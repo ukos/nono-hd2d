@@ -454,6 +454,8 @@ scene.add(partyGlow);
 // 移動まわりの状態
 const vel = new THREE.Vector2(0, 0); // 現在の移動速度（慣性つき）
 let dirRow = 0; // 0=S,1=SE,2=E,3=NE,4=N,5=NW,6=W,7=SW（アトラスの行と一致）
+let pendRow = 0, pendT = 0; // 向き変更の保留（短い入力の乱れで絵が反転しないよう、少し続いた向きだけ採用する）
+let histP = ''; // デバッグ用：プレイヤーの row の履歴
 let walkPhase = 0, rippleTimer = 0;
 let walkBounds = { minX: -15.5, maxX: 15.5, minZ: -3.05, maxZ: 6.2 };
 const camTarget = new THREE.Vector3(0, 0, 0.6);
@@ -1063,7 +1065,13 @@ function animate() {
     player.position.z = THREE.MathUtils.clamp(pz + vel.y * dt, walkBounds.minZ, walkBounds.maxZ);
     resolveCollisions(player.position, 0.3);
     const moved = Math.hypot(player.position.x - px, player.position.z - pz);
-    if (spd > 0.35) dirRow = rowFromVel(vel.x, vel.y);
+    if (spd > 0.35) {
+      const want = rowFromVel(vel.x, vel.y);
+      if (want !== dirRow) {
+        if (want === pendRow) { pendT += dt; if (pendT > 0.15) { dirRow = want; pendT = 0; } }
+        else { pendRow = want; pendT = 0; }
+      } else pendT = 0;
+    }
     walkPhase += moved / STEP_LENS[dirRow];
     if (spd > 0.25) {
       const col = WALK_SEQ[Math.floor(walkPhase) % 4];
@@ -1182,7 +1190,8 @@ function animate() {
   // デバッグ表示（向き反転の切り分け用）
   if (t - dbgT > 0.12) {
     dbgT = t;
-    dbgEl.textContent = `P${dirRow} Y${yui.userData.dirRow} R${rei.userData.dirRow} stick ${stickVec.x.toFixed(2)},${stickVec.y.toFixed(2)} vel ${vel.x.toFixed(2)},${vel.y.toFixed(2)}`;
+    histP = (histP + dirRow).slice(-22);
+    dbgEl.textContent = `P:${histP} Y${yui.userData.dirRow} R${rei.userData.dirRow} vel ${vel.x.toFixed(1)},${vel.y.toFixed(1)}`;
   }
 
   composer.render();
