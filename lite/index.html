@@ -908,6 +908,7 @@ const REGIONS = {
     bg: 0x1e2b26,
     sun: { i: 1.9, pos: [71, 11, -4.5], tgt: [85, 0, 0.4] },
     sub: '森の小道 ／ 移動： WASD・矢印キー ／ 西の端から湖畔へ、東の端から草原へ',
+    backdrop: 'assets/far_forest.jpg',
     wadeZ: null,
     custom: 'forest',
     grounds: [
@@ -942,6 +943,7 @@ const REGIONS = {
     bg: 0x2e3350,
     sun: { i: 2.3, pos: [156, 11, -4.5], tgt: [170, 0, 0.4] },
     sub: '草原 ／ 移動： WASD・矢印キー ／ 西の端から森へ、東の端から岩場へ',
+    backdrop: 'assets/far_meadow.jpg',
     wadeZ: null,
     spawn: { x: 155.2, z: 0.4, row: 2 },
     grounds: [
@@ -986,6 +988,7 @@ const REGIONS = {
     bg: 0x35283e,
     sun: { i: 2.2, pos: [241, 11, -4.5], tgt: [255, 0, 0.4] },
     sub: '岩場 ／ 移動： WASD・矢印キー ／ 西の端から草原へ、東の端から雪原へ',
+    backdrop: 'assets/far_rock.jpg',
     wadeZ: null,
     spawn: { x: 240.2, z: 0.4, row: 2 },
     grounds: [
@@ -1028,6 +1031,7 @@ const REGIONS = {
     bg: 0x2c3550,
     sun: { i: 2.0, pos: [326, 11, -4.5], tgt: [340, 0, 0.4] },
     sub: '雪原 ／ 移動： WASD・矢印キー ／ 西の端から岩場へ戻る',
+    backdrop: 'assets/far_snow.jpg',
     wadeZ: null,
     spawn: { x: 325.2, z: 0.4, row: 2 },
     grounds: [
@@ -1070,6 +1074,16 @@ function buildRegion(id, def) {
   scene.add(group);
   const colliders = [];
   const rng = mulberry32(1000 + id.length * 77 + id.charCodeAt(0));
+  if (def.backdrop) { // 地方ごとの遠景ボード（北の奥）
+    const bTex = loadTex(def.backdrop);
+    bTex.magFilter = THREE.LinearFilter;
+    const board = new THREE.Mesh(
+      new THREE.PlaneGeometry(96, 40),
+      new THREE.MeshBasicMaterial({ map: bTex, fog: false })
+    );
+    board.position.set(def.centerX + 6, 8.5, -30);
+    group.add(board);
+  }
   for (const g of def.grounds || []) {
     let mat;
     if (g.tex) {
