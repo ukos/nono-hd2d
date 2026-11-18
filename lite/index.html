@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>NONO: Blade of the Dawn ― HD-2D lite 試作</title>
 <style>
-  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#241b38; }
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#241b38;
+    touch-action:none; overscroll-behavior:none; }
   #app { position:fixed; inset:0; }
   canvas { display:block; }
   #vignette { position:fixed; inset:0; pointer-events:none;
@@ -19,7 +20,8 @@
     color:#ffe9c9; background:#241b38; font-family:sans-serif; font-size:14px; z-index:10;
     transition: opacity .6s; }
   #stick { position:fixed; left:22px; bottom:26px; width:112px; height:112px; border-radius:50%;
-    border:2px solid rgba(255,233,201,.35); background:rgba(20,14,40,.25); display:none; z-index:5; }
+    border:2px solid rgba(255,233,201,.35); background:rgba(20,14,40,.25); display:none; z-index:5;
+    touch-action:none; }
   #knob { position:absolute; left:50%; top:50%; width:48px; height:48px; border-radius:50%;
     background:rgba(255,233,201,.45); transform:translate(-50%,-50%); }
   @media (pointer: coarse) { #stick { display:block; } }
@@ -436,14 +438,14 @@ for (const ch of [yui, rei]) {
   ch.userData.rippleTimer = 0;
 }
 // パーティの周りだけを暖かく照らす提灯のような光（周囲の暗さはそのまま残す）
-const partyLight = new THREE.PointLight(0xffa050, 9, 10, 1.7);
+const partyLight = new THREE.PointLight(0xffa050, 3.2, 8.5, 1.7);
 partyLight.position.set(0, 1.6, 0.9);
 scene.add(partyLight);
 const partyGlow = new THREE.Sprite(new THREE.SpriteMaterial({
-  map: glowTex, color: 0xff9a3c, transparent: true, opacity: 0.13,
+  map: glowTex, color: 0xff9a3c, transparent: true, opacity: 0.055,
   depthWrite: false, blending: THREE.AdditiveBlending,
 }));
-partyGlow.scale.setScalar(5.4);
+partyGlow.scale.setScalar(4.6);
 partyGlow.position.set(0, 0.9, 0.6);
 scene.add(partyGlow);
 // 移動まわりの状態
@@ -960,14 +962,18 @@ const stickVec = { x: 0, y: 0 };
 {
   const stick = document.getElementById('stick');
   const knob = document.getElementById('knob');
-  let pid = null;
+  let pid = null, cx = 0, cy = 0;
   const setKnob = (dx, dy) => { knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`; };
-  stick.addEventListener('pointerdown', (e) => { pid = e.pointerId; stick.setPointerCapture(pid); });
+  // 中心は押した瞬間に固定する（途中で画面が拡大・スクロールして矩形がずれても読みが狂わないように）
+  stick.addEventListener('pointerdown', (e) => {
+    pid = e.pointerId; stick.setPointerCapture(pid);
+    const r = stick.getBoundingClientRect();
+    cx = r.left + r.width / 2; cy = r.top + r.height / 2;
+  });
   stick.addEventListener('pointermove', (e) => {
     if (e.pointerId !== pid) return;
-    const r = stick.getBoundingClientRect();
-    let dx = e.clientX - (r.left + r.width / 2);
-    let dy = e.clientY - (r.top + r.height / 2);
+    let dx = e.clientX - cx;
+    let dy = e.clientY - cy;
     const len = Math.hypot(dx, dy), max = 36;
     if (len > max) { dx *= max / len; dy *= max / len; }
     setKnob(dx, dy);
@@ -976,6 +982,17 @@ const stickVec = { x: 0, y: 0 };
   const end = (e) => { if (e.pointerId === pid) { pid = null; stickVec.x = stickVec.y = 0; setKnob(0, 0); } };
   stick.addEventListener('pointerup', end);
   stick.addEventListener('pointercancel', end);
+}
+// ダブルタップ拡大の抑止（アプリ内ブラウザ等が user-scalable=no を無視する場合の保険）
+document.addEventListener('dblclick', (e) => e.preventDefault());
+document.addEventListener('gesturestart', (e) => e.preventDefault());
+{
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 320) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
 }
 function inputVector() {
   let x = 0, z = 0;
@@ -1116,7 +1133,7 @@ function animate() {
 
   // カメラ追従（地方の中心を基準に緩やかにパンする）
   const ccx = R.centerX;
-  camTarget.lerp(new THREE.Vector3(ccx + (player.position.x - ccx) * 0.82, 0, player.position.z * 0.55), 1 - Math.pow(0.002, dt));
+  camTarget.lerp(new THREE.Vector3(player.position.x, 0, player.position.z), 1 - Math.pow(0.002, dt));
   const wantPos = new THREE.Vector3(camTarget.x, 4.6 + camTarget.z * 0.18, camTarget.z + 8.4);
   camPos.lerp(wantPos, 1 - Math.pow(0.002, dt));
   camera.position.copy(camPos);
