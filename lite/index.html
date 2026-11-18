@@ -1112,6 +1112,7 @@ const REGIONS = {
     bg: 0x24382c,
     sun: { i: 2.1, pos: [411, 11, -4.5], tgt: [425, 0, 0.4] },
     sub: '渓谷 ／ 移動： WASD・矢印キー ／ 西の端から雪原へ、東の端から高原へ',
+    backdrop: 'assets/far_valley.jpg',
     wadeZ: null,
     spawn: { x: 410.2, z: 0.4, row: 2 },
     grounds: [
@@ -1154,6 +1155,7 @@ const REGIONS = {
     bg: 0x33304e,
     sun: { i: 2.4, pos: [496, 11, -4.5], tgt: [510, 0, 0.4] },
     sub: '高原 ／ 移動： WASD・矢印キー ／ 西の端から渓谷へ、東の端から沼地へ',
+    backdrop: 'assets/far_highland.jpg',
     wadeZ: null,
     spawn: { x: 495.2, z: 0.4, row: 2 },
     grounds: [
@@ -1195,6 +1197,7 @@ const REGIONS = {
     bg: 0x1f2e26,
     sun: { i: 1.7, pos: [581, 11, -4.5], tgt: [595, 0, 0.4] },
     sub: '沼地 ／ 移動： WASD・矢印キー ／ 西の端から高原へ戻る',
+    backdrop: 'assets/far_marsh.jpg',
     wadeZ: null,
     spawn: { x: 580.2, z: 0.4, row: 2 },
     grounds: [
@@ -1356,7 +1359,12 @@ function startTransition(exit) {
 {
   const startId = new URLSearchParams(location.search).get('area');
   const startRegion = (startId && REGIONS[startId] && REGIONS[startId].spawn) ? startId : 'lake';
-  const sp = REGIONS[startRegion].spawn;
+  const sp = { ...REGIONS[startRegion].spawn };
+  const xParam = parseFloat(new URLSearchParams(location.search).get('x'));
+  if (Number.isFinite(xParam)) { // 動作確認用: ?x=<数値> で開始位置のxを上書きできる
+    const b = REGIONS[startRegion].bounds;
+    sp.x = Math.min(b.maxX - 0.5, Math.max(b.minX + 0.5, xParam));
+  }
   player.position.set(sp.x, 0, sp.z);
   dirRow = sp.row;
   setFrameC(player, sp.row, 1);
