@@ -25,6 +25,8 @@
   #knob { position:absolute; left:50%; top:50%; width:48px; height:48px; border-radius:50%;
     background:rgba(255,233,201,.45); transform:translate(-50%,-50%); }
   @media (pointer: coarse) { #stick { display:block; } }
+  #dbg { position:fixed; right:10px; bottom:8px; z-index:6; pointer-events:none;
+    color:#fff; font:11px monospace; text-shadow:0 1px 2px #000; opacity:.85; }
   #fade { position:fixed; inset:0; background:#000; opacity:0; pointer-events:none;
     transition:opacity .38s; z-index:8; }
   #dialog { position:fixed; left:50%; transform:translateX(-50%); bottom:18px;
@@ -55,6 +57,7 @@
   <div class="sub" id="hudSub">読み込み中…</div>
 </div>
 <div id="stick"><div id="knob"></div></div>
+<div id="dbg"></div>
 <div id="fade"></div>
 <button id="talkBtn">話す</button>
 <div id="dialog"><div class="name" id="dialogName"></div><div class="text" id="dialogText"></div><div class="next">▼ タップ／Eキーで進む</div></div>
@@ -1028,6 +1031,8 @@ window.addEventListener('resize', () => {
 
 // ---------- メインループ ----------
 const clock = new THREE.Clock();
+let dbgT = 0;
+const dbgEl = document.getElementById('dbg');
 
 function animate() {
   requestAnimationFrame(animate);
@@ -1165,6 +1170,12 @@ function animate() {
     m.position.set(camTarget.x + m.userData.dx, -0.55 + Math.sin(t * 0.9 + m.userData.dx) * 0.03, camTarget.z + 5.4);
     m.rotation.y = Math.atan2(camera.position.x - m.position.x, camera.position.z - m.position.z);
     m.rotation.x = -0.28;
+  }
+
+  // デバッグ表示（向き反転の切り分け用）
+  if (t - dbgT > 0.12) {
+    dbgT = t;
+    dbgEl.textContent = `stick ${stickVec.x.toFixed(2)},${stickVec.y.toFixed(2)} vel ${vel.x.toFixed(2)},${vel.y.toFixed(2)} row ${dirRow}`;
   }
 
   composer.render();
