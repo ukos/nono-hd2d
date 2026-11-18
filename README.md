@@ -15,6 +15,8 @@ Three.js（WebGL）で HD-2D の見た目を再現した試作。Unity 本格版
 
 - `assets-src/rivals/` — ライバル15人（中ボス・ボス格）の公式ポートレート＋歩行シート。全30点。デザインの「正」はこちら
 - `assets-src/characters/` — 主人公の通常衣装ポートレート／歩行シート、試練⑨用のライバル顔シート
+- `assets-src/textures/` — HD-2D lite の背景・小物の原画6点（src_*.jpg）と、透過処理済みのビルボード素材4点
+- `assets-src/backgrounds/` — 本編・試練の背景画8点（1024×576ほか）
 
 ## Unity 本格版
 
