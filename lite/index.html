@@ -284,6 +284,7 @@ const GROUND_TEX = {
   sand: { base: '#b08d5f', dots: ['#9c7a4e', '#c2a06e', '#a8845a', '#c9ab77'], patch: '#8a6a42' },
   forestFloor: { base: '#33503a', dots: ['#2a4530', '#3c5c42', '#2f4d36', '#425f45'], patch: '#26402c' },
   meadow: { base: '#578a49', dots: ['#4a7a3e', '#679c55', '#77ac60', '#4f8145', '#8fbc72', '#a5cc84'], patch: '#45703a' },
+  meadowDusk: { base: '#626f3e', dots: ['#525f33', '#6d7c46', '#75834c', '#5d683a', '#8a6f45', '#97804f'], patch: '#4c5730' },
   dirtPath: { base: '#7d6242', dots: ['#6f5638', '#8a6d4a', '#755c3c'], patch: '#63492c' },
   rock: { base: '#6a5a4c', dots: ['#5d4f42', '#776655', '#655746'], patch: '#534639' },
   snow: { base: '#b3bedd', dots: ['#a7b2d4', '#bfc9e6', '#aeb9dc'], patch: '#9fabcc' },
@@ -1126,11 +1127,10 @@ const REGIONS = {
     sun: { i: 2.3, pos: [156, 11, -4.5], tgt: [170, 0, 0.4] },
     sub: '妖怪の里 ／ 移動： WASD・矢印キー ／ 北の端から海の底へ、東の端からジャングルへ',
     backdrop: 'assets/far_meadow.jpg',
-    lush: true,
     wadeZ: null,
     spawn: { x: 155.2, z: 0.4, row: 2 },
     grounds: [
-      { tex: 'meadow', repeat: [13, 6], w: 40, d: 18, x: 170, y: 0, z: 0.6 },
+      { tex: 'meadowDusk', repeat: [13, 6], w: 40, d: 18, x: 170, y: 0, z: 0.6 },
       { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 170, y: 0.012, z: 0.4 },
     ],
     scatter: [
