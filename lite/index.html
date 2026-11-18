@@ -235,6 +235,8 @@ const GROUND_TEX = {
   dirtPath: { base: '#7d6242', dots: ['#6f5638', '#8a6d4a', '#755c3c'], patch: '#63492c' },
   rock: { base: '#6a5a4c', dots: ['#5d4f42', '#776655', '#655746'], patch: '#534639' },
   snow: { base: '#b3bedd', dots: ['#a7b2d4', '#bfc9e6', '#aeb9dc'], patch: '#9fabcc' },
+  highland: { base: '#6f9a4e', dots: ['#628c43', '#7da858', '#678f47', '#87b364'], patch: '#567a3a' },
+  marsh: { base: '#3d5c40', dots: ['#334f36', '#476a4a', '#38543c', '#4d7050'], patch: '#2c4630' },
 };
 
 // ---------- 共有テクスチャ ----------
@@ -1030,7 +1032,7 @@ const REGIONS = {
     fog: { color: 0x39466a, near: 13, far: 42 },
     bg: 0x2c3550,
     sun: { i: 2.0, pos: [326, 11, -4.5], tgt: [340, 0, 0.4] },
-    sub: '雪原 ／ 移動： WASD・矢印キー ／ 西の端から岩場へ戻る',
+    sub: '雪原 ／ 移動： WASD・矢印キー ／ 西の端から岩場へ、東の端から渓谷へ',
     backdrop: 'assets/far_snow.jpg',
     wadeZ: null,
     spawn: { x: 325.2, z: 0.4, row: 2 },
@@ -1062,6 +1064,132 @@ const REGIONS = {
     fireflies: { n: 8, seed: 83, box: { x: [325, 355], y: [0.4, 1.6], z: [-2.5, 3.5] } },
     exits: [
       { edge: 'west', at: 324.2, to: 'rocky', spawn: { x: 271.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'east', at: 357.2, to: 'valley', spawn: { x: 410.2, z: 0.4, row: 2, trail: -1 } },
+    ],
+  },
+  valley: {
+    label: '渓谷',
+    centerX: 425,
+    bounds: { minX: 408.4, maxX: 442.6, minZ: -3.4, maxZ: 4.6 },
+    fog: { color: 0x2c4034, near: 12, far: 40 },
+    bg: 0x24382c,
+    sun: { i: 2.1, pos: [411, 11, -4.5], tgt: [425, 0, 0.4] },
+    sub: '渓谷 ／ 移動： WASD・矢印キー ／ 西の端から雪原へ、東の端から高原へ',
+    wadeZ: null,
+    spawn: { x: 410.2, z: 0.4, row: 2 },
+    grounds: [
+      { tex: 'forestFloor', repeat: [13, 6], w: 40, d: 18, x: 425, y: 0, z: 0.6 },
+      { color: 0x3f6186, w: 40, d: 2.2, x: 425, y: 0.008, z: -2.2 },
+      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 425, y: 0.012, z: 0.4 },
+    ],
+    scatter: [
+      { t: 'rock', n: 14, seed: 107, x: [409, 441], zCenter: 0.6, offMin: 2.4, offMax: 7.8, s: [0.6, 1.2] },
+      { t: 'pine', n: 10, seed: 109, x: [409.5, 440.5], zCenter: 0.6, offMin: 4.8, offMax: 8.6, s: [0.9, 1.4], frontS: 0.6 },
+      { t: 'tuft', n: 80, seed: 113, x: [409, 441], zCenter: 0.6, offMin: 1.8, offMax: 7.6, s: [0.8, 0.8] },
+    ],
+    props: [
+      { t: 'rock', x: 415, z: -2.9, s: 2.2 },
+      { t: 'rock', x: 438, z: -2.7, s: 2.4 },
+      { t: 'driftwood', x: 420, z: 2.6, rot: 0.5 },
+      { t: 'signpost', x: 409.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [
+      {
+        sheet: 'assets/mizuchi_sheet.png', h: 1.06, x: 430, z: -0.9, name: 'ミズチ',
+        lines: [
+          'あら、人間。アタシはミズチ、この渓谷の主よ。',
+          '川の音を聞いてごらん。何百年も、こうして流れてるの。',
+          '東の高原は風が強いの。飛ばされないようにね。',
+        ],
+      },
+    ],
+    fireflies: { n: 14, seed: 89, box: { x: [410, 440], y: [0.4, 1.6], z: [-2.5, 3.5] } },
+    exits: [
+      { edge: 'west', at: 409.2, to: 'snow', spawn: { x: 356.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'east', at: 442.2, to: 'highland', spawn: { x: 495.2, z: 0.4, row: 2, trail: -1 } },
+    ],
+  },
+  highland: {
+    label: '高原',
+    centerX: 510,
+    bounds: { minX: 493.4, maxX: 527.6, minZ: -3.4, maxZ: 4.6 },
+    fog: { color: 0x4a3a5e, near: 16, far: 48 },
+    bg: 0x33304e,
+    sun: { i: 2.4, pos: [496, 11, -4.5], tgt: [510, 0, 0.4] },
+    sub: '高原 ／ 移動： WASD・矢印キー ／ 西の端から渓谷へ、東の端から沼地へ',
+    wadeZ: null,
+    spawn: { x: 495.2, z: 0.4, row: 2 },
+    grounds: [
+      { tex: 'highland', repeat: [13, 6], w: 40, d: 18, x: 510, y: 0, z: 0.6 },
+      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 510, y: 0.012, z: 0.4 },
+    ],
+    scatter: [
+      { t: 'tuft', n: 500, seed: 127, x: [494, 526], zCenter: 0.6, offMin: 1.7, offMax: 8.8, s: [0.9, 0.9] },
+      { t: 'rock', n: 12, seed: 131, x: [494, 526], zCenter: 0.6, offMin: 2.4, offMax: 7.8, s: [0.5, 1] },
+      { t: 'pine', n: 4, seed: 137, x: [494.5, 525.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
+    ],
+    props: [
+      { t: 'torii', x: 505, z: -2.3 },
+      { t: 'shrine', x: 505, z: -3.2 },
+      { t: 'pine', x: 520, z: -3.0, s: 2.0 },
+      { t: 'signpost', x: 494.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [
+      {
+        sheet: 'assets/hayate_sheet.png', h: 1.16, x: 503.6, z: -1.5, name: 'ハヤテ',
+        lines: [
+          'やあ、いい風だろ？ オレはハヤテ、この高原を走るのが日課でね。',
+          'ここから見る夕日は格別だ。あんたも少し休んでいきな。',
+          '東の沼地は足元が悪い。気をつけて行けよ。',
+        ],
+      },
+    ],
+    fireflies: { n: 10, seed: 97, box: { x: [495, 525], y: [0.4, 1.6], z: [-2.5, 3.5] } },
+    exits: [
+      { edge: 'west', at: 494.2, to: 'valley', spawn: { x: 441.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'east', at: 527.2, to: 'marsh', spawn: { x: 580.2, z: 0.4, row: 2, trail: -1 } },
+    ],
+  },
+  marsh: {
+    label: '沼地',
+    centerX: 595,
+    bounds: { minX: 578.4, maxX: 612.6, minZ: -3.4, maxZ: 4.6 },
+    fog: { color: 0x2e4038, near: 8, far: 26 },
+    bg: 0x1f2e26,
+    sun: { i: 1.7, pos: [581, 11, -4.5], tgt: [595, 0, 0.4] },
+    sub: '沼地 ／ 移動： WASD・矢印キー ／ 西の端から高原へ戻る',
+    wadeZ: null,
+    spawn: { x: 580.2, z: 0.4, row: 2 },
+    grounds: [
+      { tex: 'marsh', repeat: [13, 6], w: 40, d: 18, x: 595, y: 0, z: 0.6 },
+      { color: 0x39526b, w: 6, d: 2.4, x: 588, y: 0.008, z: -2.4 },
+      { color: 0x39526b, w: 5, d: 2.2, x: 604, y: 0.008, z: 2.9 },
+      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 595, y: 0.012, z: 0.4 },
+    ],
+    scatter: [
+      { t: 'tuft', n: 300, seed: 139, x: [579, 611], zCenter: 0.6, offMin: 1.7, offMax: 8.6, s: [0.9, 0.9] },
+      { t: 'rock', n: 8, seed: 149, x: [579, 611], zCenter: 0.6, offMin: 2.6, offMax: 7.6, s: [0.4, 0.8] },
+    ],
+    props: [
+      { t: 'driftwood', x: 590, z: 2.4, rot: -0.4 },
+      { t: 'driftwood', x: 600, z: -1.9, rot: 0.8 },
+      { t: 'stump', x: 585, z: -2.6 },
+      { t: 'stump', x: 608, z: 2.6, rot: 1.1 },
+      { t: 'signpost', x: 579.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [
+      {
+        sheet: 'assets/tanurio_sheet.png', h: 1.04, x: 592.5, z: -1.3, name: 'タヌリオ',
+        lines: [
+          'おやおや、お客さんだポン。ボクはタヌリオ、この沼の案内人。',
+          '沼はね、見た目より深いところがあるポン。道から外れちゃダメだポン。',
+          '夕方のホタルは、この沼がいちばん綺麗だと思うポン。',
+        ],
+      },
+    ],
+    fireflies: { n: 26, seed: 103, box: { x: [580, 610], y: [0.4, 1.6], z: [-2.5, 3.5] } },
+    exits: [
+      { edge: 'west', at: 579.2, to: 'highland', spawn: { x: 526.7, z: 0.4, row: 6, trail: 1 } },
     ],
   },
 };
