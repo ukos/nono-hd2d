@@ -104,6 +104,34 @@ function loadTex(path, srgb = true) {
   t.generateMipmaps = true;
   return t;
 }
+// 遠景用：縮小→拡大の往復で輪郭のギザギザを消し、柔らかくぼかしたテクスチャを作る
+function blurredTex(path, scale = 0.28) {
+  const tex = new THREE.Texture();
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.LinearFilter;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  new THREE.ImageLoader().load(path, (img) => {
+    const w = img.width, h = img.height;
+    const small = document.createElement('canvas');
+    small.width = Math.max(2, Math.round(w * scale)); small.height = Math.max(2, Math.round(h * scale));
+    const full = document.createElement('canvas');
+    full.width = w; full.height = h;
+    const xs = small.getContext('2d'), xf = full.getContext('2d');
+    xs.imageSmoothingEnabled = xf.imageSmoothingEnabled = true;
+    xs.imageSmoothingQuality = xf.imageSmoothingQuality = 'high';
+    let src = img;
+    for (let i = 0; i < 2; i++) { // 2往復でしっかりぼかす
+      xs.clearRect(0, 0, small.width, small.height);
+      xs.drawImage(src, 0, 0, small.width, small.height);
+      xf.clearRect(0, 0, w, h);
+      xf.drawImage(small, 0, 0, w, h);
+      src = full;
+    }
+    tex.image = full;
+    tex.needsUpdate = true;
+  });
+  return tex;
+}
 
 // ---------- レンダラ / シーン / カメラ ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -689,8 +717,7 @@ function buildLakeCustom(group) {
     group.add(m);
   }
   // 遠景の山ボード
-  const mountainsTex = loadTex('assets/far_mountains.png');
-  mountainsTex.magFilter = THREE.LinearFilter;
+  const mountainsTex = blurredTex('assets/far_mountains.png');
   const mountains = new THREE.Mesh(
     new THREE.PlaneGeometry(97, 48),
     new THREE.MeshBasicMaterial({ map: mountainsTex, fog: false })
