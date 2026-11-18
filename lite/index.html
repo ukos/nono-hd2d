@@ -657,11 +657,13 @@ function spawnRipple(x, z) {
 // ---------- エリア（湖畔／森の小道）と画面遷移 ----------
 const AREAS = {
   lake: {
+    centerX: 0,
     bounds: { minX: -15.5, maxX: 15.5, minZ: -3.05, maxZ: 6.2 },
     fog: [20, 52], bg: 0x3b2b52, sunI: 2.6, sunPos: [-14, 11, -5], sunTgt: [0, 0, 0],
     sub: '湖畔・夕景 ／ 移動： WASD・矢印キー ／ 話す： Eキー ／ 東の端から森の小道へ',
   },
   forest: {
+    centerX: 85,
     bounds: { minX: 68.6, maxX: 102.5, minZ: -1.9, maxZ: 2.7 },
     fog: [9, 30], bg: 0x1e2b26, sunI: 1.9, sunPos: [71, 11, -4.5], sunTgt: [85, 0, 0.4],
     sub: '森の小道 ／ 移動： WASD・矢印キー ／ 西の端から湖畔へ戻る',
@@ -687,7 +689,7 @@ function setArea(name) {
   document.getElementById('hudSub').textContent = A.sub;
 }
 let transitioning = false;
-function teleportTo(x, z, faceRow, trailSign) {
+function teleportTo(x, z, faceRow, trailSign, cx) {
   player.position.set(x, 0, z);
   vel.set(0, 0);
   dirRow = faceRow;
@@ -704,7 +706,7 @@ function teleportTo(x, z, faceRow, trailSign) {
     ch.userData.dirRow = faceRow;
     setFrameC(ch, faceRow, 1);
   }
-  camTarget.set(player.position.x * 0.82, 0, player.position.z * 0.55);
+  camTarget.set(cx + (player.position.x - cx) * 0.82, 0, player.position.z * 0.55);
   camPos.set(camTarget.x, 4.6 + camTarget.z * 0.18, camTarget.z + 8.4);
 }
 function startTransition(to) {
@@ -713,8 +715,8 @@ function startTransition(to) {
   const fade = document.getElementById('fade');
   fade.style.opacity = '1';
   setTimeout(() => {
-    if (to === 'forest') { teleportTo(70.2, 0.4, 2, -1); setArea('forest'); }
-    else { teleportTo(14.7, 0.6, 6, 1); setArea('lake'); }
+    if (to === 'forest') { teleportTo(70.2, 0.4, 2, -1, AREAS.forest.centerX); setArea('forest'); }
+    else { teleportTo(14.7, 0.6, 6, 1, AREAS.lake.centerX); setArea('lake'); }
     fade.style.opacity = '0';
     setTimeout(() => { transitioning = false; }, 600);
   }, 420);
@@ -997,7 +999,8 @@ function animate() {
   }
 
   // カメラ追従
-  camTarget.lerp(new THREE.Vector3(player.position.x * 0.82, 0, player.position.z * 0.55), 1 - Math.pow(0.002, dt));
+  const ccx = AREAS[area].centerX;
+  camTarget.lerp(new THREE.Vector3(ccx + (player.position.x - ccx) * 0.82, 0, player.position.z * 0.55), 1 - Math.pow(0.002, dt));
   const wantPos = new THREE.Vector3(camTarget.x, 4.6 + camTarget.z * 0.18, camTarget.z + 8.4);
   camPos.lerp(wantPos, 1 - Math.pow(0.002, dt));
   camera.position.copy(camPos);
