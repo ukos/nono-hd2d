@@ -300,6 +300,14 @@ const GROUND_TEX = {
   rock: { img: 'assets/gtex_rocky.png', base: '#6a5a4c', dots: ['#5d4f42', '#776655', '#655746'], patch: '#534639' },
   snow: { img: 'assets/gtex_snow.png', base: '#b3bedd', dots: ['#a7b2d4', '#bfc9e6', '#aeb9dc'], patch: '#9fabcc' },
   highland: { img: 'assets/gtex_grass.png', base: '#6f9a4e', dots: ['#628c43', '#7da858', '#678f47', '#87b364'], patch: '#567a3a' },
+  ice: { img: 'assets/gtex_ice.png' },
+  lavarock: { img: 'assets/gtex_lavarock.png' },
+  lava: { img: 'assets/gtex_lava.png' },
+  stoneDark: { img: 'assets/gtex_stonefloor_dark.png' },
+  stoneLight: { img: 'assets/gtex_stonefloor_light.png' },
+  slab: { img: 'assets/gtex_slab.png' },
+  brick: { img: 'assets/gtex_brick.png' },
+  wood: { img: 'assets/gtex_wood.png' },
   marsh: { img: 'assets/gtex_marsh.png', base: '#3d5c40', dots: ['#334f36', '#476a4a', '#38543c', '#4d7050'], patch: '#2c4630' },
 };
 
@@ -409,8 +417,9 @@ function placeTree(parent, colliders, x, z, s = 1, rng = Math.random, snowy = fa
   // 広葉樹のビルボード（本編の木の形に合わせたドット絵。針葉樹の低ポリ松に代わる通常の木）
   let tex, ar;
   if (snowy) { tex = treeTex('tree_snow.png'); ar = 376 / 404; }
-  else if (rng() < 0.5) { tex = treeTex('tree_tall.png'); ar = 368 / 484; }
-  else { tex = treeTex('tree_round.png'); ar = 433 / 469; }
+  else if (rng() < 0.36) { tex = treeTex('tree_tall.png'); ar = 368 / 484; }
+  else if (rng() < 0.5) { tex = treeTex('tree_round.png'); ar = 433 / 469; }
+  else { tex = treeTex('tree_dense.png'); ar = 1.0; }
   const h = 2.6 * s;
   billboard(parent, tex, h * ar, h, x, z, { shadow: true });
   colliders.push({ x, z, r: 0.3 * s + 0.08 });
@@ -439,15 +448,13 @@ function makeRock(scale = 1, rng = Math.random) {
   return m;
 }
 function placeRock(parent, colliders, x, z, scale = 1, rng = Math.random, snowy = false) {
-  const m = makeRock(scale, rng);
-  m.position.set(x, 0.1 * scale, z);
-  parent.add(m);
-  if (snowy) { // 岩のてっぺんに雪を積もらせる
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 6), snowMat);
-    cap.scale.set(scale, scale * 0.36, scale);
-    cap.position.set(x, 0.42 * scale, z);
-    parent.add(cap);
-  }
+  // 岩もドット絵ビルボードに統一（低ポリ3Dは Unity へ引き継げないため）
+  let tex, ar;
+  if (snowy) { tex = treeTex('rock_snow.png'); ar = 741 / 721; }
+  else if (rng() < 0.5) { tex = treeTex('rock_boulder.png'); ar = 742 / 722; }
+  else { tex = treeTex('rock_moss.png'); ar = 744 / 721; }
+  const h = 1.15 * scale;
+  const m = billboard(parent, tex, h * ar, h, x, z, { shadow: true });
   colliders.push({ x, z, r: 0.5 * scale + 0.12 });
   return m;
 }
@@ -518,6 +525,44 @@ function placeSignpost(parent, colliders, x, z, rotY = 0) {
 }
 const toriiMat = new THREE.MeshStandardMaterial({ color: 0xa83c2a, roughness: 0.9, flatShading: true });
 const toriiDarkMat = new THREE.MeshStandardMaterial({ color: 0x7e2d20, roughness: 0.9, flatShading: true });
+// ---------- ドット絵スプライト小物（画像素材なので Unity 版へそのまま引き継げる） ----------
+function placeSpriteProp(parent, colliders, x, z, texName, ar, h, r) {
+  billboard(parent, treeTex(texName), h * ar, h, x, z, { shadow: true });
+  if (r) colliders.push({ x, z, r });
+}
+function placeStumpSprite(parent, colliders, x, z) {
+  placeSpriteProp(parent, colliders, x, z, 'wood_stump.png', 780 / 668, 0.66, 0.36);
+}
+function placeDriftSprite(parent, colliders, x, z, rotY = 0) {
+  placeSpriteProp(parent, colliders, x, z, 'wood_drift.png', 781 / 569, 0.62, 0);
+  colliders.push({ x: x + 0.38, z, r: 0.3 });
+  colliders.push({ x: x - 0.38, z, r: 0.3 });
+}
+function placeLog(parent, colliders, x, z, s = 1) {
+  placeSpriteProp(parent, colliders, x, z, 'wood_log.png', 770 / 518, 0.62 * s, 0.42 * s);
+}
+function placeWoodPile(parent, colliders, x, z, s = 1) {
+  placeSpriteProp(parent, colliders, x, z, 'wood_pile.png', 758 / 552, 0.85 * s, 0.5 * s);
+}
+function placeBamboo(parent, colliders, x, z, s = 1) {
+  placeSpriteProp(parent, colliders, x, z, 'bamboo.png', 1.0, 3.1 * s, 0.26 * s);
+}
+function placeDeadTree(parent, colliders, x, z, s = 1) {
+  placeSpriteProp(parent, colliders, x, z, 'tree_dead.png', 737 / 800, 2.7 * s, 0.3 * s + 0.08);
+}
+function placeWillow(parent, colliders, x, z, s = 1) {
+  placeSpriteProp(parent, colliders, x, z, 'tree_willow.png', 747 / 800, 2.9 * s, 0.32 * s + 0.08);
+}
+function placeLavaRock(parent, colliders, x, z, s = 1) {
+  placeSpriteProp(parent, colliders, x, z, 'rock_lava.png', 742 / 724, 1.15 * s, 0.5 * s + 0.12);
+}
+let pillarTex = null;
+function placePillar(parent, colliders, x, z, s = 1) {
+  if (!pillarTex) pillarTex = loadTex('assets/prop_pillar.png');
+  const h = 2.3 * s;
+  billboard(parent, pillarTex, h * (281 / 457), h, x, z, { shadow: true });
+  colliders.push({ x, z, r: 0.38 * s });
+}
 function placeTorii(parent, colliders, x, z, scale = 1, rotY = 0, snowy = false) {
   const g = new THREE.Group();
   for (const sx of [-0.85, 0.85]) {
@@ -1043,7 +1088,39 @@ function buildValleyCustom(group) {
   river.renderOrder = 2;
   group.add(river);
 }
-const CUSTOM_BUILDERS = { lake: buildLakeCustom, forest: buildForestCustom, valley: buildValleyCustom };
+function buildSeaCustom(group) {
+  // 群青の海: 北に広がる海（湖と同じ水シェーダー。汀の z は湖と共通）と波打ち際の泡ライン
+  const water = new THREE.Mesh(
+    new THREE.PlaneGeometry(110, 36, 1, 1),
+    new THREE.ShaderMaterial({
+      uniforms: waterUniforms,
+      transparent: true,
+      depthWrite: false,
+      vertexShader: WATER_VERT,
+      fragmentShader: WATER_FRAG,
+    })
+  );
+  water.rotation.x = -Math.PI / 2;
+  water.position.set(1105, -0.15, -21.2);
+  water.renderOrder = 2;
+  group.add(water);
+  const c = document.createElement('canvas'); c.width = 256; c.height = 16;
+  const cx2 = c.getContext('2d');
+  cx2.fillStyle = 'rgba(255,246,230,0.9)';
+  for (let i = 0; i < 9; i++) cx2.fillRect(i * 30 + 4, 6 + (i % 3) * 2, 16, 2);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = THREE.RepeatWrapping; t.repeat.set(26, 1);
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(90, 0.3),
+    new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0.5, depthWrite: false })
+  );
+  m.rotation.x = -Math.PI / 2;
+  m.position.set(1105, -0.1, -3.32);
+  m.renderOrder = 3;
+  m.onBeforeRender = () => { t.offset.x = (performance.now() * 0.000012) % 1; };
+  group.add(m);
+}
+const CUSTOM_BUILDERS = { lake: buildLakeCustom, forest: buildForestCustom, valley: buildValleyCustom, sea: buildSeaCustom };
 
 // ---------- 地方データ ----------
 // grounds: {tex: GROUND_TEXのキー, repeat:[x,y], w, d, x, y, z} または {color, w, d, x, y, z}
@@ -1052,6 +1129,293 @@ const CUSTOM_BUILDERS = { lake: buildLakeCustom, forest: buildForestCustom, vall
 // npcs:    {sheet, h, x, z, name, lines:[...]}
 // exits:   {edge:'east'|'west'|'north'|'south', at, to, spawn:{x, z, row, trail}}
 const REGIONS = {
+  tasogare: {
+    label: '黄昏の地',
+    centerX: 765,
+    bounds: { minX: 748.4, maxX: 782.6, minZ: -3.4, maxZ: 4.6 },
+    fog: { color: 0x3a2c33, near: 14, far: 44 },
+    bg: 0x2c2126,
+    sun: { i: 2.0, pos: [751, 10, -4.5], tgt: [765, 0, 0.4] },
+    sub: '黄昏の地 ／ 移動： WASD・矢印キー ／ 西の端から終末の大地へ、東の端から氷河へ、南の端から大森林へ',
+    wadeZ: null,
+    spawn: { x: 750.2, z: 0.4, row: 2 },
+    grounds: [
+      { tex: 'stoneDark', repeat: [13, 3], w: 40, d: 18, x: 765, y: 0, z: 0.6 },
+      { tex: 'brick', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 765, y: 0.012, z: 0.4 },
+    ],
+    scatter: [
+      { t: 'rock', n: 14, seed: 211, x: [749, 781], zCenter: 0.6, offMin: 2.2, offMax: 7.8, s: [0.5, 1.1] },
+      { t: 'dtree', n: 5, seed: 213, x: [749.5, 780.5], zCenter: 0.6, offMin: 4.8, offMax: 8.6, s: [0.8, 1.2], frontS: 0.6 },
+      { t: 'tuft', n: 70, seed: 217, x: [749, 781], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.8, 0.8], frontS: 0.7 },
+    ],
+    props: [
+      { t: 'pillar', x: 772, z: -1.1, s: 1 },
+      { t: 'pillar', x: 772, z: 1.9, s: 1 },
+      { t: 'rock', x: 758, z: -2.7, s: 2.2 },
+      { t: 'signpost', x: 749.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [
+      {
+        sheet: 'assets/iwao_sheet.png', h: 1.3, x: 771, z: -0.6, name: 'イワオ',
+        lines: [
+          'ここは黄昏の城への関所。通すわけにはいかぬ。',
+          '……ほう、その剣。ただの旅人ではないな。',
+          '城の主は黄昏に眠る。起こせば、ただでは済まんぞ。',
+        ],
+      },
+    ],
+    fireflies: { n: 10, seed: 219, box: { x: [750, 780], y: [0.4, 1.6], z: [-2.5, 3.5] } },
+    exits: [
+      { edge: 'west', at: 749.2, to: 'shumatsu', spawn: { x: 271.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'east', at: 782.2, to: 'hyouga', spawn: { x: 835.2, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'south', at: 4.45, to: 'daishinrin', spawn: { x: 85, z: -1.4, row: 0, trail: [0, -1] } },
+    ],
+  },
+  hyouga: {
+    label: '氷河',
+    centerX: 850,
+    bounds: { minX: 833.4, maxX: 867.6, minZ: -3.4, maxZ: 4.6 },
+    fog: { color: 0x5a6f8c, near: 14, far: 44 },
+    bg: 0x46586e,
+    sun: { i: 2.0, pos: [836, 11, -4.5], tgt: [850, 0, 0.4] },
+    sub: '氷河 ／ 移動： WASD・矢印キー ／ 西の端から黄昏の地へ、南の端から機械遺跡へ',
+    snow: true,
+    wadeZ: null,
+    spawn: { x: 835.2, z: 0.4, row: 2 },
+    grounds: [
+      { tex: 'ice', repeat: [13, 6], w: 40, d: 18, x: 850, y: 0, z: 0.6 },
+      { tex: 'snow', soft: true, repeat: [4, 2], w: 12, d: 6, x: 842, y: 0.006, z: -1 },
+      { tex: 'snow', soft: true, repeat: [3, 2], w: 9, d: 5, x: 859, y: 0.006, z: 2 },
+      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 850, y: 0.012, z: 0.4 },
+    ],
+    scatter: [
+      { t: 'rock', n: 12, seed: 223, x: [834, 866], zCenter: 0.6, offMin: 2.2, offMax: 7.8, s: [0.5, 1.1] },
+      { t: 'tree', n: 5, seed: 227, x: [834.5, 865.5], zCenter: 0.6, offMin: 5.0, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
+      { t: 'drift', n: 10, seed: 229, x: [834, 866], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.8, 1.2] },
+    ],
+    props: [
+      { t: 'rock', x: 843, z: -2.7, s: 2.4 },
+      { t: 'signpost', x: 834.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [
+      {
+        sheet: 'assets/kotetsu_sheet.png', h: 1.22, x: 855.6, z: -1.5, name: '虎鉄',
+        lines: [
+          '氷の大地で震えておるのか？ 俺は虎鉄、この雪原の主だ。',
+          '寒さに勝てぬ者は、戦にも勝てぬ。',
+          '南の遺跡には、鉄の亡霊が残ると聞く。気をつけな。',
+        ],
+      },
+    ],
+    exits: [
+      { edge: 'west', at: 834.2, to: 'tasogare', spawn: { x: 781.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'south', at: 4.45, to: 'kikai', spawn: { x: 935, z: -2.6, row: 0, trail: [0, -1] } },
+    ],
+  },
+  kikai: {
+    label: '機械遺跡',
+    centerX: 935,
+    bounds: { minX: 918.4, maxX: 952.6, minZ: -3.4, maxZ: 4.6 },
+    fog: { color: 0x37423c, near: 13, far: 42 },
+    bg: 0x29322d,
+    sun: { i: 1.9, pos: [921, 10, -4.5], tgt: [935, 0, 0.4] },
+    sub: '機械遺跡 ／ 移動： WASD・矢印キー ／ 北の端から氷河へ、西の端から大森林へ、南の端から大溪谷へ',
+    wadeZ: null,
+    spawn: { x: 920.2, z: 0.4, row: 2 },
+    grounds: [
+      { tex: 'slab', repeat: [10, 5], w: 40, d: 18, x: 935, y: 0, z: 0.6 },
+      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 935, y: 0.012, z: 0.4 },
+    ],
+    scatter: [
+      { t: 'rock', n: 10, seed: 233, x: [919, 951], zCenter: 0.6, offMin: 2.2, offMax: 7.8, s: [0.5, 1.0] },
+      { t: 'tuft', n: 40, seed: 239, x: [919, 951], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.8, 0.8], frontS: 0.7 },
+    ],
+    props: [
+      { t: 'pillar', x: 930, z: -2.4, s: 1 },
+      { t: 'pillar', x: 941, z: -1.8, s: 0.8 },
+      { t: 'pillar', x: 928, z: 2.8, s: 0.9 },
+      { t: 'pillar', x: 943, z: 2.6, s: 1.1 },
+      { t: 'woodpile', x: 947, z: -2.6, s: 1 },
+      { t: 'signpost', x: 919.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [],
+    exits: [
+      { edge: 'north', at: -3.2, to: 'hyouga', spawn: { x: 850, z: 3.6, row: 4, trail: [0, 1] } },
+      { edge: 'west', at: 919.2, to: 'daishinrin', spawn: { x: 101.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'south', at: 4.45, to: 'daikeikoku', spawn: { x: 425, z: -2.6, row: 0, trail: [0, -1] } },
+    ],
+  },
+  shakusa: {
+    label: '灼砂の砂漠',
+    centerX: 1020,
+    bounds: { minX: 1003.4, maxX: 1037.6, minZ: -3.4, maxZ: 4.6 },
+    fog: { color: 0x6b5636, near: 15, far: 46 },
+    bg: 0x54432a,
+    sun: { i: 2.6, pos: [1006, 12, -4.5], tgt: [1020, 0, 0.4] },
+    sub: '灼砂の砂漠 ／ 移動： WASD・矢印キー ／ 北の端からはじまりの野へ、東の端から群青の海へ、南の端から紅蓮の火山へ',
+    wadeZ: null,
+    spawn: { x: 1005.2, z: 0.4, row: 2 },
+    grounds: [
+      { tex: 'sand', repeat: [13, 6], w: 40, d: 18, x: 1020, y: 0, z: 0.6 },
+      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 1020, y: 0.012, z: 0.4 },
+    ],
+    scatter: [
+      { t: 'rock', n: 16, seed: 241, x: [1004, 1036], zCenter: 0.6, offMin: 2.2, offMax: 7.8, s: [0.5, 1.1] },
+      { t: 'tuft', n: 90, seed: 243, x: [1004, 1036], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.8, 0.8], frontS: 0.7 },
+      { t: 'tree', n: 3, seed: 247, x: [1004.5, 1035.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.2], frontS: 0.6 },
+    ],
+    props: [
+      { t: 'driftwood', x: 1012, z: 2.6, rot: 0.5 },
+      { t: 'rock', x: 1032, z: -2.7, s: 2 },
+      { t: 'signpost', x: 1004.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [
+      {
+        sheet: 'assets/mizuchi_sheet.png', h: 1.05, x: 1025.4, z: -1.4, name: 'ミズチ',
+        lines: [
+          '砂漠へようこそ。喉が渇いては、にごった水もごちそうだろう？',
+          'あたしはミズチ。砂の下のことは何でも知っているよ。',
+          '東の海に着く頃には、乾きも癒えるだろうさ。',
+        ],
+      },
+      {
+        sheet: 'assets/hayate_sheet.png', h: 1.3, x: 1013.5, z: -1.2, name: 'ハヤテ',
+        lines: [
+          '砂漠を駆けるのが一番好きだ。俺はハヤテ、風の馬。',
+          'まっすぐ東へ行けば群青の海だ。俺なら一息で着くがな。',
+          '南の火山は熱すぎて苦手だ。ホムラの奴、よく平気だよな。',
+        ],
+      },
+    ],
+    exits: [
+      { edge: 'north', at: -3.2, to: 'hajimari', spawn: { x: 0, z: 3.6, row: 4, trail: [0, 1] } },
+      { edge: 'east', at: 1037.2, to: 'gunjou', spawn: { x: 1090.2, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'south', at: 4.45, to: 'kouren', spawn: { x: 1190, z: -2.6, row: 0, trail: [0, -1] } },
+    ],
+  },
+  gunjou: {
+    label: '群青の海',
+    centerX: 1105,
+    bounds: { minX: 1088.4, maxX: 1122.6, minZ: -3.05, maxZ: 6.2 },
+    fog: { color: 0x2c4a66, near: 16, far: 48 },
+    bg: 0x24405c,
+    sun: { i: 2.5, pos: [1091, 11, -5], tgt: [1105, 0, 0] },
+    sub: '群青の海 ／ 移動： WASD・矢印キー ／ 西の端から灼砂の砂漠へ、東の端から海の底へ、南の端から霞の竹林へ',
+    spawn: { x: 1090.2, z: 0.4, row: 2 },
+    wadeZ: -2.05,
+    custom: 'sea',
+    grounds: [
+      { tex: 'sand', repeat: [14, 4], w: 90, d: 18, x: 1105, y: 0, z: 5.4 },
+      { color: 0x1d2b33, w: 110, d: 4, x: 1105, y: -0.06, z: -26 },
+    ],
+    scatter: [
+      { t: 'tuft', n: 60, seed: 251, x: [1089, 1121], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.8, 0.8], frontS: 0.7 },
+      { t: 'tree', n: 4, seed: 257, x: [1089.5, 1120.5], zCenter: 0.6, offMin: 5.0, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
+    ],
+    props: [
+      { t: 'willow', x: 1096, z: -0.8, s: 1.2 },
+      { t: 'driftwood', x: 1114, z: 1.8, rot: 0.4 },
+      { t: 'signpost', x: 1089.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [
+      {
+        sheet: 'assets/nibulus_sheet.png', h: 0.95, x: 1110.4, z: -1.7, name: 'ニブルス',
+        lines: [
+          'おっ、新しい顔だな。おいらはニブルス、海の探し物屋だ。',
+          'この海の底には、沈んだ宝が眠ってるって話だ。',
+          '北へ渡れば雪山だって？ ネズミは寒いのが苦手でね。',
+        ],
+      },
+    ],
+    exits: [
+      { edge: 'north', at: -2.95, to: 'hakurei', spawn: { x: 340, z: 3.6, row: 4, trail: [0, 1] } },
+      { edge: 'west', at: 1089.2, to: 'shakusa', spawn: { x: 1036.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'east', at: 1122.2, to: 'umisoko', spawn: { x: 580.2, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'south', at: 6.05, to: 'kasumi', spawn: { x: 1275, z: -2.6, row: 0, trail: [0, -1] } },
+    ],
+  },
+  kouren: {
+    label: '紅蓮の火山',
+    centerX: 1190,
+    bounds: { minX: 1173.4, maxX: 1207.6, minZ: -3.4, maxZ: 4.6 },
+    fog: { color: 0x40201c, near: 13, far: 42 },
+    bg: 0x2e1712,
+    sun: { i: 2.0, pos: [1176, 10, -4.5], tgt: [1190, 0, 0.4] },
+    sub: '紅蓮の火山 ／ 移動： WASD・矢印キー ／ 北の端から灼砂の砂漠へ、東の端から霞の竹林へ',
+    wadeZ: null,
+    spawn: { x: 1175.2, z: 0.4, row: 2 },
+    grounds: [
+      { tex: 'lavarock', repeat: [13, 6], w: 40, d: 18, x: 1190, y: 0, z: 0.6 },
+      { tex: 'lava', soft: true, repeat: [3, 2], w: 9, d: 5, x: 1182, y: 0.006, z: -1.6 },
+      { tex: 'lava', soft: true, repeat: [2, 1], w: 7, d: 4, x: 1200, y: 0.006, z: 1.8 },
+      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 1190, y: 0.012, z: 0.4 },
+    ],
+    scatter: [
+      { t: 'lavarock', n: 16, seed: 263, x: [1174, 1206], zCenter: 0.6, offMin: 2.2, offMax: 7.8, s: [0.5, 1.1] },
+      { t: 'rock', n: 8, seed: 269, x: [1174, 1206], zCenter: 0.6, offMin: 2.4, offMax: 7.8, s: [0.5, 1.0] },
+      { t: 'tuft', n: 24, seed: 271, x: [1174, 1206], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.8, 0.8], frontS: 0.7 },
+    ],
+    props: [
+      { t: 'lavarock', x: 1182, z: -2.9, s: 2.2 },
+      { t: 'rock', x: 1201, z: -2.5, s: 1.8 },
+      { t: 'signpost', x: 1174.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [
+      {
+        sheet: 'assets/homura_sheet.png', h: 1.18, x: 1195.6, z: -1.5, name: 'ホムラ',
+        lines: [
+          '火山へようこそ。私はホムラ、この山の炎を守る者。',
+          '溶岩は生きている。敬意を持って進むことだ。',
+          '北の砂漠の向こうに、はじまりの野があると聞く。',
+        ],
+      },
+    ],
+    exits: [
+      { edge: 'north', at: -3.2, to: 'shakusa', spawn: { x: 1020, z: 3.6, row: 4, trail: [0, 1] } },
+      { edge: 'east', at: 1207.2, to: 'kasumi', spawn: { x: 1260.2, z: 0.4, row: 2, trail: -1 } },
+    ],
+  },
+  kasumi: {
+    label: '霞の竹林',
+    centerX: 1275,
+    bounds: { minX: 1258.4, maxX: 1292.6, minZ: -3.4, maxZ: 4.6 },
+    fog: { color: 0x44584a, near: 10, far: 34 },
+    bg: 0x36483c,
+    sun: { i: 2.0, pos: [1261, 10, -4.5], tgt: [1275, 0, 0.4] },
+    sub: '霞の竹林 ／ 移動： WASD・矢印キー ／ 北の端から群青の海へ、西の端から紅蓮の火山へ、東の端から妖怪の里へ',
+    wadeZ: null,
+    spawn: { x: 1260.2, z: 0.4, row: 2 },
+    grounds: [
+      { tex: 'forestFloor', repeat: [13, 6], w: 40, d: 18, x: 1275, y: 0, z: 0.6 },
+      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 1275, y: 0.012, z: 0.4 },
+    ],
+    scatter: [
+      { t: 'bamboo', n: 30, seed: 277, x: [1259, 1291], zCenter: 0.6, offMin: 2.0, offMax: 8.2, s: [0.8, 1.25], frontS: 0.55 },
+      { t: 'tree', n: 8, seed: 281, x: [1259.5, 1290.5], zCenter: 0.6, offMin: 4.8, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
+      { t: 'tuft', n: 150, seed: 283, x: [1259, 1291], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.8, 0.8], frontS: 0.7 },
+    ],
+    props: [
+      { t: 'torii', x: 1282, z: -1.9, s: 0.9 },
+      { t: 'log', x: 1266, z: 2.7, s: 1 },
+      { t: 'signpost', x: 1259.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [
+      {
+        sheet: 'assets/sasuke_sheet.png', h: 1.05, x: 1280.4, z: -1.3, name: 'サスケ',
+        lines: [
+          'やぁやぁ、竹林へようこそ！ おいらはサスケだ。',
+          'この竹林は抜け道だらけ。迷子になっても知らないよ。',
+          '東は妖怪の里だ。あそこの連中、化かすのが上手くてね。',
+        ],
+      },
+    ],
+    fireflies: { n: 20, seed: 293, box: { x: [1260, 1290], y: [0.4, 1.6], z: [-2.5, 3.5] } },
+    exits: [
+      { edge: 'north', at: -3.2, to: 'gunjou', spawn: { x: 1105, z: 3.6, row: 4, trail: [0, 1] } },
+      { edge: 'west', at: 1259.2, to: 'kouren', spawn: { x: 1206.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'east', at: 1292.2, to: 'youkai', spawn: { x: 155.2, z: 0.4, row: 2, trail: -1 } },
+    ],
+  },
   hajimari: {
     label: 'はじまりの野',
     centerX: 0,
@@ -1059,7 +1423,7 @@ const REGIONS = {
     fog: { color: 0x463257, near: 20, far: 52 },
     bg: 0x3b2b52,
     sun: { i: 2.6, pos: [-14, 11, -5], tgt: [0, 0, 0] },
-    sub: 'はじまりの野 ／ 移動： WASD・矢印キー ／ 話す： Eキー ／ 北の端から天嶺の霊峰へ、東の端から白嶺の雪山へ',
+    sub: 'はじまりの野 ／ 移動： WASD・矢印キー ／ 話す： Eキー ／ 北の端から天嶺の霊峰へ、東の端から白嶺の雪山へ、南の端から灼砂の砂漠へ',
     spawn: { x: 0, z: 0.6, row: 0 },
     wadeZ: -2.05,
     custom: 'lake',
@@ -1098,6 +1462,7 @@ const REGIONS = {
     exits: [
       { edge: 'east', at: 15.25, to: 'hakurei', spawn: { x: 325.2, z: 0.4, row: 2, trail: -1 } },
       { edge: 'north', at: -2.95, to: 'reihou', spawn: { x: 510, z: 3.6, row: 4, trail: [0, 1] } },
+      { edge: 'south', at: 6.05, to: 'shakusa', spawn: { x: 1020, z: -2.6, row: 0, trail: [0, -1] } },
     ],
   },
   daishinrin: {
@@ -1107,7 +1472,7 @@ const REGIONS = {
     fog: { color: 0x463257, near: 9, far: 30 },
     bg: 0x1e2b26,
     sun: { i: 1.9, pos: [71, 11, -4.5], tgt: [85, 0, 0.4] },
-    sub: '大森林 ／ 移動： WASD・矢印キー ／ 西の端から白嶺の雪山へ、南の端から海の底へ',
+    sub: '大森林 ／ 移動： WASD・矢印キー ／ 北の端から黄昏の地へ、西の端から白嶺の雪山へ、東の端から機械遺跡へ、南の端から海の底へ',
     backdrop: 'assets/far_forest.jpg',
     wadeZ: null,
     custom: 'forest',
@@ -1142,6 +1507,8 @@ const REGIONS = {
     exits: [
       { edge: 'west', at: 69.4, to: 'hakurei', spawn: { x: 356.7, z: 0.4, row: 6, trail: 1 } },
       { edge: 'south', at: 2.55, to: 'umisoko', spawn: { x: 595, z: -2.6, row: 0, trail: [0, -1] } },
+      { edge: 'north', at: -1.7, to: 'tasogare', spawn: { x: 765, z: 3.6, row: 4, trail: [0, 1] } },
+      { edge: 'east', at: 102.1, to: 'kikai', spawn: { x: 920.2, z: 0.4, row: 2, trail: -1 } },
     ],
     spawn: { x: 70.2, z: 0.4, row: 2 },
   },
@@ -1152,7 +1519,7 @@ const REGIONS = {
     fog: { color: 0x463257, near: 14, far: 44 },
     bg: 0x2e3350,
     sun: { i: 2.3, pos: [156, 11, -4.5], tgt: [170, 0, 0.4] },
-    sub: '妖怪の里 ／ 移動： WASD・矢印キー ／ 北の端から海の底へ、東の端からジャングルへ',
+    sub: '妖怪の里 ／ 移動： WASD・矢印キー ／ 北の端から海の底へ、西の端から霞の竹林へ、東の端からジャングルへ',
     backdrop: 'assets/far_meadow.jpg',
     wadeZ: null,
     spawn: { x: 155.2, z: 0.4, row: 2 },
@@ -1196,6 +1563,7 @@ const REGIONS = {
     exits: [
       { edge: 'north', at: -3.2, to: 'umisoko', spawn: { x: 595, z: 3.6, row: 4, trail: [0, 1] } },
       { edge: 'east', at: 187.2, to: 'jungle', spawn: { x: 664.8, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'west', at: 154.2, to: 'kasumi', spawn: { x: 1291.7, z: 0.4, row: 6, trail: 1 } },
     ],
   },
   shumatsu: {
@@ -1205,7 +1573,7 @@ const REGIONS = {
     fog: { color: 0x40304a, near: 15, far: 46 },
     bg: 0x35283e,
     sun: { i: 2.2, pos: [241, 11, -4.5], tgt: [255, 0, 0.4] },
-    sub: '終末の大地 ／ 移動： WASD・矢印キー ／ 西の端から天嶺の霊峰へ、南の端から白嶺の雪山へ',
+    sub: '終末の大地 ／ 移動： WASD・矢印キー ／ 西の端から天嶺の霊峰へ、東の端から黄昏の地へ、南の端から白嶺の雪山へ',
     backdrop: 'assets/far_rock.jpg',
     wadeZ: null,
     spawn: { x: 240.2, z: 0.4, row: 2 },
@@ -1247,6 +1615,7 @@ const REGIONS = {
     exits: [
       { edge: 'west', at: 239.2, to: 'reihou', spawn: { x: 526.7, z: 0.4, row: 6, trail: 1 } },
       { edge: 'south', at: 4.45, to: 'hakurei', spawn: { x: 340, z: -2.6, row: 0, trail: [0, -1] } },
+      { edge: 'east', at: 272.2, to: 'tasogare', spawn: { x: 750.2, z: 0.4, row: 2, trail: -1 } },
     ],
   },
   hakurei: {
@@ -1256,7 +1625,7 @@ const REGIONS = {
     fog: { color: 0x39466a, near: 13, far: 42 },
     bg: 0x2c3550,
     sun: { i: 2.0, pos: [326, 11, -4.5], tgt: [340, 0, 0.4] },
-    sub: '白嶺の雪山 ／ 移動： WASD・矢印キー ／ 北の端から終末の大地へ、西の端からはじまりの野へ、東の端から大森林へ',
+    sub: '白嶺の雪山 ／ 移動： WASD・矢印キー ／ 北の端から終末の大地へ、西の端からはじまりの野へ、東の端から大森林へ、南の端から群青の海へ',
     backdrop: 'assets/far_snow.jpg',
     snow: true,
     snowDepth: 0.2,
@@ -1293,6 +1662,7 @@ const REGIONS = {
       { edge: 'north', at: -3.2, to: 'shumatsu', spawn: { x: 255, z: 3.6, row: 4, trail: [0, 1] } },
       { edge: 'west', at: 324.2, to: 'hajimari', spawn: { x: 14.7, z: 0.6, row: 6, trail: 1 } },
       { edge: 'east', at: 357.2, to: 'daishinrin', spawn: { x: 70.2, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'south', at: 4.45, to: 'gunjou', spawn: { x: 1105, z: -1.4, row: 0, trail: [0, -1] } },
     ],
   },
   daikeikoku: {
@@ -1302,7 +1672,7 @@ const REGIONS = {
     fog: { color: 0x2c4034, near: 12, far: 40 },
     bg: 0x24382c,
     sun: { i: 2.1, pos: [411, 11, -4.5], tgt: [425, 0, 0.4] },
-    sub: '大溪谷 ／ 移動： WASD・矢印キー ／ 西の端から海の底へ、南の端からジャングルへ',
+    sub: '大溪谷 ／ 移動： WASD・矢印キー ／ 北の端から機械遺跡へ、西の端から海の底へ、南の端からジャングルへ',
     backdrop: 'assets/far_valley.jpg',
     custom: 'valley',
     wadeZ: null,
@@ -1328,6 +1698,7 @@ const REGIONS = {
     exits: [
       { edge: 'west', at: 409.2, to: 'umisoko', spawn: { x: 611.7, z: 0.4, row: 6, trail: 1 } },
       { edge: 'south', at: 4.45, to: 'jungle', spawn: { x: 680, z: -2.6, row: 0, trail: [0, -1] } },
+      { edge: 'north', at: -3.2, to: 'kikai', spawn: { x: 935, z: 3.6, row: 4, trail: [0, 1] } },
     ],
   },
   reihou: {
@@ -1379,7 +1750,7 @@ const REGIONS = {
     fog: { color: 0x2e4038, near: 8, far: 26 },
     bg: 0x1f2e26,
     sun: { i: 1.7, pos: [581, 11, -4.5], tgt: [595, 0, 0.4] },
-    sub: '海の底 ／ 移動： WASD・矢印キー ／ 北の端から大森林へ、東の端から大溪谷へ、南の端から妖怪の里へ',
+    sub: '海の底 ／ 移動： WASD・矢印キー ／ 北の端から大森林へ、西の端から群青の海へ、東の端から大溪谷へ、南の端から妖怪の里へ',
     backdrop: 'assets/far_marsh.jpg',
     wadeZ: null,
     spawn: { x: 580.2, z: 0.4, row: 2 },
@@ -1406,6 +1777,7 @@ const REGIONS = {
       { edge: 'north', at: -3.2, to: 'daishinrin', spawn: { x: 85, z: 2.2, row: 4, trail: [0, 1] } },
       { edge: 'east', at: 612.2, to: 'daikeikoku', spawn: { x: 410.2, z: 0.4, row: 2, trail: -1 } },
       { edge: 'south', at: 4.45, to: 'youkai', spawn: { x: 170, z: -2.6, row: 0, trail: [0, -1] } },
+      { edge: 'west', at: 579.2, to: 'gunjou', spawn: { x: 1121.7, z: 0.4, row: 6, trail: 1 } },
     ],
   },
   jungle: {
@@ -1508,14 +1880,21 @@ function buildRegion(id, def) {
     else if (p.t === 'gtree') placeBigTree(group, colliders, p.x, p.z, 'tree_great.png', 644 / 592, 4.3, 1.0);
     else if (p.t === 'wtree') placeBigTree(group, colliders, p.x, p.z, 'tree_wide.png', 532 / 468, 3.1, 0.9);
     else if (p.t === 'rock') placeRock(group, colliders, p.x, p.z, p.s || 1, r, snowy);
-    else if (p.t === 'driftwood') placeDriftwood(group, colliders, p.x, p.z, p.rot || 0);
-    else if (p.t === 'stump') placeStump(group, colliders, p.x, p.z, snowy);
+    else if (p.t === 'driftwood') placeDriftSprite(group, colliders, p.x, p.z, p.rot || 0);
+    else if (p.t === 'stump') placeStumpSprite(group, colliders, p.x, p.z);
     else if (p.t === 'signpost') placeSignpost(group, colliders, p.x, p.z, p.rot || 0);
     else if (p.t === 'torii') placeTorii(group, colliders, p.x, p.z, p.s || 1, p.rot || 0, snowy);
     else if (p.t === 'shrine') placeShrine(group, colliders, p.x, p.z, p.s || 1, p.rot || 0, snowy);
     else if (p.t === 'tuft') placeTuft(group, p.x, p.z, r, p.s || 1, def.lush ? grassLushTex : grassTuftTex);
     else if (p.t === 'drift') placeDrift(group, p.x, p.z, p.s || 1, def.snowDepth || 0);
     else if (p.t === 'flower') placeFlower(group, p.x, p.z, r, p.s || 1);
+    else if (p.t === 'pillar') placePillar(group, colliders, p.x, p.z, p.s || 1);
+    else if (p.t === 'bamboo') placeBamboo(group, colliders, p.x, p.z, p.s || 1);
+    else if (p.t === 'dtree') placeDeadTree(group, colliders, p.x, p.z, p.s || 1);
+    else if (p.t === 'willow') placeWillow(group, colliders, p.x, p.z, p.s || 1);
+    else if (p.t === 'log') placeLog(group, colliders, p.x, p.z, p.s || 1);
+    else if (p.t === 'woodpile') placeWoodPile(group, colliders, p.x, p.z, p.s || 1);
+    else if (p.t === 'lavarock') placeLavaRock(group, colliders, p.x, p.z, p.s || 1);
   };
   for (const p of def.props || []) placeProp(p, rng);
   for (const s of def.scatter || []) {
