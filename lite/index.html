@@ -42,12 +42,14 @@
     font-size:15px; font-weight:700; padding:12px 22px; box-shadow:0 2px 10px rgba(0,0,0,.45);
     cursor:pointer; font-family:"Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; }
   #splash { position:fixed; inset:0; z-index:15;
-    background:#000;
+    background:
+      radial-gradient(95vmin 75vmin at 50% 44%, #3a3350 0%, rgba(35,33,44,0) 62%),
+      linear-gradient(180deg, #23212c 0%, #282633 55%, #352f42 100%);
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
     transition:opacity .6s; cursor:pointer; }
   #splash img { width:min(86vmin, 560px); height:auto;
-    -webkit-mask-image: radial-gradient(118% 118% at 50% 46%, #000 60%, transparent 88%);
-    mask-image: radial-gradient(118% 118% at 50% 46%, #000 60%, transparent 88%); }
+    -webkit-mask-image: radial-gradient(128% 128% at 50% 46%, #000 42%, transparent 78%);
+    mask-image: radial-gradient(128% 128% at 50% 46%, #000 42%, transparent 78%); }
   #splash .hint { color:#ffe9c9; font-size:13px; letter-spacing:.14em;
     font-family:"Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
     animation: splashBlink 1.6s ease-in-out infinite; }
