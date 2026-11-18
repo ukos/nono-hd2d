@@ -504,10 +504,10 @@ function placeFlower(parent, x, z, rng = Math.random, s = 1) { // 花畑の花�
   m.position.set(x, 0.04, z);
   parent.add(m);
 }
-function placeDrift(parent, x, z, s = 1) { // 雪の吹きだまり（雪原専用）
+function placeDrift(parent, x, z, s = 1, yOff = 0) { // 雪の吹きだまり（雪原専用）
   const m = new THREE.Mesh(new THREE.SphereGeometry(0.55, 9, 7), snowMat);
   m.scale.set(s, s * 0.3, s * 0.8);
-  m.position.set(x, 0, z);
+  m.position.set(x, yOff, z);
   m.receiveShadow = true;
   parent.add(m);
 }
@@ -1078,6 +1078,7 @@ const REGIONS = {
     sub: '雪原 ／ 移動： WASD・矢印キー ／ 西の端から岩場へ、東の端から渓谷へ',
     backdrop: 'assets/far_snow.jpg',
     snow: true,
+    snowDepth: 0.3,
     wadeZ: null,
     spawn: { x: 325.2, z: 0.4, row: 2 },
     grounds: [
@@ -1316,6 +1317,22 @@ function buildRegion(id, def) {
     m.receiveShadow = true;
     group.add(m);
   }
+  if (def.snowDepth) { // 雪の積もった地面（膝丈）。キャラや小物の足元が雪に埋まる
+    const g0 = (def.grounds || [])[0];
+    if (g0) {
+      const td = GROUND_TEX.snow;
+      const tex = groundTexture(td.base, td.dots, td.patch);
+      tex.repeat.set(13, 6);
+      const m = new THREE.Mesh(
+        new THREE.PlaneGeometry(g0.w, g0.d),
+        new THREE.MeshStandardMaterial({ map: tex, roughness: 1 })
+      );
+      m.rotation.x = -Math.PI / 2;
+      m.position.set(g0.x, def.snowDepth, g0.z);
+      m.receiveShadow = true;
+      group.add(m);
+    }
+  }
   const placeProp = (p, r) => {
     const snowy = !!def.snow; // 雪原では各小物に雪を積もらせる
     if (p.t === 'pine') placePine(group, colliders, p.x, p.z, p.s || 1, r, snowy);
@@ -1326,7 +1343,7 @@ function buildRegion(id, def) {
     else if (p.t === 'torii') placeTorii(group, colliders, p.x, p.z, p.s || 1, p.rot || 0, snowy);
     else if (p.t === 'shrine') placeShrine(group, colliders, p.x, p.z, p.s || 1, p.rot || 0, snowy);
     else if (p.t === 'tuft') placeTuft(group, p.x, p.z, r, p.s || 1);
-    else if (p.t === 'drift') placeDrift(group, p.x, p.z, p.s || 1);
+    else if (p.t === 'drift') placeDrift(group, p.x, p.z, p.s || 1, def.snowDepth || 0);
     else if (p.t === 'flower') placeFlower(group, p.x, p.z, r, p.s || 1);
   };
   for (const p of def.props || []) placeProp(p, rng);
