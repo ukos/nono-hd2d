@@ -233,6 +233,16 @@ function groundTexture(base, dots, patch) {
   t.magFilter = THREE.NearestFilter;
   return t;
 }
+// 地面テクスチャ: 本編タイル画像があればそれを使い、なければ色指定から生成する
+function makeGroundTexture(key) {
+  const td = GROUND_TEX[key];
+  if (td.img) {
+    const t = loadTex(td.img);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    return t;
+  }
+  return groundTexture(td.base, td.dots, td.patch);
+}
 // 帯状の地面（小道・砂浜）の縁を、ギザギザに透かして下の地面へ馴染ませるアルファ
 function stripAlphaTexture() {
   const c = document.createElement('canvas'); c.width = c.height = 256;
@@ -280,17 +290,17 @@ let _stripAlpha = null, _softAlpha = null;
 
 // 地面テクスチャの定義（地方データから参照する）
 const GROUND_TEX = {
-  grass: { base: '#4d7353', dots: ['#40644a', '#5a7f5e', '#65855c', '#486a4d', '#758a63'], patch: '#38543f' },
-  sand: { base: '#b08d5f', dots: ['#9c7a4e', '#c2a06e', '#a8845a', '#c9ab77'], patch: '#8a6a42' },
-  forestFloor: { base: '#33503a', dots: ['#2a4530', '#3c5c42', '#2f4d36', '#425f45'], patch: '#26402c' },
-  meadow: { base: '#578a49', dots: ['#4a7a3e', '#679c55', '#77ac60', '#4f8145', '#8fbc72', '#a5cc84'], patch: '#45703a' },
-  meadowDusk: { base: '#626f3e', dots: ['#525f33', '#6d7c46', '#75834c', '#5d683a', '#8a6f45', '#97804f'], patch: '#4c5730' },
-  dirtPath: { base: '#7d6242', dots: ['#6f5638', '#8a6d4a', '#755c3c'], patch: '#63492c' },
-  wetbank: { base: '#5c4832', dots: ['#4f3d2a', '#68543c', '#554331', '#71604a'], patch: '#473723' },
-  rock: { base: '#6a5a4c', dots: ['#5d4f42', '#776655', '#655746'], patch: '#534639' },
-  snow: { base: '#b3bedd', dots: ['#a7b2d4', '#bfc9e6', '#aeb9dc'], patch: '#9fabcc' },
-  highland: { base: '#6f9a4e', dots: ['#628c43', '#7da858', '#678f47', '#87b364'], patch: '#567a3a' },
-  marsh: { base: '#3d5c40', dots: ['#334f36', '#476a4a', '#38543c', '#4d7050'], patch: '#2c4630' },
+  grass: { img: 'assets/gtex_grass.png', base: '#4d7353', dots: ['#40644a', '#5a7f5e', '#65855c', '#486a4d', '#758a63'], patch: '#38543f' },
+  sand: { img: 'assets/gtex_sand.png', base: '#b08d5f', dots: ['#9c7a4e', '#c2a06e', '#a8845a', '#c9ab77'], patch: '#8a6a42' },
+  forestFloor: { img: 'assets/gtex_forest.png', base: '#33503a', dots: ['#2a4530', '#3c5c42', '#2f4d36', '#425f45'], patch: '#26402c' },
+  meadow: { img: 'assets/gtex_grass_flower.png', base: '#578a49', dots: ['#4a7a3e', '#679c55', '#77ac60', '#4f8145', '#8fbc72', '#a5cc84'], patch: '#45703a' },
+  meadowDusk: { img: 'assets/gtex_purple.png', base: '#626f3e', dots: ['#525f33', '#6d7c46', '#75834c', '#5d683a', '#8a6f45', '#97804f'], patch: '#4c5730' },
+  dirtPath: { img: 'assets/gtex_dirt.png', base: '#7d6242', dots: ['#6f5638', '#8a6d4a', '#755c3c'], patch: '#63492c' },
+  wetbank: { img: 'assets/gtex_dirt_dark.png', base: '#5c4832', dots: ['#4f3d2a', '#68543c', '#554331', '#71604a'], patch: '#473723' },
+  rock: { img: 'assets/gtex_rocky.png', base: '#6a5a4c', dots: ['#5d4f42', '#776655', '#655746'], patch: '#534639' },
+  snow: { img: 'assets/gtex_snow.png', base: '#b3bedd', dots: ['#a7b2d4', '#bfc9e6', '#aeb9dc'], patch: '#9fabcc' },
+  highland: { img: 'assets/gtex_grass.png', base: '#6f9a4e', dots: ['#628c43', '#7da858', '#678f47', '#87b364'], patch: '#567a3a' },
+  marsh: { img: 'assets/gtex_marsh.png', base: '#3d5c40', dots: ['#334f36', '#476a4a', '#38543c', '#4d7050'], patch: '#2c4630' },
 };
 
 // ---------- 共有テクスチャ ----------
@@ -1298,7 +1308,7 @@ const REGIONS = {
     wadeZ: null,
     spawn: { x: 410.2, z: 0.4, row: 2 },
     grounds: [
-      { tex: 'forestFloor', repeat: [13, 6], w: 40, d: 18, x: 425, y: 0, z: 0.6 },
+      { tex: 'rock', repeat: [13, 6], w: 40, d: 18, x: 425, y: 0, z: 0.6 },
       { tex: 'wetbank', strip: true, repeat: [13, 1], w: 40, d: 3.6, x: 425, y: 0.006, z: -2.2 },
       { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 425, y: 0.012, z: 0.4 },
     ],
@@ -1455,8 +1465,7 @@ function buildRegion(id, def) {
   for (const g of def.grounds || []) {
     let mat;
     if (g.tex) {
-      const td = GROUND_TEX[g.tex];
-      const tex = groundTexture(td.base, td.dots, td.patch);
+      const tex = makeGroundTexture(g.tex);
       tex.repeat.set(g.repeat[0], g.repeat[1]);
       mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 1 });
     } else {
@@ -1480,8 +1489,7 @@ function buildRegion(id, def) {
   if (def.snowDepth) { // 雪の積もった地面（膝丈）。キャラや小物の足元が雪に埋まる
     const g0 = (def.grounds || [])[0];
     if (g0) {
-      const td = GROUND_TEX.snow;
-      const tex = groundTexture(td.base, td.dots, td.patch);
+      const tex = makeGroundTexture('snow');
       tex.repeat.set(13, 6);
       const m = new THREE.Mesh(
         new THREE.PlaneGeometry(g0.w, g0.d),
