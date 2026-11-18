@@ -202,6 +202,7 @@ const GROUND_TEX = {
   grass: { base: '#4d7353', dots: ['#40644a', '#5a7f5e', '#65855c', '#486a4d', '#758a63'], patch: '#38543f' },
   sand: { base: '#b08d5f', dots: ['#9c7a4e', '#c2a06e', '#a8845a', '#c9ab77'], patch: '#8a6a42' },
   forestFloor: { base: '#33503a', dots: ['#2a4530', '#3c5c42', '#2f4d36', '#425f45'], patch: '#26402c' },
+  meadow: { base: '#5a874e', dots: ['#4d7843', '#67975a', '#6fa362', '#527f47', '#86ab6d'], patch: '#49713e' },
   dirtPath: { base: '#7d6242', dots: ['#6f5638', '#8a6d4a', '#755c3c'], patch: '#63492c' },
 };
 
@@ -378,6 +379,56 @@ function placeSignpost(parent, colliders, x, z, rotY = 0) {
   g.rotation.y = rotY;
   parent.add(g);
   colliders.push({ x, z, r: 0.25 });
+  return g;
+}
+const toriiMat = new THREE.MeshStandardMaterial({ color: 0xa83c2a, roughness: 0.9, flatShading: true });
+const toriiDarkMat = new THREE.MeshStandardMaterial({ color: 0x7e2d20, roughness: 0.9, flatShading: true });
+function placeTorii(parent, colliders, x, z, scale = 1, rotY = 0) {
+  const g = new THREE.Group();
+  for (const sx of [-0.85, 0.85]) {
+    const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.115, 2.2, 8), toriiMat);
+    pillar.position.set(sx, 1.1, 0);
+    pillar.rotation.z = -sx * 0.045; // 柱はわずかに内側へ傾ける
+    pillar.castShadow = true;
+    g.add(pillar);
+  }
+  const kasagi = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.17, 0.26), toriiDarkMat);
+  kasagi.position.y = 2.32; kasagi.castShadow = true;
+  const shimaki = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.13, 0.2), toriiMat);
+  shimaki.position.y = 2.16; shimaki.castShadow = true;
+  const nuki = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.11, 0.15), toriiMat);
+  nuki.position.y = 1.82; nuki.castShadow = true;
+  const gaku = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.34, 0.06), toriiDarkMat);
+  gaku.position.y = 1.99;
+  g.add(kasagi); g.add(shimaki); g.add(nuki); g.add(gaku);
+  g.position.set(x, 0, z);
+  g.rotation.y = rotY;
+  g.scale.setScalar(scale);
+  parent.add(g);
+  // 柱2本分の判定にして、間を歩いてくぐれるようにする
+  const c = Math.cos(rotY), s = Math.sin(rotY);
+  for (const sx of [-0.85, 0.85]) colliders.push({ x: x + sx * c * scale, z: z - sx * s * scale, r: 0.17 * scale });
+  return g;
+}
+const stoneMat = new THREE.MeshStandardMaterial({ color: 0x8d8d96, roughness: 1, flatShading: true });
+const shrineWoodMat = new THREE.MeshStandardMaterial({ color: 0x5d4433, roughness: 1, flatShading: true });
+const shrineRoofMat = new THREE.MeshStandardMaterial({ color: 0x3f4652, roughness: 1, flatShading: true });
+function placeShrine(parent, colliders, x, z, scale = 1, rotY = 0) {
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.24, 0.75), stoneMat);
+  base.position.y = 0.12; base.castShadow = true; base.receiveShadow = true;
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.52, 0.52), shrineWoodMat);
+  body.position.y = 0.5; body.castShadow = true;
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.38, 0.03), toriiDarkMat);
+  door.position.set(0, 0.48, 0.275);
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(0.68, 0.34, 4), shrineRoofMat);
+  roof.position.y = 0.93; roof.rotation.y = Math.PI / 4; roof.castShadow = true;
+  g.add(base); g.add(body); g.add(door); g.add(roof);
+  g.position.set(x, 0, z);
+  g.rotation.y = rotY;
+  g.scale.setScalar(scale);
+  parent.add(g);
+  colliders.push({ x, z, r: 0.55 * scale });
   return g;
 }
 function placeTuft(parent, x, z, rng = Math.random) {
@@ -825,7 +876,7 @@ const REGIONS = {
     fog: { color: 0x463257, near: 9, far: 30 },
     bg: 0x1e2b26,
     sun: { i: 1.9, pos: [71, 11, -4.5], tgt: [85, 0, 0.4] },
-    sub: '森の小道 ／ 移動： WASD・矢印キー ／ 西の端から湖畔へ戻る',
+    sub: '森の小道 ／ 移動： WASD・矢印キー ／ 西の端から湖畔へ、東の端から草原へ',
     wadeZ: null,
     custom: 'forest',
     grounds: [
@@ -848,6 +899,50 @@ const REGIONS = {
     fireflies: { n: 16, seed: 23, box: { x: [69.5, 100.5], y: [0.4, 1.6], z: [-1.2, 2.2] } },
     exits: [
       { edge: 'west', at: 69.4, to: 'lake', spawn: { x: 14.7, z: 0.6, row: 6, trail: 1 } },
+      { edge: 'east', at: 102.2, to: 'grassland', spawn: { x: 155.2, z: 0.4, row: 2, trail: -1 } },
+    ],
+    spawn: { x: 70.2, z: 0.4, row: 2 },
+  },
+  grassland: {
+    label: '草原',
+    centerX: 170,
+    bounds: { minX: 153.4, maxX: 187.6, minZ: -3.4, maxZ: 4.6 },
+    fog: { color: 0x463257, near: 14, far: 44 },
+    bg: 0x2e3350,
+    sun: { i: 2.3, pos: [156, 11, -4.5], tgt: [170, 0, 0.4] },
+    sub: '草原 ／ 移動： WASD・矢印キー ／ 西の端から森へ戻る',
+    wadeZ: null,
+    spawn: { x: 155.2, z: 0.4, row: 2 },
+    grounds: [
+      { tex: 'meadow', repeat: [13, 6], w: 40, d: 18, x: 170, y: 0, z: 0.6 },
+      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 170, y: 0.012, z: 0.4 },
+    ],
+    scatter: [
+      { t: 'tuft', n: 44, seed: 31, x: [154, 186], zCenter: 0.6, offMin: 2.3, offMax: 7.6, s: [1, 1] },
+      { t: 'pine', n: 10, seed: 37, x: [154.5, 186.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.5], frontS: 0.6 },
+    ],
+    props: [
+      { t: 'torii', x: 176, z: -2.3 },
+      { t: 'shrine', x: 176, z: -3.2 },
+      { t: 'pine', x: 186.4, z: -3.0, s: 1.8 },
+      { t: 'rock', x: 160, z: 2.7, s: 0.7 },
+      { t: 'rock', x: 183, z: -1.8, s: 0.55 },
+      { t: 'stump', x: 166, z: 3.5 },
+      { t: 'signpost', x: 154.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [
+      {
+        sheet: 'assets/mei_sheet.png', h: 1.08, x: 174.6, z: -1.6, name: 'メイ',
+        lines: [
+          'まあ、旅の方？ わたしはメイ。この祠の巫女をしています。',
+          'ここの草原は、夕方の風がいちばん気持ちいいんですよ。',
+          '祠へのお参りもどうぞ。旅の安全を、お祈りしますね。',
+        ],
+      },
+    ],
+    fireflies: { n: 14, seed: 41, box: { x: [155, 186], y: [0.4, 1.6], z: [-2.5, 3.5] } },
+    exits: [
+      { edge: 'west', at: 154.2, to: 'forest', spawn: { x: 101.7, z: 0.4, row: 6, trail: 1 } },
     ],
   },
 };
@@ -882,6 +977,8 @@ function buildRegion(id, def) {
     else if (p.t === 'driftwood') placeDriftwood(group, colliders, p.x, p.z, p.rot || 0);
     else if (p.t === 'stump') placeStump(group, colliders, p.x, p.z);
     else if (p.t === 'signpost') placeSignpost(group, colliders, p.x, p.z, p.rot || 0);
+    else if (p.t === 'torii') placeTorii(group, colliders, p.x, p.z, p.s || 1, p.rot || 0);
+    else if (p.t === 'shrine') placeShrine(group, colliders, p.x, p.z, p.s || 1, p.rot || 0);
     else if (p.t === 'tuft') placeTuft(group, p.x, p.z, r);
   };
   for (const p of def.props || []) placeProp(p, rng);
@@ -959,9 +1056,11 @@ function startTransition(exit) {
     setTimeout(() => { transitioning = false; }, 600);
   }, 420);
 }
-// 初期配置（開始地方の spawn へ）
+// 初期配置（開始地方の spawn へ。?area=<地方id> で開始地方を変えられる＝動作確認用）
 {
-  const sp = REGIONS.lake.spawn;
+  const startId = new URLSearchParams(location.search).get('area');
+  const startRegion = (startId && REGIONS[startId] && REGIONS[startId].spawn) ? startId : 'lake';
+  const sp = REGIONS[startRegion].spawn;
   player.position.set(sp.x, 0, sp.z);
   dirRow = sp.row;
   setFrameC(player, sp.row, 1);
@@ -971,7 +1070,11 @@ function startTransition(exit) {
   rei.position.set(rp.x, 0, rp.z);
   setFrameC(yui, sp.row, 1);
   setFrameC(rei, sp.row, 1);
-  setRegion('lake');
+  setRegion(startRegion);
+  if (startRegion !== 'lake') {
+    camTarget.set(sp.x, 0, sp.z);
+    camPos.set(sp.x, 4.6 + sp.z * 0.18, sp.z + 8.4);
+  }
 }
 
 // ---------- 会話（現在の地方のNPC・汎用） ----------
