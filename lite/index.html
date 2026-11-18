@@ -717,7 +717,8 @@ function buildLakeCustom(group) {
     group.add(m);
   }
   // 遠景の山ボード
-  const mountainsTex = blurredTex('assets/far_mountains.png', 0.5, 1); // 描き直しまでの仮：弱めのぼかし
+  const mountainsTex = loadTex('assets/far_mountains.jpg'); // 描き直し済みの滑らかな遠景（2026-11-19差し替え）
+  mountainsTex.magFilter = THREE.LinearFilter;
   const mountains = new THREE.Mesh(
     new THREE.PlaneGeometry(97, 48),
     new THREE.MeshBasicMaterial({ map: mountainsTex, fog: false })
