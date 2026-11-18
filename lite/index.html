@@ -290,7 +290,8 @@ function billboard(parent, tex, w, h, x, z, opts = {}) {
 // place* は (parent, colliders, ...) を受け取り、その地方のグループと当たり判定配列へ登録する
 const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4a33, roughness: 1, flatShading: true });
 const pineMats = [0x2e5940, 0x35684a, 0x3d7350].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true }));
-function makePine(scale = 1, rng = Math.random) {
+const snowMat = new THREE.MeshStandardMaterial({ color: 0xe9edf8, roughness: 1, flatShading: true });
+function makePine(scale = 1, rng = Math.random, snowy = false) {
   const g = new THREE.Group();
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.17, 0.95, 7), trunkMat);
   trunk.position.y = 0.47;
@@ -315,14 +316,20 @@ function makePine(scale = 1, rng = Math.random) {
     cone.rotation.y = rot + i * 1.7;
     cone.castShadow = true;
     g.add(cone);
+    if (snowy) { // 雪原では葉の段ごとに雪を積もらせる
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(r * 0.84, h * 0.5, 10), snowMat);
+      cap.position.set(cone.position.x, y + h * 0.24, cone.position.z);
+      cap.rotation.y = cone.rotation.y;
+      g.add(cap);
+    }
   });
   g.scale.setScalar(scale);
   g.rotation.y = rot;
   g.rotation.z = Math.sin(rot * 3.7) * 0.022; // わずかな傾き
   return g;
 }
-function placePine(parent, colliders, x, z, scale = 1, rng = Math.random) {
-  const p = makePine(scale, rng);
+function placePine(parent, colliders, x, z, scale = 1, rng = Math.random, snowy = false) {
+  const p = makePine(scale, rng, snowy);
   p.position.set(x, 0, z);
   parent.add(p);
   colliders.push({ x, z, r: 0.34 * scale + 0.08 });
@@ -347,10 +354,16 @@ function makeRock(scale = 1, rng = Math.random) {
   m.rotation.y = rng() * Math.PI * 2;
   return m;
 }
-function placeRock(parent, colliders, x, z, scale = 1, rng = Math.random) {
+function placeRock(parent, colliders, x, z, scale = 1, rng = Math.random, snowy = false) {
   const m = makeRock(scale, rng);
   m.position.set(x, 0.1 * scale, z);
   parent.add(m);
+  if (snowy) { // 岩のてっぺんに雪を積もらせる
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 6), snowMat);
+    cap.scale.set(scale, scale * 0.36, scale);
+    cap.position.set(x, 0.42 * scale, z);
+    parent.add(cap);
+  }
   colliders.push({ x, z, r: 0.5 * scale + 0.12 });
   return m;
 }
@@ -380,7 +393,7 @@ function placeDriftwood(parent, colliders, x, z, rotY = 0) {
   colliders.push({ x: x - 0.38 * c, z: z + 0.38 * s, r: 0.3 });
   return g;
 }
-function placeStump(parent, colliders, x, z) {
+function placeStump(parent, colliders, x, z, snowy = false) {
   const g = new THREE.Group();
   const side = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.34, 0.44, 9), trunkMat);
   side.position.y = 0.22;
@@ -391,6 +404,11 @@ function placeStump(parent, colliders, x, z) {
   );
   top.position.y = 0.45;
   g.add(side); g.add(top);
+  if (snowy) { // 切り株の天面に雪
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.06, 9), snowMat);
+    cap.position.y = 0.49;
+    g.add(cap);
+  }
   g.position.set(x, 0, z);
   parent.add(g);
   colliders.push({ x, z, r: 0.38 });
@@ -416,7 +434,7 @@ function placeSignpost(parent, colliders, x, z, rotY = 0) {
 }
 const toriiMat = new THREE.MeshStandardMaterial({ color: 0xa83c2a, roughness: 0.9, flatShading: true });
 const toriiDarkMat = new THREE.MeshStandardMaterial({ color: 0x7e2d20, roughness: 0.9, flatShading: true });
-function placeTorii(parent, colliders, x, z, scale = 1, rotY = 0) {
+function placeTorii(parent, colliders, x, z, scale = 1, rotY = 0, snowy = false) {
   const g = new THREE.Group();
   for (const sx of [-0.85, 0.85]) {
     const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.115, 2.2, 8), toriiMat);
@@ -434,6 +452,11 @@ function placeTorii(parent, colliders, x, z, scale = 1, rotY = 0) {
   const gaku = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.34, 0.06), toriiDarkMat);
   gaku.position.y = 1.99;
   g.add(kasagi); g.add(shimaki); g.add(nuki); g.add(gaku);
+  if (snowy) { // 笠木の上に雪
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(2.74, 0.07, 0.3), snowMat);
+    cap.position.y = 2.44;
+    g.add(cap);
+  }
   g.position.set(x, 0, z);
   g.rotation.y = rotY;
   g.scale.setScalar(scale);
@@ -446,7 +469,7 @@ function placeTorii(parent, colliders, x, z, scale = 1, rotY = 0) {
 const stoneMat = new THREE.MeshStandardMaterial({ color: 0x8d8d96, roughness: 1, flatShading: true });
 const shrineWoodMat = new THREE.MeshStandardMaterial({ color: 0x5d4433, roughness: 1, flatShading: true });
 const shrineRoofMat = new THREE.MeshStandardMaterial({ color: 0x3f4652, roughness: 1, flatShading: true });
-function placeShrine(parent, colliders, x, z, scale = 1, rotY = 0) {
+function placeShrine(parent, colliders, x, z, scale = 1, rotY = 0, snowy = false) {
   const g = new THREE.Group();
   const base = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.24, 0.75), stoneMat);
   base.position.y = 0.12; base.castShadow = true; base.receiveShadow = true;
@@ -457,6 +480,11 @@ function placeShrine(parent, colliders, x, z, scale = 1, rotY = 0) {
   const roof = new THREE.Mesh(new THREE.ConeGeometry(0.68, 0.34, 4), shrineRoofMat);
   roof.position.y = 0.93; roof.rotation.y = Math.PI / 4; roof.castShadow = true;
   g.add(base); g.add(body); g.add(door); g.add(roof);
+  if (snowy) { // 屋根に雪を積もらせる
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.72, 0.36, 4), snowMat);
+    cap.position.y = 0.97; cap.rotation.y = Math.PI / 4;
+    g.add(cap);
+  }
   g.position.set(x, 0, z);
   g.rotation.y = rotY;
   g.scale.setScalar(scale);
@@ -464,10 +492,17 @@ function placeShrine(parent, colliders, x, z, scale = 1, rotY = 0) {
   colliders.push({ x, z, r: 0.55 * scale });
   return g;
 }
-function placeTuft(parent, x, z, rng = Math.random) {
-  const w = 1.1 + rng() * 0.5;
+function placeTuft(parent, x, z, rng = Math.random, s = 1) {
+  const w = (1.1 + rng() * 0.5) * s;
   billboard(parent, grassTuftTex, w, w * 0.42, x, z);
   blobShadow(parent, w * 0.9, x, z, 0.22);
+}
+function placeDrift(parent, x, z, s = 1) { // 雪の吹きだまり（雪原専用）
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.55, 9, 7), snowMat);
+  m.scale.set(s, s * 0.3, s * 0.8);
+  m.position.set(x, 0, z);
+  m.receiveShadow = true;
+  parent.add(m);
 }
 
 // ---------- 当たり判定（現在の地方の判定配列＋NPCに対して解決する） ----------
@@ -953,8 +988,8 @@ const REGIONS = {
       { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 170, y: 0.012, z: 0.4 },
     ],
     scatter: [
-      { t: 'tuft', n: 1320, seed: 31, x: [154, 186], zCenter: 0.6, offMin: 1.7, offMax: 8.8, s: [1, 1] },
-      { t: 'tuft', n: 660, seed: 43, x: [154, 186], zCenter: 0.6, offMin: 1.7, offMax: 8.8, s: [1, 1], side: 1 },
+      { t: 'tuft', n: 1320, seed: 31, x: [154, 186], zCenter: 0.6, offMin: 1.7, offMax: 7.6, s: [1, 1], frontS: 0.55 },
+      { t: 'tuft', n: 660, seed: 43, x: [154, 186], zCenter: 0.6, offMin: 1.7, offMax: 7.2, s: [1, 1], side: 1, frontS: 0.5 },
       { t: 'pine', n: 10, seed: 37, x: [154.5, 186.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.5], frontS: 0.6 },
     ],
     props: [
@@ -999,7 +1034,7 @@ const REGIONS = {
     ],
     scatter: [
       { t: 'rock', n: 26, seed: 53, x: [239, 271], zCenter: 0.6, offMin: 2.2, offMax: 7.8, s: [0.5, 1.1] },
-      { t: 'tuft', n: 120, seed: 59, x: [239, 271], zCenter: 0.6, offMin: 1.8, offMax: 7.6, s: [0.8, 0.8] },
+      { t: 'tuft', n: 120, seed: 59, x: [239, 271], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.8, 0.8], frontS: 0.7 },
       { t: 'pine', n: 6, seed: 61, x: [239.5, 270.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
     ],
     props: [
@@ -1034,6 +1069,7 @@ const REGIONS = {
     sun: { i: 2.0, pos: [326, 11, -4.5], tgt: [340, 0, 0.4] },
     sub: '雪原 ／ 移動： WASD・矢印キー ／ 西の端から岩場へ、東の端から渓谷へ',
     backdrop: 'assets/far_snow.jpg',
+    snow: true,
     wadeZ: null,
     spawn: { x: 325.2, z: 0.4, row: 2 },
     grounds: [
@@ -1043,7 +1079,8 @@ const REGIONS = {
     scatter: [
       { t: 'pine', n: 12, seed: 71, x: [324.5, 355.5], zCenter: 0.6, offMin: 4.6, offMax: 8.6, s: [0.9, 1.4], frontS: 0.6 },
       { t: 'rock', n: 10, seed: 73, x: [324, 356], zCenter: 0.6, offMin: 2.4, offMax: 7.6, s: [0.5, 0.9] },
-      { t: 'tuft', n: 60, seed: 79, x: [324, 356], zCenter: 0.6, offMin: 1.8, offMax: 7.6, s: [0.7, 0.7] },
+      { t: 'tuft', n: 60, seed: 79, x: [324, 356], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.7, 0.7], frontS: 0.7 },
+      { t: 'drift', n: 22, seed: 151, x: [324, 356], zCenter: 0.6, offMin: 1.9, offMax: 8, s: [0.7, 1.7] },
     ],
     props: [
       { t: 'torii', x: 347, z: -2.3 },
@@ -1085,7 +1122,7 @@ const REGIONS = {
     scatter: [
       { t: 'rock', n: 14, seed: 107, x: [409, 441], zCenter: 0.6, offMin: 2.4, offMax: 7.8, s: [0.6, 1.2] },
       { t: 'pine', n: 10, seed: 109, x: [409.5, 440.5], zCenter: 0.6, offMin: 4.8, offMax: 8.6, s: [0.9, 1.4], frontS: 0.6 },
-      { t: 'tuft', n: 80, seed: 113, x: [409, 441], zCenter: 0.6, offMin: 1.8, offMax: 7.6, s: [0.8, 0.8] },
+      { t: 'tuft', n: 80, seed: 113, x: [409, 441], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.8, 0.8], frontS: 0.7 },
     ],
     props: [
       { t: 'rock', x: 415, z: -2.9, s: 2.2 },
@@ -1124,7 +1161,7 @@ const REGIONS = {
       { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 510, y: 0.012, z: 0.4 },
     ],
     scatter: [
-      { t: 'tuft', n: 500, seed: 127, x: [494, 526], zCenter: 0.6, offMin: 1.7, offMax: 8.8, s: [0.9, 0.9] },
+      { t: 'tuft', n: 500, seed: 127, x: [494, 526], zCenter: 0.6, offMin: 1.7, offMax: 7.6, s: [0.9, 0.9], frontS: 0.6 },
       { t: 'rock', n: 12, seed: 131, x: [494, 526], zCenter: 0.6, offMin: 2.4, offMax: 7.8, s: [0.5, 1] },
       { t: 'pine', n: 4, seed: 137, x: [494.5, 525.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
     ],
@@ -1167,7 +1204,7 @@ const REGIONS = {
       { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 595, y: 0.012, z: 0.4 },
     ],
     scatter: [
-      { t: 'tuft', n: 300, seed: 139, x: [579, 611], zCenter: 0.6, offMin: 1.7, offMax: 8.6, s: [0.9, 0.9] },
+      { t: 'tuft', n: 300, seed: 139, x: [579, 611], zCenter: 0.6, offMin: 1.7, offMax: 7.4, s: [0.9, 0.9], frontS: 0.6 },
       { t: 'rock', n: 8, seed: 149, x: [579, 611], zCenter: 0.6, offMin: 2.6, offMax: 7.6, s: [0.4, 0.8] },
     ],
     props: [
@@ -1229,14 +1266,16 @@ function buildRegion(id, def) {
     group.add(m);
   }
   const placeProp = (p, r) => {
-    if (p.t === 'pine') placePine(group, colliders, p.x, p.z, p.s || 1, r);
-    else if (p.t === 'rock') placeRock(group, colliders, p.x, p.z, p.s || 1, r);
+    const snowy = !!def.snow; // 雪原では各小物に雪を積もらせる
+    if (p.t === 'pine') placePine(group, colliders, p.x, p.z, p.s || 1, r, snowy);
+    else if (p.t === 'rock') placeRock(group, colliders, p.x, p.z, p.s || 1, r, snowy);
     else if (p.t === 'driftwood') placeDriftwood(group, colliders, p.x, p.z, p.rot || 0);
-    else if (p.t === 'stump') placeStump(group, colliders, p.x, p.z);
+    else if (p.t === 'stump') placeStump(group, colliders, p.x, p.z, snowy);
     else if (p.t === 'signpost') placeSignpost(group, colliders, p.x, p.z, p.rot || 0);
-    else if (p.t === 'torii') placeTorii(group, colliders, p.x, p.z, p.s || 1, p.rot || 0);
-    else if (p.t === 'shrine') placeShrine(group, colliders, p.x, p.z, p.s || 1, p.rot || 0);
-    else if (p.t === 'tuft') placeTuft(group, p.x, p.z, r);
+    else if (p.t === 'torii') placeTorii(group, colliders, p.x, p.z, p.s || 1, p.rot || 0, snowy);
+    else if (p.t === 'shrine') placeShrine(group, colliders, p.x, p.z, p.s || 1, p.rot || 0, snowy);
+    else if (p.t === 'tuft') placeTuft(group, p.x, p.z, r, p.s || 1);
+    else if (p.t === 'drift') placeDrift(group, p.x, p.z, p.s || 1);
   };
   for (const p of def.props || []) placeProp(p, rng);
   for (const s of def.scatter || []) {
