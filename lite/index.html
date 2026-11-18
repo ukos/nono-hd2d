@@ -105,7 +105,7 @@ function loadTex(path, srgb = true) {
   return t;
 }
 // 遠景用：縮小→拡大の往復で輪郭のギザギザを消し、柔らかくぼかしたテクスチャを作る
-function blurredTex(path, scale = 0.28) {
+function blurredTex(path, scale = 0.28, passes = 2) {
   const tex = new THREE.Texture();
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.magFilter = THREE.LinearFilter;
@@ -120,7 +120,7 @@ function blurredTex(path, scale = 0.28) {
     xs.imageSmoothingEnabled = xf.imageSmoothingEnabled = true;
     xs.imageSmoothingQuality = xf.imageSmoothingQuality = 'high';
     let src = img;
-    for (let i = 0; i < 2; i++) { // 2往復でしっかりぼかす
+    for (let i = 0; i < passes; i++) {
       xs.clearRect(0, 0, small.width, small.height);
       xs.drawImage(src, 0, 0, small.width, small.height);
       xf.clearRect(0, 0, w, h);
@@ -717,7 +717,7 @@ function buildLakeCustom(group) {
     group.add(m);
   }
   // 遠景の山ボード
-  const mountainsTex = blurredTex('assets/far_mountains.png');
+  const mountainsTex = blurredTex('assets/far_mountains.png', 0.5, 1); // 描き直しまでの仮：弱めのぼかし
   const mountains = new THREE.Mesh(
     new THREE.PlaneGeometry(97, 48),
     new THREE.MeshBasicMaterial({ map: mountainsTex, fog: false })
