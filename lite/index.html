@@ -2277,7 +2277,7 @@ function animate() {
   // カメラ追従（地方の中心を基準に緩やかにパンする）
   const ccx = R.centerX;
   camTarget.lerp(new THREE.Vector3(player.position.x, 0, player.position.z), 1 - Math.pow(0.002, dt));
-  const wantPos = new THREE.Vector3(camTarget.x, 4.6 + camTarget.z * 0.18, camTarget.z + 8.4);
+  const wantPos = new THREE.Vector3(camTarget.x, 6.7 + camTarget.z * 0.18, camTarget.z + 8.4); // 2026-11-19 カメラの俯瞰角を約10°上げた（高さ4.6→6.7、注視点は不変）
   camPos.lerp(wantPos, 1 - Math.pow(0.002, dt));
   camera.position.copy(camPos);
   camera.lookAt(camTarget.x, 2.0, camTarget.z - 1.6);
