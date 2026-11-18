@@ -484,10 +484,19 @@ function seedTrail(x, z, signX, signZ) {
 function updateCompanion(ch, target, station, dt, wadeZ) {
   const ud = ch.userData;
   const dx = target.x - ch.position.x, dz = target.z - ch.position.z;
-  const dist = Math.hypot(dx, dz);
-  const sp = dist > 0.6 ? 3.0 : dist * 3.2; // 目標が近いほど減速して止まる
-  const desX = dist > 0.001 ? dx / dist * sp : 0;
-  const desZ = dist > 0.001 ? dz / dist * sp : 0;
+  // 目標点の速度を見積もってフィードフォワードする。
+  // 位置を追うだけだと追従の遅れがそのまま間隔の偏りになるため、速度も合わせて寄せる
+  let tvx = 0, tvz = 0;
+  if (ud.prevTarget && dt > 0) {
+    tvx = (target.x - ud.prevTarget.x) / dt;
+    tvz = (target.z - ud.prevTarget.z) / dt;
+    const tl = Math.hypot(tvx, tvz);
+    if (tl > 3.5) { tvx *= 3.5 / tl; tvz *= 3.5 / tl; }
+  }
+  ud.prevTarget = { x: target.x, z: target.z };
+  let desX = tvx + dx * 5, desZ = tvz + dz * 5; // ずれはゲイン5/sで戻す
+  const dl = Math.hypot(desX, desZ);
+  if (dl > 4.2) { desX *= 4.2 / dl; desZ *= 4.2 / dl; }
   const acc = 1 - Math.pow(0.0025, dt);
   ud.vel.x += (desX - ud.vel.x) * acc;
   ud.vel.y += (desZ - ud.vel.y) * acc;
