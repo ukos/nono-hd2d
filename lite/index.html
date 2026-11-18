@@ -215,15 +215,17 @@ function groundTexture(base, dots, patch) {
   const c = document.createElement('canvas'); c.width = c.height = 256;
   const x = c.getContext('2d');
   x.fillStyle = base; x.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 26; i++) { // まだら
+  const wrap9 = (fn) => { for (const ox of [-256, 0, 256]) for (const oy of [-256, 0, 256]) fn(ox, oy); };
+  for (let i = 0; i < 26; i++) { // まだら（端で切れないよう9方向に描いて継ぎ目をなくす）
     x.fillStyle = patch; x.globalAlpha = 0.16 + Math.random() * 0.14;
-    const r = 14 + Math.random() * 34;
-    x.beginPath(); x.ellipse(Math.random() * 256, Math.random() * 256, r, r * 0.6, Math.random() * 3, 0, 7); x.fill();
+    const r = 14 + Math.random() * 34, px = Math.random() * 256, py = Math.random() * 256, rot = Math.random() * 3;
+    wrap9((ox, oy) => { x.beginPath(); x.ellipse(px + ox, py + oy, r, r * 0.6, rot, 0, 7); x.fill(); });
   }
   x.globalAlpha = 1;
   for (let i = 0; i < 5200; i++) {
     x.fillStyle = dots[(Math.random() * dots.length) | 0];
-    x.fillRect((Math.random() * 256) | 0, (Math.random() * 256) | 0, 2, 2);
+    const px = (Math.random() * 256) | 0, py = (Math.random() * 256) | 0;
+    wrap9((ox, oy) => x.fillRect(px + ox, py + oy, 2, 2));
   }
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
@@ -231,6 +233,51 @@ function groundTexture(base, dots, patch) {
   t.magFilter = THREE.NearestFilter;
   return t;
 }
+// 帯状の地面（小道・砂浜）の縁を、ギザギザに透かして下の地面へ馴染ませるアルファ
+function stripAlphaTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d');
+  const img = x.createImageData(256, 256);
+  const jit = (px) => 16 * Math.sin(px * 0.0737) + 10 * Math.sin(px * 0.172 + 1.7) + 6 * Math.sin(px * 0.319 + 0.6); // x方向に周期的な縁の揺れ
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let py = 0; py < 256; py++) {
+    for (let px = 0; px < 256; px++) {
+      const j = jit(px);
+      const dEdge = Math.min(py, 255 - py) - j; // 縁からの距離（揺れ込み）
+      let a = Math.max(0, Math.min(1, (dEdge + 26) / 52)); // 52pxかけて縁をぼかす
+      if (dEdge < 34 && rnd() < 0.24) a *= rnd() * 0.7; // 縁近くは斑に透かして下の地面を覗かせる
+      const v = Math.round(a * 255), o = (py * 256 + px) * 4;
+      img.data[o] = img.data[o + 1] = img.data[o + 2] = v; img.data[o + 3] = 255;
+    }
+  }
+  x.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+// 池のような面の縁を、丸くぼかして馴染ませるアルファ
+function softAlphaTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const x = c.getContext('2d');
+  const img = x.createImageData(256, 256);
+  let seed = 13;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let py = 0; py < 256; py++) {
+    for (let px = 0; px < 256; px++) {
+      const dx = (px - 128) / 128, dy = (py - 128) / 128;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      let a = Math.max(0, Math.min(1, (1.02 - d) / 0.42));
+      if (d > 0.55 && rnd() < 0.2) a *= rnd() * 0.75;
+      const v = Math.round(a * 255), o = (py * 256 + px) * 4;
+      img.data[o] = img.data[o + 1] = img.data[o + 2] = v; img.data[o + 3] = 255;
+    }
+  }
+  x.putImageData(img, 0, 0);
+  return new THREE.CanvasTexture(c);
+}
+let _stripAlpha = null, _softAlpha = null;
+
 // 地面テクスチャの定義（地方データから参照する）
 const GROUND_TEX = {
   grass: { base: '#4d7353', dots: ['#40644a', '#5a7f5e', '#65855c', '#486a4d', '#758a63'], patch: '#38543f' },
@@ -966,7 +1013,7 @@ const REGIONS = {
     custom: 'lake',
     grounds: [
       { tex: 'grass', repeat: [14, 4], w: 90, d: 18, x: 0, y: 0, z: 5.4 },
-      { tex: 'sand', repeat: [16, 1], w: 90, d: 1.7, x: 0, y: -0.03, z: -2.55 },
+      { tex: 'sand', strip: true, repeat: [16, 1], w: 90, d: 1.7, x: 0, y: -0.03, z: -2.55 },
       { color: 0x1d2b33, w: 110, d: 4, x: 0, y: -0.06, z: -26 },
     ],
     props: [
@@ -1014,7 +1061,7 @@ const REGIONS = {
     custom: 'forest',
     grounds: [
       { tex: 'forestFloor', repeat: [12, 5], w: 38, d: 16, x: 85, y: 0, z: 0.4 },
-      { tex: 'dirtPath', repeat: [12, 1], w: 38, d: 3.1, x: 85, y: 0.012, z: 0.4 },
+      { tex: 'dirtPath', strip: true, repeat: [12, 1], w: 38, d: 3.1, x: 85, y: 0.012, z: 0.4 },
     ],
     scatter: [
       { t: 'tree', n: 30, seed: 7, x: [67.5, 103.5], zCenter: 0.4, offMin: 2.9, offMax: 6.3, s: [1.05, 1.7], frontS: 0.5 },
@@ -1059,7 +1106,7 @@ const REGIONS = {
     spawn: { x: 155.2, z: 0.4, row: 2 },
     grounds: [
       { tex: 'meadow', repeat: [13, 6], w: 40, d: 18, x: 170, y: 0, z: 0.6 },
-      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 170, y: 0.012, z: 0.4 },
+      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 170, y: 0.012, z: 0.4 },
     ],
     scatter: [
       { t: 'tuft', n: 1320, seed: 31, x: [154, 186], zCenter: 0.6, offMin: 1.7, offMax: 7.6, s: [1, 1], frontS: 0.55 },
@@ -1112,7 +1159,7 @@ const REGIONS = {
     spawn: { x: 240.2, z: 0.4, row: 2 },
     grounds: [
       { tex: 'rock', repeat: [13, 6], w: 40, d: 18, x: 255, y: 0, z: 0.6 },
-      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 255, y: 0.012, z: 0.4 },
+      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 255, y: 0.012, z: 0.4 },
     ],
     scatter: [
       { t: 'rock', n: 26, seed: 53, x: [239, 271], zCenter: 0.6, offMin: 2.2, offMax: 7.8, s: [0.5, 1.1] },
@@ -1165,7 +1212,7 @@ const REGIONS = {
     spawn: { x: 325.2, z: 0.4, row: 2 },
     grounds: [
       { tex: 'snow', repeat: [13, 6], w: 40, d: 18, x: 340, y: 0, z: 0.6 },
-      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 340, y: 0.012, z: 0.4 },
+      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 340, y: 0.012, z: 0.4 },
     ],
     scatter: [
       { t: 'tree', n: 12, seed: 71, x: [324.5, 355.5], zCenter: 0.6, offMin: 4.6, offMax: 8.6, s: [0.9, 1.4], frontS: 0.6 },
@@ -1210,7 +1257,7 @@ const REGIONS = {
     spawn: { x: 410.2, z: 0.4, row: 2 },
     grounds: [
       { tex: 'forestFloor', repeat: [13, 6], w: 40, d: 18, x: 425, y: 0, z: 0.6 },
-      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 425, y: 0.012, z: 0.4 },
+      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 425, y: 0.012, z: 0.4 },
     ],
     scatter: [
       { t: 'rock', n: 14, seed: 107, x: [409, 441], zCenter: 0.6, offMin: 2.4, offMax: 7.8, s: [0.6, 1.2] },
@@ -1243,7 +1290,7 @@ const REGIONS = {
     spawn: { x: 495.2, z: 0.4, row: 2 },
     grounds: [
       { tex: 'highland', repeat: [13, 6], w: 40, d: 18, x: 510, y: 0, z: 0.6 },
-      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 510, y: 0.012, z: 0.4 },
+      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 510, y: 0.012, z: 0.4 },
     ],
     scatter: [
       { t: 'tuft', n: 500, seed: 127, x: [494, 526], zCenter: 0.6, offMin: 1.7, offMax: 7.6, s: [0.9, 0.9], frontS: 0.6 },
@@ -1285,9 +1332,9 @@ const REGIONS = {
     spawn: { x: 580.2, z: 0.4, row: 2 },
     grounds: [
       { tex: 'marsh', repeat: [13, 6], w: 40, d: 18, x: 595, y: 0, z: 0.6 },
-      { color: 0x39526b, w: 6, d: 2.4, x: 588, y: 0.008, z: -2.4 },
-      { color: 0x39526b, w: 5, d: 2.2, x: 604, y: 0.008, z: 2.9 },
-      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 595, y: 0.012, z: 0.4 },
+      { color: 0x39526b, soft: true, w: 6, d: 2.4, x: 588, y: 0.008, z: -2.4 },
+      { color: 0x39526b, soft: true, w: 5, d: 2.2, x: 604, y: 0.008, z: 2.9 },
+      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 595, y: 0.012, z: 0.4 },
     ],
     scatter: [
       { t: 'tuft', n: 300, seed: 139, x: [579, 611], zCenter: 0.6, offMin: 1.7, offMax: 7.4, s: [0.9, 0.9], frontS: 0.6 },
@@ -1321,7 +1368,7 @@ const REGIONS = {
     spawn: { x: 680, z: 3.6, row: 4 },
     grounds: [
       { tex: 'meadow', repeat: [13, 6], w: 40, d: 18, x: 680, y: 0, z: 0.6 },
-      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 680, y: 0.012, z: 0.4 },
+      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 680, y: 0.012, z: 0.4 },
     ],
     scatter: [
       { t: 'flower', n: 380, seed: 157, x: [664, 696], zCenter: 0.6, offMin: 1.8, offMax: 8.4, s: [0.7, 1.3] },
@@ -1370,6 +1417,15 @@ function buildRegion(id, def) {
       mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 1 });
     } else {
       mat = new THREE.MeshStandardMaterial({ color: g.color, roughness: 1 });
+    }
+    if (g.strip || g.soft) { // 縁を透かして下の地面へ馴染ませる
+      if (!_stripAlpha) { _stripAlpha = stripAlphaTexture(); _softAlpha = softAlphaTexture(); }
+      const at = (g.strip ? _stripAlpha : _softAlpha).clone();
+      at.wrapS = at.wrapT = THREE.RepeatWrapping;
+      at.repeat.set(g.repeat ? g.repeat[0] : 1, g.repeat ? g.repeat[1] : 1);
+      at.needsUpdate = true;
+      mat.transparent = true;
+      mat.alphaMap = at;
     }
     const m = new THREE.Mesh(new THREE.PlaneGeometry(g.w, g.d), mat);
     m.rotation.x = -Math.PI / 2;
