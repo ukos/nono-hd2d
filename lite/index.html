@@ -233,6 +233,8 @@ const GROUND_TEX = {
   forestFloor: { base: '#33503a', dots: ['#2a4530', '#3c5c42', '#2f4d36', '#425f45'], patch: '#26402c' },
   meadow: { base: '#5a874e', dots: ['#4d7843', '#67975a', '#6fa362', '#527f47', '#86ab6d'], patch: '#49713e' },
   dirtPath: { base: '#7d6242', dots: ['#6f5638', '#8a6d4a', '#755c3c'], patch: '#63492c' },
+  rock: { base: '#6a5a4c', dots: ['#5d4f42', '#776655', '#655746'], patch: '#534639' },
+  snow: { base: '#b3bedd', dots: ['#a7b2d4', '#bfc9e6', '#aeb9dc'], patch: '#9fabcc' },
 };
 
 // ---------- 共有テクスチャ ----------
@@ -939,7 +941,7 @@ const REGIONS = {
     fog: { color: 0x463257, near: 14, far: 44 },
     bg: 0x2e3350,
     sun: { i: 2.3, pos: [156, 11, -4.5], tgt: [170, 0, 0.4] },
-    sub: '草原 ／ 移動： WASD・矢印キー ／ 西の端から森へ戻る',
+    sub: '草原 ／ 移動： WASD・矢印キー ／ 西の端から森へ、東の端から岩場へ',
     wadeZ: null,
     spawn: { x: 155.2, z: 0.4, row: 2 },
     grounds: [
@@ -973,6 +975,89 @@ const REGIONS = {
     fireflies: { n: 14, seed: 41, box: { x: [155, 186], y: [0.4, 1.6], z: [-2.5, 3.5] } },
     exits: [
       { edge: 'west', at: 154.2, to: 'forest', spawn: { x: 101.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'east', at: 187.2, to: 'rocky', spawn: { x: 240.2, z: 0.4, row: 2, trail: -1 } },
+    ],
+  },
+  rocky: {
+    label: '岩場',
+    centerX: 255,
+    bounds: { minX: 238.4, maxX: 272.6, minZ: -3.4, maxZ: 4.6 },
+    fog: { color: 0x40304a, near: 15, far: 46 },
+    bg: 0x35283e,
+    sun: { i: 2.2, pos: [241, 11, -4.5], tgt: [255, 0, 0.4] },
+    sub: '岩場 ／ 移動： WASD・矢印キー ／ 西の端から草原へ、東の端から雪原へ',
+    wadeZ: null,
+    spawn: { x: 240.2, z: 0.4, row: 2 },
+    grounds: [
+      { tex: 'rock', repeat: [13, 6], w: 40, d: 18, x: 255, y: 0, z: 0.6 },
+      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 255, y: 0.012, z: 0.4 },
+    ],
+    scatter: [
+      { t: 'rock', n: 26, seed: 53, x: [239, 271], zCenter: 0.6, offMin: 2.2, offMax: 7.8, s: [0.5, 1.1] },
+      { t: 'tuft', n: 120, seed: 59, x: [239, 271], zCenter: 0.6, offMin: 1.8, offMax: 7.6, s: [0.8, 0.8] },
+      { t: 'pine', n: 6, seed: 61, x: [239.5, 270.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
+    ],
+    props: [
+      { t: 'rock', x: 262, z: -2.6, s: 2.6 },
+      { t: 'rock', x: 264.5, z: -1.8, s: 1.7 },
+      { t: 'rock', x: 246, z: -2.8, s: 1.9 },
+      { t: 'stump', x: 250, z: 2.8, rot: 0.7 },
+      { t: 'signpost', x: 239.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [
+      {
+        sheet: 'assets/iwao_sheet.png', h: 1.14, x: 258.5, z: -1.4, name: 'イワオ',
+        lines: [
+          'おう、旅の人か。俺はイワオ、この岩場の番人だ。',
+          '見ての通り岩だらけだが、足元さえ気をつければいい場所だ。',
+          '東は雪原だ。寒さ対策なしに行くと、耳まで凍るぞ。',
+        ],
+      },
+    ],
+    fireflies: { n: 12, seed: 67, box: { x: [240, 270], y: [0.4, 1.6], z: [-2.5, 3.5] } },
+    exits: [
+      { edge: 'west', at: 239.2, to: 'grassland', spawn: { x: 186.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'east', at: 272.2, to: 'snow', spawn: { x: 325.2, z: 0.4, row: 2, trail: -1 } },
+    ],
+  },
+  snow: {
+    label: '雪原',
+    centerX: 340,
+    bounds: { minX: 323.4, maxX: 357.6, minZ: -3.4, maxZ: 4.6 },
+    fog: { color: 0x39466a, near: 13, far: 42 },
+    bg: 0x2c3550,
+    sun: { i: 2.0, pos: [326, 11, -4.5], tgt: [340, 0, 0.4] },
+    sub: '雪原 ／ 移動： WASD・矢印キー ／ 西の端から岩場へ戻る',
+    wadeZ: null,
+    spawn: { x: 325.2, z: 0.4, row: 2 },
+    grounds: [
+      { tex: 'snow', repeat: [13, 6], w: 40, d: 18, x: 340, y: 0, z: 0.6 },
+      { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 340, y: 0.012, z: 0.4 },
+    ],
+    scatter: [
+      { t: 'pine', n: 12, seed: 71, x: [324.5, 355.5], zCenter: 0.6, offMin: 4.6, offMax: 8.6, s: [0.9, 1.4], frontS: 0.6 },
+      { t: 'rock', n: 10, seed: 73, x: [324, 356], zCenter: 0.6, offMin: 2.4, offMax: 7.6, s: [0.5, 0.9] },
+      { t: 'tuft', n: 60, seed: 79, x: [324, 356], zCenter: 0.6, offMin: 1.8, offMax: 7.6, s: [0.7, 0.7] },
+    ],
+    props: [
+      { t: 'torii', x: 347, z: -2.3 },
+      { t: 'shrine', x: 347, z: -3.2 },
+      { t: 'stump', x: 332, z: 2.8, rot: 0.4 },
+      { t: 'signpost', x: 324.7, z: 2.3, rot: Math.PI },
+    ],
+    npcs: [
+      {
+        sheet: 'assets/shiro_sheet.png', h: 1.02, x: 345.6, z: -1.5, name: 'シロ',
+        lines: [
+          '……よくここまで来たね。ボクはシロ、この雪原に住んでる。',
+          '雪に足跡が残るから、誰が来たかすぐわかるんだ。',
+          '祠にお参りしていくと、帰り道は不思議と楽になるよ。',
+        ],
+      },
+    ],
+    fireflies: { n: 8, seed: 83, box: { x: [325, 355], y: [0.4, 1.6], z: [-2.5, 3.5] } },
+    exits: [
+      { edge: 'west', at: 324.2, to: 'rocky', spawn: { x: 271.7, z: 0.4, row: 6, trail: 1 } },
     ],
   },
 };
