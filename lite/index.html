@@ -286,6 +286,7 @@ const GROUND_TEX = {
   meadow: { base: '#578a49', dots: ['#4a7a3e', '#679c55', '#77ac60', '#4f8145', '#8fbc72', '#a5cc84'], patch: '#45703a' },
   meadowDusk: { base: '#626f3e', dots: ['#525f33', '#6d7c46', '#75834c', '#5d683a', '#8a6f45', '#97804f'], patch: '#4c5730' },
   dirtPath: { base: '#7d6242', dots: ['#6f5638', '#8a6d4a', '#755c3c'], patch: '#63492c' },
+  wetbank: { base: '#5c4832', dots: ['#4f3d2a', '#68543c', '#554331', '#71604a'], patch: '#473723' },
   rock: { base: '#6a5a4c', dots: ['#5d4f42', '#776655', '#655746'], patch: '#534639' },
   snow: { base: '#b3bedd', dots: ['#a7b2d4', '#bfc9e6', '#aeb9dc'], patch: '#9fabcc' },
   highland: { base: '#6f9a4e', dots: ['#628c43', '#7da858', '#678f47', '#87b364'], patch: '#567a3a' },
@@ -978,8 +979,19 @@ function buildForestCustom(group) {
 
 function buildValleyCustom(group) {
   // 渓谷の川（流れの縞と両岸の泡で、静止画でも流れと分かる専用シェーダー）
+  const riverGeo = new THREE.PlaneGeometry(40, 2.2, 96, 6);
+  {
+    // 両岸が直線にならないよう、川幅を場所ごとに波打たせる（シェーダー側と同式）
+    const pos = riverGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const lx = pos.getX(i);
+      const wob = 0.15 * Math.sin(lx * 0.55) + 0.10 * Math.sin(lx * 1.37 + 1.7) + 0.05 * Math.sin(lx * 3.1 + 0.5);
+      pos.setY(i, pos.getY(i) * (1 + wob / 1.1));
+    }
+    riverGeo.computeVertexNormals();
+  }
   const river = new THREE.Mesh(
-    new THREE.PlaneGeometry(40, 2.2),
+    riverGeo,
     new THREE.ShaderMaterial({
       uniforms: { uTime: waterUniforms.uTime },
       transparent: true,
@@ -1005,10 +1017,13 @@ function buildValleyCustom(group) {
           float glint = smoothstep(0.965, 1.0, sin((vUv.x - t * 0.085) * 210.0 + vUv.y * 22.0) * 0.5 + 0.5);
           col += vec3(0.75, 0.85, 0.9) * glint * 0.55;
           float foamN = 0.5 + 0.5 * sin(fx * 170.0) * sin((vUv.x - t * 0.04) * 57.0);
-          float bank = smoothstep(0.0, 0.10, vUv.y) * smoothstep(1.0, 0.90, vUv.y);
+          float lx = (vUv.x - 0.5) * 40.0;
+          float wob = 0.15 * sin(lx * 0.55) + 0.10 * sin(lx * 1.37 + 1.7) + 0.05 * sin(lx * 3.1 + 0.5);
+          float dEdge = (0.5 - abs(vUv.y - 0.5)) * 2.2 * (1.0 + wob / 1.1);
+          float bank = smoothstep(0.0, 0.22, dEdge);
           float foam = (1.0 - bank) * smoothstep(0.45, 0.9, foamN);
-          col = mix(col, vec3(0.82, 0.88, 0.88), foam * 0.5);
-          float alpha = mix(0.97, 0.75, 1.0 - bank);
+          col = mix(col, vec3(0.82, 0.88, 0.88), foam * 0.55);
+          float alpha = 0.97 * smoothstep(0.0, 0.13, dEdge);
           gl_FragColor = vec4(col, alpha);
         }`,
     })
@@ -1284,6 +1299,7 @@ const REGIONS = {
     spawn: { x: 410.2, z: 0.4, row: 2 },
     grounds: [
       { tex: 'forestFloor', repeat: [13, 6], w: 40, d: 18, x: 425, y: 0, z: 0.6 },
+      { tex: 'wetbank', strip: true, repeat: [13, 1], w: 40, d: 3.6, x: 425, y: 0.006, z: -2.2 },
       { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 425, y: 0.012, z: 0.4 },
     ],
     scatter: [
