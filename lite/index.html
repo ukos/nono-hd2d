@@ -607,7 +607,7 @@ function spawnRipple(x, z) {
 // ---------- 湖畔の専用景観（水面・夕日・背景ボード） ----------
 const waterUniforms = {
   uTime: { value: 0 },
-  uSunX: { value: -16 },
+  uSunPos: { value: new THREE.Vector3(-11, 3.15, -33) },
   uShoreZ: { value: -3.4 },
 };
 const lakeRefs = {}; // animate から参照する湖畔専用オブジェクト
@@ -626,26 +626,40 @@ function buildLakeCustom(group) {
           gl_Position = projectionMatrix * viewMatrix * wp;
         }`,
       fragmentShader: /* glsl */`
-        uniform float uTime; uniform float uSunX; uniform float uShoreZ;
+        uniform float uTime; uniform vec3 uSunPos; uniform float uShoreZ;
         varying vec3 vWorld;
+        // 波の合成（4つの方向・周波数の異なる波の勾配から水面の法線を作る）
+        vec3 waveNormal(vec2 p, float t) {
+          vec2 g = vec2(0.0);
+          g += 0.30 * 2.1 * cos(dot(p, vec2(0.96, 0.29)) * 2.1 + t * 1.15) * vec2(0.96, 0.29);
+          g += 0.20 * 3.7 * cos(dot(p, vec2(-0.57, 0.82)) * 3.7 + t * 1.65) * vec2(-0.57, 0.82);
+          g += 0.09 * 7.9 * cos(dot(p, vec2(0.37, -0.93)) * 7.9 + t * 2.6) * vec2(0.37, -0.93);
+          g += 0.045 * 13.7 * cos(dot(p, vec2(0.86, -0.51)) * 13.7 + t * 3.4) * vec2(0.86, -0.51);
+          return normalize(vec3(-g.x * 0.32, 1.0, -g.y * 0.32));
+        }
         void main() {
           vec3 wp = vWorld;
           float dist = clamp((uShoreZ - wp.z) / 34.0, 0.0, 1.0);
+          vec3 N = waveNormal(wp.xz, uTime);
+          vec3 V = normalize(cameraPosition - wp);
+          vec3 L = normalize(uSunPos - wp);
+          // フレネル：見下ろす角度では水の色、浅い角度では空の映り込みが勝つ
+          float fres = pow(1.0 - max(dot(V, vec3(0.0, 1.0, 0.0)), 0.0), 3.0);
+          fres = mix(0.18, 1.0, fres);
           vec3 deep = vec3(0.030, 0.155, 0.205);
           vec3 skyc = vec3(0.125, 0.185, 0.325);
-          vec3 col = mix(deep, skyc, dist * 0.75);
-          // ゆらぎ（格子状にならないよう不規則なマスクを掛ける）
-          float n = sin(wp.x * 7.0 + uTime * 1.9) * sin(wp.z * 5.5 - uTime * 1.5)
-                  + 0.6 * sin(wp.x * 15.0 - uTime * 2.6) * sin(wp.z * 11.0 + uTime * 2.1);
-          float mask = 0.5 + 0.5 * sin(wp.x * 1.7 - uTime * 0.6) * sin(wp.z * 1.3 + uTime * 0.45);
-          float sparkle = smoothstep(1.02, 1.4, n) * mask * 0.32;
-          col += vec3(0.65, 0.75, 0.8) * sparkle * (0.35 + dist * 0.65);
-          // 夕日の反射柱
-          float wob = sin(wp.z * 1.4 + uTime * 1.2) * 0.7 + sin(wp.z * 4.2 - uTime * 2.0) * 0.3;
-          float d = abs(wp.x - uSunX + wob);
-          float band = pow(max(0.0, 1.0 - d / 7.5), 2.2);
-          float glit = 0.72 + 0.28 * sin(wp.z * 13.0 - uTime * 3.2) * sin(wp.x * 8.0 + uTime * 1.7);
-          col += vec3(1.0, 0.40, 0.12) * band * glit * 2.1;
+          vec3 col = mix(deep, skyc, clamp(dist * 0.45 + fres * 0.6, 0.0, 1.0));
+          col *= 0.94 + 0.06 * N.y; // 波の谷をわずかに暗く
+          // 夕日の映り込み：法線で反射ベクトルを揺らし、反射柱とグリッターを作る
+          vec3 R = reflect(-V, N);
+          float rl = max(dot(R, L), 0.0);
+          float column = pow(rl, 20.0) * 0.55;              // 柔らかい反射柱
+          float glit = pow(rl, 260.0) * 3.2;                // 鋭いきらめき
+          float glit2 = pow(rl, 60.0) * 0.5 * (0.5 + 0.5 * N.x * 8.0); // 中間のまたたき
+          col += vec3(1.0, 0.42, 0.13) * (column + glit + max(glit2, 0.0)) * (0.35 + dist * 0.65);
+          // 空のきらめき（太陽以外の微反射）
+          float sparkle = pow(rl, 90.0) * 0.25;
+          col += vec3(0.65, 0.75, 0.8) * sparkle * fres;
           float alpha = mix(0.62, 0.96, smoothstep(0.0, 1.6, uShoreZ - wp.z));
           gl_FragColor = vec4(col, alpha);
         }`,
@@ -791,7 +805,7 @@ const REGIONS = {
       { tex: 'dirtPath', repeat: [12, 1], w: 38, d: 3.1, x: 85, y: 0.012, z: 0.4 },
     ],
     scatter: [
-      { t: 'pine', n: 30, seed: 7, x: [67.5, 103.5], zCenter: 0.4, offMin: 2.9, offMax: 6.3, s: [1.05, 1.7] },
+      { t: 'pine', n: 30, seed: 7, x: [67.5, 103.5], zCenter: 0.4, offMin: 2.9, offMax: 6.3, s: [1.05, 1.7], frontS: 0.5 },
     ],
     props: [
       { t: 'pine', x: 101.5, z: -2.4, s: 2.1 },
@@ -849,7 +863,8 @@ function buildRegion(id, def) {
       const x = s.x[0] + srng() * (s.x[1] - s.x[0]);
       const side = i % 2 === 0 ? -1 : 1;
       const z = s.zCenter + side * (s.offMin + srng() * (s.offMax - s.offMin));
-      const sc = s.s[0] + srng() * (s.s[1] - s.s[0]);
+      // 手前側（カメラ側）の木は背を低くして、道と一行を見えやすくする
+      const sc = (s.s[0] + srng() * (s.s[1] - s.s[0])) * (side > 0 && s.frontS ? s.frontS : 1);
       placeProp({ t: s.t, x, z, s: sc }, srng);
     }
   }
@@ -1171,7 +1186,7 @@ function animate() {
   if (area === 'lake' && lakeRefs.mountains) {
     lakeRefs.mountains.position.x = camTarget.x + 23;
     lakeRefs.sunGroup.position.x = camTarget.x - 11;
-    waterUniforms.uSunX.value = lakeRefs.sunGroup.position.x;
+    waterUniforms.uSunPos.value.copy(lakeRefs.sunGroup.position);
   }
 
   // ビルボードをカメラへ向ける（円筒）
