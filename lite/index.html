@@ -340,6 +340,25 @@ function placePine(parent, colliders, x, z, scale = 1, rng = Math.random, snowy 
   colliders.push({ x, z, r: 0.34 * scale + 0.08 });
   return p;
 }
+const TREE_TEX = {};
+function treeTex(name) {
+  if (!TREE_TEX[name]) { const t = loadTex('assets/' + name); t.magFilter = THREE.LinearFilter; TREE_TEX[name] = t; }
+  return TREE_TEX[name];
+}
+function placeTree(parent, colliders, x, z, s = 1, rng = Math.random, snowy = false) {
+  // 広葉樹のビルボード（本編の木の形に合わせたドット絵。針葉樹の低ポリ松に代わる通常の木）
+  let tex, ar;
+  if (snowy) { tex = treeTex('tree_snow.png'); ar = 376 / 404; }
+  else if (rng() < 0.5) { tex = treeTex('tree_tall.png'); ar = 368 / 484; }
+  else { tex = treeTex('tree_round.png'); ar = 433 / 469; }
+  const h = 2.6 * s;
+  billboard(parent, tex, h * ar, h, x, z, { shadow: true });
+  colliders.push({ x, z, r: 0.3 * s + 0.08 });
+}
+function placeBigTree(parent, colliders, x, z, texName, ar, h, r) {
+  billboard(parent, treeTex(texName), h * ar, h, x, z, { shadow: true });
+  colliders.push({ x, z, r });
+}
 const rockMats = [0x8d8d96, 0x7c7c86, 0x9a9aa2].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true }));
 function makeRock(scale = 1, rng = Math.random) {
   const geo = new THREE.IcosahedronGeometry(0.55, 0);
@@ -497,10 +516,22 @@ function placeShrine(parent, colliders, x, z, scale = 1, rotY = 0, snowy = false
   colliders.push({ x, z, r: 0.55 * scale });
   return g;
 }
+const TUFTS = []; // 横向き画面で手前左右の草を隠すための登録簿
 function placeTuft(parent, x, z, rng = Math.random, s = 1) {
   const w = (1.1 + rng() * 0.5) * s;
-  billboard(parent, grassTuftTex, w, w * 0.42, x, z);
-  blobShadow(parent, w * 0.9, x, z, 0.22);
+  const m = billboard(parent, grassTuftTex, w, w * 0.42, x, z);
+  const sh = blobShadow(parent, w * 0.9, x, z, 0.22);
+  TUFTS.push({ m, sh, x, z });
+}
+// 横向き（ランドスケープ）では、手前（カメラ側）の左右に広がる草を消して見通しを確保する
+let tuftTick = 0;
+function updateTuftVisibility() {
+  const landscape = window.innerWidth >= window.innerHeight;
+  const px = player.position.x;
+  for (const t of TUFTS) {
+    const hide = landscape && t.z > 1.3 && Math.abs(t.x - px) > 6.0;
+    if (t.m.visible === hide) { t.m.visible = !hide; t.sh.visible = !hide; }
+  }
 }
 const flowerMats = [0xd77fa1, 0xe3c878, 0xeee6f0, 0xa58fd0, 0xe08a5a].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true }));
 function placeFlower(parent, x, z, rng = Math.random, s = 1) { // 花畑の花のかたまり
@@ -770,21 +801,14 @@ const waterUniforms = {
   uShoreZ: { value: -3.4 },
 };
 const lakeRefs = {}; // animate から参照する湖畔専用オブジェクト
-function buildLakeCustom(group) {
-  const water = new THREE.Mesh(
-    new THREE.PlaneGeometry(110, 36, 1, 1),
-    new THREE.ShaderMaterial({
-      uniforms: waterUniforms,
-      transparent: true,
-      depthWrite: false,
-      vertexShader: /* glsl */`
+const WATER_VERT = `
         varying vec3 vWorld;
         void main() {
           vec4 wp = modelMatrix * vec4(position, 1.0);
           vWorld = wp.xyz;
           gl_Position = projectionMatrix * viewMatrix * wp;
-        }`,
-      fragmentShader: /* glsl */`
+        }`;
+const WATER_FRAG = `
         uniform float uTime; uniform vec3 uSunPos; uniform float uShoreZ;
         varying vec3 vWorld;
         // 波の合成（4つの方向・周波数の異なる波の勾配から水面の法線を作る）
@@ -821,7 +845,16 @@ function buildLakeCustom(group) {
           col += vec3(0.65, 0.75, 0.8) * sparkle * fres;
           float alpha = mix(0.62, 0.96, smoothstep(0.0, 1.6, uShoreZ - wp.z));
           gl_FragColor = vec4(col, alpha);
-        }`,
+        }`;
+function buildLakeCustom(group) {
+  const water = new THREE.Mesh(
+    new THREE.PlaneGeometry(110, 36, 1, 1),
+    new THREE.ShaderMaterial({
+      uniforms: waterUniforms,
+      transparent: true,
+      depthWrite: false,
+      vertexShader: WATER_VERT,
+      fragmentShader: WATER_FRAG,
     })
   );
   water.rotation.x = -Math.PI / 2;
@@ -893,7 +926,25 @@ function buildForestCustom(group) {
   backBoard.position.set(104.5, 2.4, 0.4);
   group.add(backBoard);
 }
-const CUSTOM_BUILDERS = { lake: buildLakeCustom, forest: buildForestCustom };
+
+function buildValleyCustom(group) {
+  // 渓谷の川（湖と同じ水シェーダーを共有し、岸の位置だけ変える）
+  const river = new THREE.Mesh(
+    new THREE.PlaneGeometry(40, 2.2),
+    new THREE.ShaderMaterial({
+      uniforms: { uTime: waterUniforms.uTime, uSunPos: waterUniforms.uSunPos, uShoreZ: { value: -1.05 } },
+      transparent: true,
+      depthWrite: false,
+      vertexShader: WATER_VERT,
+      fragmentShader: WATER_FRAG,
+    })
+  );
+  river.rotation.x = -Math.PI / 2;
+  river.position.set(425, 0.02, -2.2);
+  river.renderOrder = 2;
+  group.add(river);
+}
+const CUSTOM_BUILDERS = { lake: buildLakeCustom, forest: buildForestCustom, valley: buildValleyCustom };
 
 // ---------- 地方データ ----------
 // grounds: {tex: GROUND_TEXのキー, repeat:[x,y], w, d, x, y, z} または {color, w, d, x, y, z}
@@ -902,14 +953,14 @@ const CUSTOM_BUILDERS = { lake: buildLakeCustom, forest: buildForestCustom };
 // npcs:    {sheet, h, x, z, name, lines:[...]}
 // exits:   {edge:'east'|'west'|'north'|'south', at, to, spawn:{x, z, row, trail}}
 const REGIONS = {
-  lake: {
-    label: '湖畔・夕景',
+  hajimari: {
+    label: 'はじまりの野',
     centerX: 0,
     bounds: { minX: -15.5, maxX: 15.5, minZ: -3.05, maxZ: 6.2 },
     fog: { color: 0x463257, near: 20, far: 52 },
     bg: 0x3b2b52,
     sun: { i: 2.6, pos: [-14, 11, -5], tgt: [0, 0, 0] },
-    sub: '湖畔・夕景 ／ 移動： WASD・矢印キー ／ 話す： Eキー ／ 東の端から森の小道へ',
+    sub: 'はじまりの野 ／ 移動： WASD・矢印キー ／ 話す： Eキー ／ 北の端から天嶺の霊峰へ、東の端から白嶺の雪山へ',
     spawn: { x: 0, z: 0.6, row: 0 },
     wadeZ: -2.05,
     custom: 'lake',
@@ -919,12 +970,12 @@ const REGIONS = {
       { color: 0x1d2b33, w: 110, d: 4, x: 0, y: -0.06, z: -26 },
     ],
     props: [
-      { t: 'pine', x: -6.2, z: -1.0, s: 1.3 },
-      { t: 'pine', x: -11.5, z: 1.0, s: 1.1 },
-      { t: 'pine', x: 8.6, z: 1.6, s: 1.5 },
-      { t: 'pine', x: 13.2, z: -0.6, s: 1.18 },
-      { t: 'pine', x: -3.4, z: 3.2, s: 1.0 },
-      { t: 'pine', x: 11.8, z: 3.6, s: 1.07 },
+      { t: 'tree', x: -6.2, z: -1.0, s: 1.3 },
+      { t: 'tree', x: -11.5, z: 1.0, s: 1.1 },
+      { t: 'tree', x: 8.6, z: 1.6, s: 1.5 },
+      { t: 'tree', x: 13.2, z: -0.6, s: 1.18 },
+      { t: 'tree', x: -3.4, z: 3.2, s: 1.0 },
+      { t: 'tree', x: 11.8, z: 3.6, s: 1.07 },
       { t: 'rock', x: -4.3, z: -1.95, s: 1.05 },
       { t: 'driftwood', x: 2.4, z: -2.5, rot: 0.4 },
       { t: 'stump', x: 7.9, z: 0.9 },
@@ -936,27 +987,28 @@ const REGIONS = {
     ],
     npcs: [
       {
-        sheet: 'assets/kurogane_sheet.png', h: 1.12, x: 5.4, z: -0.7, name: 'クロガネ',
+        sheet: 'assets/mei_sheet.png', h: 1.08, x: 5.4, z: -0.7, name: 'メイ',
         lines: [
-          'やあ、のの。夕方の湖は、いいものだろう。',
-          'ユイとレイも一緒か。にぎやかになったな。',
-          '東の森の小道は、もう少し暗い。ホタルが見ごろだよ。',
+          'まあ、旅の方？ わたしはメイ。この野を守る巫女をしています。',
+          'ここが旅のはじまりの野。湖の夕日が、とても綺麗なんですよ。',
+          '北は天嶺の霊峰、東は白嶺の雪山。どちらへ行くにも足元に気をつけて。',
         ],
       },
     ],
     fireflies: { n: 24, seed: 11, box: { x: [-14, 14], y: [0.5, 1.8], z: [-2, 3] } },
     exits: [
-      { edge: 'east', at: 15.25, to: 'forest', spawn: { x: 70.2, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'east', at: 15.25, to: 'hakurei', spawn: { x: 325.2, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'north', at: -2.95, to: 'reihou', spawn: { x: 510, z: 3.6, row: 4, trail: [0, 1] } },
     ],
   },
-  forest: {
-    label: '森の小道',
+  daishinrin: {
+    label: '大森林',
     centerX: 85,
     bounds: { minX: 68.6, maxX: 102.5, minZ: -1.9, maxZ: 2.7 },
     fog: { color: 0x463257, near: 9, far: 30 },
     bg: 0x1e2b26,
     sun: { i: 1.9, pos: [71, 11, -4.5], tgt: [85, 0, 0.4] },
-    sub: '森の小道 ／ 移動： WASD・矢印キー ／ 西の端から湖畔へ、東の端から草原へ',
+    sub: '大森林 ／ 移動： WASD・矢印キー ／ 西の端から白嶺の雪山へ、南の端から海の底へ',
     backdrop: 'assets/far_forest.jpg',
     wadeZ: null,
     custom: 'forest',
@@ -965,10 +1017,11 @@ const REGIONS = {
       { tex: 'dirtPath', repeat: [12, 1], w: 38, d: 3.1, x: 85, y: 0.012, z: 0.4 },
     ],
     scatter: [
-      { t: 'pine', n: 30, seed: 7, x: [67.5, 103.5], zCenter: 0.4, offMin: 2.9, offMax: 6.3, s: [1.05, 1.7], frontS: 0.5 },
+      { t: 'tree', n: 30, seed: 7, x: [67.5, 103.5], zCenter: 0.4, offMin: 2.9, offMax: 6.3, s: [1.05, 1.7], frontS: 0.5 },
     ],
     props: [
-      { t: 'pine', x: 101.5, z: -2.4, s: 2.1 },
+      { t: 'tree', x: 101.5, z: -2.4, s: 2.1 },
+      { t: 'gtree', x: 97.5, z: -2.5 },
       { t: 'rock', x: 76, z: 1.9, s: 0.8 },
       { t: 'rock', x: 93, z: -1.7, s: 0.65 },
       { t: 'rock', x: 83.5, z: 2.0, s: 0.5 },
@@ -976,22 +1029,31 @@ const REGIONS = {
       { t: 'driftwood', x: 72.5, z: 1.9, rot: 0.9 },
       { t: 'signpost', x: 69.7, z: 2.3, rot: Math.PI },
     ],
-    npcs: [],
+    npcs: [
+      {
+        sheet: 'assets/yoru_sheet.png', h: 1.1, x: 90, z: -1.2, name: 'ヨル',
+        lines: [
+          '……気づかなかっただろう。ボクはヨル、この大森林の影だよ。',
+          '大森林は深い。迷ったら、ホタルの光を頼りにするといい。',
+          '南は海の底。浅瀬を渡る、不思議な場所だよ。',
+        ],
+      },
+    ],
     fireflies: { n: 16, seed: 23, box: { x: [69.5, 100.5], y: [0.4, 1.6], z: [-1.2, 2.2] } },
     exits: [
-      { edge: 'west', at: 69.4, to: 'lake', spawn: { x: 14.7, z: 0.6, row: 6, trail: 1 } },
-      { edge: 'east', at: 102.2, to: 'grassland', spawn: { x: 155.2, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'west', at: 69.4, to: 'hakurei', spawn: { x: 356.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'south', at: 2.55, to: 'umisoko', spawn: { x: 595, z: -2.6, row: 0, trail: [0, -1] } },
     ],
     spawn: { x: 70.2, z: 0.4, row: 2 },
   },
-  grassland: {
-    label: '草原',
+  youkai: {
+    label: '妖怪の里',
     centerX: 170,
     bounds: { minX: 153.4, maxX: 187.6, minZ: -3.4, maxZ: 4.6 },
     fog: { color: 0x463257, near: 14, far: 44 },
     bg: 0x2e3350,
     sun: { i: 2.3, pos: [156, 11, -4.5], tgt: [170, 0, 0.4] },
-    sub: '草原 ／ 移動： WASD・矢印キー ／ 西の端から森へ、東の端から岩場へ、北の端から花畑へ',
+    sub: '妖怪の里 ／ 移動： WASD・矢印キー ／ 北の端から海の底へ、東の端からジャングルへ',
     backdrop: 'assets/far_meadow.jpg',
     wadeZ: null,
     spawn: { x: 155.2, z: 0.4, row: 2 },
@@ -1002,12 +1064,12 @@ const REGIONS = {
     scatter: [
       { t: 'tuft', n: 1320, seed: 31, x: [154, 186], zCenter: 0.6, offMin: 1.7, offMax: 7.6, s: [1, 1], frontS: 0.55 },
       { t: 'tuft', n: 660, seed: 43, x: [154, 186], zCenter: 0.6, offMin: 1.7, offMax: 7.2, s: [1, 1], side: 1, frontS: 0.5 },
-      { t: 'pine', n: 10, seed: 37, x: [154.5, 186.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.5], frontS: 0.6 },
+      { t: 'tree', n: 10, seed: 37, x: [154.5, 186.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.5], frontS: 0.6 },
     ],
     props: [
       { t: 'torii', x: 176, z: -2.3 },
       { t: 'shrine', x: 176, z: -3.2 },
-      { t: 'pine', x: 186.4, z: -3.0, s: 1.8 },
+      { t: 'tree', x: 186.4, z: -3.0, s: 1.8 },
       { t: 'rock', x: 160, z: 2.7, s: 0.7 },
       { t: 'rock', x: 183, z: -1.8, s: 0.55 },
       { t: 'stump', x: 166, z: 3.5 },
@@ -1015,29 +1077,36 @@ const REGIONS = {
     ],
     npcs: [
       {
-        sheet: 'assets/mei_sheet.png', h: 1.08, x: 174.6, z: -1.6, name: 'メイ',
+        sheet: 'assets/tanurio_sheet.png', h: 1.04, x: 174.6, z: -1.6, name: 'タヌリオ',
         lines: [
-          'まあ、旅の方？ わたしはメイ。この祠の巫女をしています。',
-          'ここの草原は、夕方の風がいちばん気持ちいいんですよ。',
-          '祠へのお参りもどうぞ。旅の安全を、お祈りしますね。',
+          'おやおや、お客さんだポン。ボクはタヌリオ、この里の案内人。',
+          '妖怪の里へようこそだポン。みんな気のいい妖怪ばかりだポン。',
+          '北は海の底、東はジャングル。里の者はどっちにも行くポン。',
+        ],
+      },
+      {
+        sheet: 'assets/akane_sheet.png', h: 1.08, x: 181, z: -1.5, name: 'アカネ',
+        lines: [
+          'あら、珍しいお客さま。わたしはアカネ、この里の番人よ。',
+          '夕方の里はね、提灯の影が濃く見えて綺麗なの。',
+          'タヌリオとは長い付き合いよ。あの子の案内は確かだわ。',
         ],
       },
     ],
     fireflies: { n: 14, seed: 41, box: { x: [155, 186], y: [0.4, 1.6], z: [-2.5, 3.5] } },
     exits: [
-      { edge: 'west', at: 154.2, to: 'forest', spawn: { x: 101.7, z: 0.4, row: 6, trail: 1 } },
-      { edge: 'east', at: 187.2, to: 'rocky', spawn: { x: 240.2, z: 0.4, row: 2, trail: -1 } },
-      { edge: 'north', at: -3.2, to: 'flower', spawn: { x: 680, z: 3.6, row: 4, trail: [0, 1] } },
+      { edge: 'north', at: -3.2, to: 'umisoko', spawn: { x: 595, z: 3.6, row: 4, trail: [0, 1] } },
+      { edge: 'east', at: 187.2, to: 'jungle', spawn: { x: 664.8, z: 0.4, row: 2, trail: -1 } },
     ],
   },
-  rocky: {
-    label: '岩場',
+  shumatsu: {
+    label: '終末の大地',
     centerX: 255,
     bounds: { minX: 238.4, maxX: 272.6, minZ: -3.4, maxZ: 4.6 },
     fog: { color: 0x40304a, near: 15, far: 46 },
     bg: 0x35283e,
     sun: { i: 2.2, pos: [241, 11, -4.5], tgt: [255, 0, 0.4] },
-    sub: '岩場 ／ 移動： WASD・矢印キー ／ 西の端から草原へ、東の端から雪原へ',
+    sub: '終末の大地 ／ 移動： WASD・矢印キー ／ 西の端から天嶺の霊峰へ、南の端から白嶺の雪山へ',
     backdrop: 'assets/far_rock.jpg',
     wadeZ: null,
     spawn: { x: 240.2, z: 0.4, row: 2 },
@@ -1048,7 +1117,7 @@ const REGIONS = {
     scatter: [
       { t: 'rock', n: 26, seed: 53, x: [239, 271], zCenter: 0.6, offMin: 2.2, offMax: 7.8, s: [0.5, 1.1] },
       { t: 'tuft', n: 120, seed: 59, x: [239, 271], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.8, 0.8], frontS: 0.7 },
-      { t: 'pine', n: 6, seed: 61, x: [239.5, 270.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
+      { t: 'tree', n: 6, seed: 61, x: [239.5, 270.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
     ],
     props: [
       { t: 'rock', x: 262, z: -2.6, s: 2.6 },
@@ -1059,31 +1128,39 @@ const REGIONS = {
     ],
     npcs: [
       {
-        sheet: 'assets/iwao_sheet.png', h: 1.14, x: 258.5, z: -1.4, name: 'イワオ',
+        sheet: 'assets/kurogane_sheet.png', h: 1.12, x: 258.5, z: -1.4, name: 'クロガネ',
         lines: [
-          'おう、旅の人か。俺はイワオ、この岩場の番人だ。',
-          '見ての通り岩だらけだが、足元さえ気をつければいい場所だ。',
-          '東は雪原だ。寒さ対策なしに行くと、耳まで凍るぞ。',
+          'この荒れ地を守るのが俺の役目。通りたくば、覚悟を見せな。',
+          '終末の大地は、かつて都だった場所だ。……その剣、信じてみよう。',
+          '東の黄昏の地の奥に黄昏の城がある。関所はイワオが守っている。',
+        ],
+      },
+      {
+        sheet: 'assets/gou_sheet.png', h: 1.18, x: 247, z: -1.2, name: 'ゴウ',
+        lines: [
+          'ぶもぉぉ！ まっすぐ突っ込むのみ！',
+          'お前、いい目をしてるな。オラはゴウ。曲がるのは苦手だ。',
+          '腹が減った……里の団子が食いてぇなぁ。',
         ],
       },
     ],
     fireflies: { n: 12, seed: 67, box: { x: [240, 270], y: [0.4, 1.6], z: [-2.5, 3.5] } },
     exits: [
-      { edge: 'west', at: 239.2, to: 'grassland', spawn: { x: 186.7, z: 0.4, row: 6, trail: 1 } },
-      { edge: 'east', at: 272.2, to: 'snow', spawn: { x: 325.2, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'west', at: 239.2, to: 'reihou', spawn: { x: 526.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'south', at: 4.45, to: 'hakurei', spawn: { x: 340, z: -2.6, row: 0, trail: [0, -1] } },
     ],
   },
-  snow: {
-    label: '雪原',
+  hakurei: {
+    label: '白嶺の雪山',
     centerX: 340,
     bounds: { minX: 323.4, maxX: 357.6, minZ: -3.4, maxZ: 4.6 },
     fog: { color: 0x39466a, near: 13, far: 42 },
     bg: 0x2c3550,
     sun: { i: 2.0, pos: [326, 11, -4.5], tgt: [340, 0, 0.4] },
-    sub: '雪原 ／ 移動： WASD・矢印キー ／ 西の端から岩場へ、東の端から渓谷へ',
+    sub: '白嶺の雪山 ／ 移動： WASD・矢印キー ／ 北の端から終末の大地へ、西の端からはじまりの野へ、東の端から大森林へ',
     backdrop: 'assets/far_snow.jpg',
     snow: true,
-    snowDepth: 0.3,
+    snowDepth: 0.2,
     wadeZ: null,
     spawn: { x: 325.2, z: 0.4, row: 2 },
     grounds: [
@@ -1091,7 +1168,7 @@ const REGIONS = {
       { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 340, y: 0.012, z: 0.4 },
     ],
     scatter: [
-      { t: 'pine', n: 12, seed: 71, x: [324.5, 355.5], zCenter: 0.6, offMin: 4.6, offMax: 8.6, s: [0.9, 1.4], frontS: 0.6 },
+      { t: 'tree', n: 12, seed: 71, x: [324.5, 355.5], zCenter: 0.6, offMin: 4.6, offMax: 8.6, s: [0.9, 1.4], frontS: 0.6 },
       { t: 'rock', n: 10, seed: 73, x: [324, 356], zCenter: 0.6, offMin: 2.4, offMax: 7.6, s: [0.5, 0.9] },
       { t: 'tuft', n: 60, seed: 79, x: [324, 356], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.7, 0.7], frontS: 0.7 },
       { t: 'drift', n: 22, seed: 151, x: [324, 356], zCenter: 0.6, offMin: 1.9, offMax: 8, s: [0.7, 1.7] },
@@ -1106,7 +1183,7 @@ const REGIONS = {
       {
         sheet: 'assets/shiro_sheet.png', h: 1.02, x: 345.6, z: -1.5, name: 'シロ',
         lines: [
-          '……よくここまで来たね。ボクはシロ、この雪原に住んでる。',
+          '……よくここまで来たね。ボクはシロ、この雪山に住んでる。',
           '雪に足跡が残るから、誰が来たかすぐわかるんだ。',
           '祠にお参りしていくと、帰り道は不思議と楽になるよ。',
         ],
@@ -1114,29 +1191,30 @@ const REGIONS = {
     ],
     fireflies: { n: 8, seed: 83, box: { x: [325, 355], y: [0.4, 1.6], z: [-2.5, 3.5] } },
     exits: [
-      { edge: 'west', at: 324.2, to: 'rocky', spawn: { x: 271.7, z: 0.4, row: 6, trail: 1 } },
-      { edge: 'east', at: 357.2, to: 'valley', spawn: { x: 410.2, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'north', at: -3.2, to: 'shumatsu', spawn: { x: 255, z: 3.6, row: 4, trail: [0, 1] } },
+      { edge: 'west', at: 324.2, to: 'hajimari', spawn: { x: 14.7, z: 0.6, row: 6, trail: 1 } },
+      { edge: 'east', at: 357.2, to: 'daishinrin', spawn: { x: 70.2, z: 0.4, row: 2, trail: -1 } },
     ],
   },
-  valley: {
-    label: '渓谷',
+  daikeikoku: {
+    label: '大溪谷',
     centerX: 425,
     bounds: { minX: 408.4, maxX: 442.6, minZ: -3.4, maxZ: 4.6 },
     fog: { color: 0x2c4034, near: 12, far: 40 },
     bg: 0x24382c,
     sun: { i: 2.1, pos: [411, 11, -4.5], tgt: [425, 0, 0.4] },
-    sub: '渓谷 ／ 移動： WASD・矢印キー ／ 西の端から雪原へ、東の端から高原へ',
+    sub: '大溪谷 ／ 移動： WASD・矢印キー ／ 西の端から海の底へ、南の端からジャングルへ',
     backdrop: 'assets/far_valley.jpg',
+    custom: 'valley',
     wadeZ: null,
     spawn: { x: 410.2, z: 0.4, row: 2 },
     grounds: [
       { tex: 'forestFloor', repeat: [13, 6], w: 40, d: 18, x: 425, y: 0, z: 0.6 },
-      { color: 0x3f6186, w: 40, d: 2.2, x: 425, y: 0.008, z: -2.2 },
       { tex: 'dirtPath', repeat: [13, 1], w: 40, d: 3.1, x: 425, y: 0.012, z: 0.4 },
     ],
     scatter: [
       { t: 'rock', n: 14, seed: 107, x: [409, 441], zCenter: 0.6, offMin: 2.4, offMax: 7.8, s: [0.6, 1.2] },
-      { t: 'pine', n: 10, seed: 109, x: [409.5, 440.5], zCenter: 0.6, offMin: 4.8, offMax: 8.6, s: [0.9, 1.4], frontS: 0.6 },
+      { t: 'tree', n: 10, seed: 109, x: [409.5, 440.5], zCenter: 0.6, offMin: 4.8, offMax: 8.6, s: [0.9, 1.4], frontS: 0.6 },
       { t: 'tuft', n: 80, seed: 113, x: [409, 441], zCenter: 0.6, offMin: 1.8, offMax: 6.8, s: [0.8, 0.8], frontS: 0.7 },
     ],
     props: [
@@ -1145,30 +1223,21 @@ const REGIONS = {
       { t: 'driftwood', x: 420, z: 2.6, rot: 0.5 },
       { t: 'signpost', x: 409.7, z: 2.3, rot: Math.PI },
     ],
-    npcs: [
-      {
-        sheet: 'assets/mizuchi_sheet.png', h: 1.06, x: 430, z: -0.9, name: 'ミズチ',
-        lines: [
-          'あら、人間。アタシはミズチ、この渓谷の主よ。',
-          '川の音を聞いてごらん。何百年も、こうして流れてるの。',
-          '東の高原は風が強いの。飛ばされないようにね。',
-        ],
-      },
-    ],
+    npcs: [],
     fireflies: { n: 14, seed: 89, box: { x: [410, 440], y: [0.4, 1.6], z: [-2.5, 3.5] } },
     exits: [
-      { edge: 'west', at: 409.2, to: 'snow', spawn: { x: 356.7, z: 0.4, row: 6, trail: 1 } },
-      { edge: 'east', at: 442.2, to: 'highland', spawn: { x: 495.2, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'west', at: 409.2, to: 'umisoko', spawn: { x: 611.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'south', at: 4.45, to: 'jungle', spawn: { x: 680, z: -2.6, row: 0, trail: [0, -1] } },
     ],
   },
-  highland: {
-    label: '高原',
+  reihou: {
+    label: '天嶺の霊峰',
     centerX: 510,
     bounds: { minX: 493.4, maxX: 527.6, minZ: -3.4, maxZ: 4.6 },
     fog: { color: 0x4a3a5e, near: 16, far: 48 },
     bg: 0x33304e,
     sun: { i: 2.4, pos: [496, 11, -4.5], tgt: [510, 0, 0.4] },
-    sub: '高原 ／ 移動： WASD・矢印キー ／ 西の端から渓谷へ、東の端から沼地へ',
+    sub: '天嶺の霊峰 ／ 移動： WASD・矢印キー ／ 南の端からはじまりの野へ、東の端から終末の大地へ',
     backdrop: 'assets/far_highland.jpg',
     wadeZ: null,
     spawn: { x: 495.2, z: 0.4, row: 2 },
@@ -1179,38 +1248,38 @@ const REGIONS = {
     scatter: [
       { t: 'tuft', n: 500, seed: 127, x: [494, 526], zCenter: 0.6, offMin: 1.7, offMax: 7.6, s: [0.9, 0.9], frontS: 0.6 },
       { t: 'rock', n: 12, seed: 131, x: [494, 526], zCenter: 0.6, offMin: 2.4, offMax: 7.8, s: [0.5, 1] },
-      { t: 'pine', n: 4, seed: 137, x: [494.5, 525.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
+      { t: 'tree', n: 4, seed: 137, x: [494.5, 525.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
     ],
     props: [
       { t: 'torii', x: 505, z: -2.3 },
       { t: 'shrine', x: 505, z: -3.2 },
-      { t: 'pine', x: 520, z: -3.0, s: 2.0 },
+      { t: 'tree', x: 520, z: -3.0, s: 2.0 },
       { t: 'signpost', x: 494.7, z: 2.3, rot: Math.PI },
     ],
     npcs: [
       {
-        sheet: 'assets/hayate_sheet.png', h: 1.16, x: 503.6, z: -1.5, name: 'ハヤテ',
+        sheet: 'assets/kogane_sheet.png', h: 1.06, x: 503.6, z: -1.5, name: 'コガネ',
         lines: [
-          'やあ、いい風だろ？ オレはハヤテ、この高原を走るのが日課でね。',
-          'ここから見る夕日は格別だ。あんたも少し休んでいきな。',
-          '東の沼地は足元が悪い。気をつけて行けよ。',
+          '霊峰の朝一番の声、聞かせてあげる！ わたしはコガネ。',
+          '天嶺の霊峰は空にいちばん近い場所。雲が足元を流れるの。',
+          '東は終末の大地。黄昏の城へ向かうなら、覚悟していくといいわ。',
         ],
       },
     ],
     fireflies: { n: 10, seed: 97, box: { x: [495, 525], y: [0.4, 1.6], z: [-2.5, 3.5] } },
     exits: [
-      { edge: 'west', at: 494.2, to: 'valley', spawn: { x: 441.7, z: 0.4, row: 6, trail: 1 } },
-      { edge: 'east', at: 527.2, to: 'marsh', spawn: { x: 580.2, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'south', at: 4.45, to: 'hajimari', spawn: { x: 0, z: -2.6, row: 0, trail: [0, -1] } },
+      { edge: 'east', at: 527.2, to: 'shumatsu', spawn: { x: 240.2, z: 0.4, row: 2, trail: -1 } },
     ],
   },
-  marsh: {
-    label: '沼地',
+  umisoko: {
+    label: '海の底',
     centerX: 595,
     bounds: { minX: 578.4, maxX: 612.6, minZ: -3.4, maxZ: 4.6 },
     fog: { color: 0x2e4038, near: 8, far: 26 },
     bg: 0x1f2e26,
     sun: { i: 1.7, pos: [581, 11, -4.5], tgt: [595, 0, 0.4] },
-    sub: '沼地 ／ 移動： WASD・矢印キー ／ 西の端から高原へ戻る',
+    sub: '海の底 ／ 移動： WASD・矢印キー ／ 北の端から大森林へ、東の端から大溪谷へ、南の端から妖怪の里へ',
     backdrop: 'assets/far_marsh.jpg',
     wadeZ: null,
     spawn: { x: 580.2, z: 0.4, row: 2 },
@@ -1231,29 +1300,22 @@ const REGIONS = {
       { t: 'stump', x: 608, z: 2.6, rot: 1.1 },
       { t: 'signpost', x: 579.7, z: 2.3, rot: Math.PI },
     ],
-    npcs: [
-      {
-        sheet: 'assets/tanurio_sheet.png', h: 1.04, x: 592.5, z: -1.3, name: 'タヌリオ',
-        lines: [
-          'おやおや、お客さんだポン。ボクはタヌリオ、この沼の案内人。',
-          '沼はね、見た目より深いところがあるポン。道から外れちゃダメだポン。',
-          '夕方のホタルは、この沼がいちばん綺麗だと思うポン。',
-        ],
-      },
-    ],
+    npcs: [],
     fireflies: { n: 26, seed: 103, box: { x: [580, 610], y: [0.4, 1.6], z: [-2.5, 3.5] } },
     exits: [
-      { edge: 'west', at: 579.2, to: 'highland', spawn: { x: 526.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'north', at: -3.2, to: 'daishinrin', spawn: { x: 85, z: 2.2, row: 4, trail: [0, 1] } },
+      { edge: 'east', at: 612.2, to: 'daikeikoku', spawn: { x: 410.2, z: 0.4, row: 2, trail: -1 } },
+      { edge: 'south', at: 4.45, to: 'youkai', spawn: { x: 170, z: -2.6, row: 0, trail: [0, -1] } },
     ],
   },
-  flower: {
-    label: '花畑',
+  jungle: {
+    label: 'ジャングル',
     centerX: 680,
     bounds: { minX: 663.4, maxX: 697.6, minZ: -3.4, maxZ: 4.6 },
     fog: { color: 0x50304a, near: 14, far: 44 },
     bg: 0x38263e,
     sun: { i: 2.3, pos: [666, 11, -4.5], tgt: [680, 0, 0.4] },
-    sub: '花畑 ／ 移動： WASD・矢印キー ／ 南の端から草原へ戻る',
+    sub: 'ジャングル ／ 移動： WASD・矢印キー ／ 西の端から妖怪の里へ、北の端から大溪谷へ',
     backdrop: 'assets/far_flower.jpg',
     wadeZ: null,
     spawn: { x: 680, z: 3.6, row: 4 },
@@ -1264,27 +1326,20 @@ const REGIONS = {
     scatter: [
       { t: 'flower', n: 380, seed: 157, x: [664, 696], zCenter: 0.6, offMin: 1.8, offMax: 8.4, s: [0.7, 1.3] },
       { t: 'tuft', n: 200, seed: 167, x: [664, 696], zCenter: 0.6, offMin: 1.7, offMax: 7.6, s: [0.8, 0.8], frontS: 0.6 },
-      { t: 'pine', n: 5, seed: 173, x: [664.5, 695.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
+      { t: 'tree', n: 5, seed: 173, x: [664.5, 695.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.3], frontS: 0.6 },
     ],
     props: [
+      { t: 'wtree', x: 676, z: -2.9 },
       { t: 'torii', x: 693, z: -2.3 },
       { t: 'shrine', x: 693, z: -3.2 },
       { t: 'stump', x: 676, z: 3.2 },
       { t: 'signpost', x: 666.5, z: 2.6, rot: 0 },
     ],
-    npcs: [
-      {
-        sheet: 'assets/akane_sheet.png', h: 1.08, x: 672, z: -1.5, name: 'アカネ',
-        lines: [
-          'あら、珍しいお客さま。わたしはアカネ、この花畑の番人よ。',
-          '夕方の花はね、昼より少しだけ色が濃く見えるの。',
-          '南へ戻れば草原よ。メイの祠にも寄ってあげてね。',
-        ],
-      },
-    ],
+    npcs: [],
     fireflies: { n: 16, seed: 163, box: { x: [665, 695], y: [0.4, 1.6], z: [-2.5, 3.5] } },
     exits: [
-      { edge: 'south', at: 4.4, to: 'grassland', spawn: { x: 170, z: -2.6, row: 0, trail: [0, -1] } },
+      { edge: 'west', at: 664.2, to: 'youkai', spawn: { x: 186.7, z: 0.4, row: 6, trail: 1 } },
+      { edge: 'north', at: -3.2, to: 'daikeikoku', spawn: { x: 425, z: 3.6, row: 4, trail: [0, 1] } },
     ],
   },
 };
@@ -1341,6 +1396,9 @@ function buildRegion(id, def) {
   const placeProp = (p, r) => {
     const snowy = !!def.snow; // 雪原では各小物に雪を積もらせる
     if (p.t === 'pine') placePine(group, colliders, p.x, p.z, p.s || 1, r, snowy);
+    else if (p.t === 'tree') placeTree(group, colliders, p.x, p.z, p.s || 1, r, snowy);
+    else if (p.t === 'gtree') placeBigTree(group, colliders, p.x, p.z, 'tree_great.png', 644 / 592, 4.3, 1.0);
+    else if (p.t === 'wtree') placeBigTree(group, colliders, p.x, p.z, 'tree_wide.png', 532 / 468, 3.1, 0.9);
     else if (p.t === 'rock') placeRock(group, colliders, p.x, p.z, p.s || 1, r, snowy);
     else if (p.t === 'driftwood') placeDriftwood(group, colliders, p.x, p.z, p.rot || 0);
     else if (p.t === 'stump') placeStump(group, colliders, p.x, p.z, snowy);
@@ -1377,7 +1435,7 @@ function buildRegion(id, def) {
 for (const [id, def] of Object.entries(REGIONS)) buildRegion(id, def);
 
 // ---------- 地方の切り替えと画面遷移 ----------
-let area = 'lake';
+let area = 'hajimari';
 // ---------- 時間経過（早朝→朝→昼→夕→夜がゆっくり巡る。全地方共通の空） ----------
 const DAY_LEN = 300; // 1日 = 300秒
 // fog/bg が null のキー（夕）は地方データの値を使う＝その地方本来の夕景に戻る
@@ -1477,7 +1535,7 @@ function startTransition(exit) {
 // 初期配置（開始地方の spawn へ。?area=<地方id> で開始地方を変えられる＝動作確認用）
 {
   const startId = new URLSearchParams(location.search).get('area');
-  const startRegion = (startId && REGIONS[startId] && REGIONS[startId].spawn) ? startId : 'lake';
+  const startRegion = (startId && REGIONS[startId] && REGIONS[startId].spawn) ? startId : 'hajimari';
   const sp = { ...REGIONS[startRegion].spawn };
   const xParam = parseFloat(new URLSearchParams(location.search).get('x'));
   if (Number.isFinite(xParam)) { // 動作確認用: ?x=<数値> で開始位置のxを上書きできる
@@ -1494,7 +1552,7 @@ function startTransition(exit) {
   setFrameC(yui, sp.row, 1);
   setFrameC(rei, sp.row, 1);
   setRegion(startRegion);
-  if (startRegion !== 'lake') {
+  if (startRegion !== 'hajimari') {
     camTarget.set(sp.x, 0, sp.z);
     camPos.set(sp.x, 4.6 + sp.z * 0.18, sp.z + 8.4);
   }
@@ -1687,6 +1745,8 @@ function animate() {
   updateCompanion(rei, trailPoint(1.1), 1.1, dt, wadeZ);
   resolveCollisions(rei.position, 0.3);
 
+  if ((tuftTick++ & 15) === 0) updateTuftVisibility();
+
   // エリア遷移（地方データの exits に従う）
   if (!transitioning) {
     for (const ex of R.exits || []) {
@@ -1738,7 +1798,7 @@ function animate() {
   camera.lookAt(camTarget.x, 2.0, camTarget.z - 1.6);
 
   // 背景ボードと夕日の位置（カメラに追随。湖畔エリアのみ）
-  if (area === 'lake' && lakeRefs.mountains) {
+  if (area === 'hajimari' && lakeRefs.mountains) {
     lakeRefs.mountains.position.x = camTarget.x + 23;
     lakeRefs.sunGroup.position.x = camTarget.x - 11;
     waterUniforms.uSunPos.value.copy(lakeRefs.sunGroup.position);
