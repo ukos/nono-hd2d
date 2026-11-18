@@ -228,19 +228,33 @@ const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4a33, roughness: 1,
 const pineMats = [0x2e5940, 0x35684a, 0x3d7350].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true }));
 function makePine(scale = 1, rng = Math.random) {
   const g = new THREE.Group();
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.14, 0.8, 6), trunkMat);
-  trunk.position.y = 0.4;
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.17, 0.95, 7), trunkMat);
+  trunk.position.y = 0.47;
   trunk.castShadow = true;
   g.add(trunk);
-  const tiers = [[1.08, 1.25, 0.95], [0.82, 1.1, 1.65], [0.54, 0.95, 2.3]];
+  const rot = rng() * Math.PI * 2;
+  // 葉は4段。頂点を用意したハッシュで揺らして輪郭を有機的にし、段ごとに芯を少しずらす
+  const tiers = [[1.12, 1.3, 0.9], [0.94, 1.2, 1.5], [0.72, 1.1, 2.08], [0.47, 0.95, 2.62]];
   tiers.forEach(([r, h, y], i) => {
-    const cone = new THREE.Mesh(new THREE.ConeGeometry(r, h, 8), pineMats[i % pineMats.length]);
-    cone.position.y = y;
+    const geo = new THREE.ConeGeometry(r, h, 10, 3);
+    const pos = geo.attributes.position;
+    for (let vi = 0; vi < pos.count; vi++) {
+      const vx = pos.getX(vi), vy = pos.getY(vi), vz = pos.getZ(vi);
+      const n1 = Math.sin((vx + i * 7.3) * 127.1 + vy * 311.7 + (vz - i * 3.1) * 74.7) * 43758.5453;
+      const n2 = Math.sin((vz - i * 5.7) * 269.5 + vy * 183.3 + (vx + i * 1.9) * 97.4) * 28001.8384;
+      pos.setX(vi, vx + (n1 - Math.floor(n1) - 0.5) * 0.16 * r);
+      pos.setZ(vi, vz + (n2 - Math.floor(n2) - 0.5) * 0.16 * r);
+    }
+    geo.computeVertexNormals();
+    const cone = new THREE.Mesh(geo, pineMats[i % pineMats.length]);
+    cone.position.set(Math.sin(rot + i * 2.4) * 0.045, y, Math.cos(rot + i * 2.4) * 0.045);
+    cone.rotation.y = rot + i * 1.7;
     cone.castShadow = true;
     g.add(cone);
   });
   g.scale.setScalar(scale);
-  g.rotation.y = rng() * Math.PI * 2;
+  g.rotation.y = rot;
+  g.rotation.z = Math.sin(rot * 3.7) * 0.022; // わずかな傾き
   return g;
 }
 function placePine(parent, colliders, x, z, scale = 1, rng = Math.random) {
@@ -396,6 +410,15 @@ function makeChar(path, h, rows = 3, parent = scene) {
   parent.add(m);
   return m;
 }
+// 向きの行（0=S,1=SE,2=E,3=NE,4=N,5=NW,6=W,7=SW）
+// 上下左右は広めに取る：スティックを右に倒しても親指が少し上にあるだけで斜め（背面）に化けるのを防ぐ
+function rowFromVel(vx, vy) {
+  const ax = Math.abs(vx), ay = Math.abs(vy);
+  if (ax > ay * 1.6) return vx > 0 ? 2 : 6;
+  if (ay > ax * 1.6) return vy > 0 ? 0 : 4;
+  if (vx > 0) return vy > 0 ? 1 : 3;
+  return vy > 0 ? 7 : 5;
+}
 const WALK_SEQ = [0, 1, 2, 1];
 // 方向ごとの歩幅[m/コマ]（背面は足の振りが見えない絵なので、速く回さず他方向と揃える）
 const STEP_LENS = [0.42, 0.40, 0.42, 0.38, 0.42, 0.38, 0.42, 0.40];
@@ -412,6 +435,17 @@ for (const ch of [yui, rei]) {
   ch.userData.dirRow = 0;
   ch.userData.rippleTimer = 0;
 }
+// パーティの周りだけを暖かく照らす提灯のような光（周囲の暗さはそのまま残す）
+const partyLight = new THREE.PointLight(0xffa050, 9, 10, 1.7);
+partyLight.position.set(0, 1.6, 0.9);
+scene.add(partyLight);
+const partyGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: glowTex, color: 0xff9a3c, transparent: true, opacity: 0.13,
+  depthWrite: false, blending: THREE.AdditiveBlending,
+}));
+partyGlow.scale.setScalar(5.4);
+partyGlow.position.set(0, 0.9, 0.6);
+scene.add(partyGlow);
 // 移動まわりの状態
 const vel = new THREE.Vector2(0, 0); // 現在の移動速度（慣性つき）
 let dirRow = 0; // 0=S,1=SE,2=E,3=NE,4=N,5=NW,6=W,7=SW（アトラスの行と一致）
@@ -455,10 +489,7 @@ function updateCompanion(ch, target, dt, wadeZ) {
   ch.position.x = THREE.MathUtils.clamp(px + ud.vel.x * dt, walkBounds.minX, walkBounds.maxX);
   ch.position.z = THREE.MathUtils.clamp(pz + ud.vel.y * dt, walkBounds.minZ, walkBounds.maxZ);
   const moved = Math.hypot(ch.position.x - px, ch.position.z - pz);
-  if (spd > 0.35) {
-    const ang = Math.atan2(ud.vel.x, ud.vel.y);
-    ud.dirRow = ((Math.round(ang / (Math.PI / 4)) % 8) + 8) % 8;
-  }
+  if (spd > 0.35) ud.dirRow = rowFromVel(ud.vel.x, ud.vel.y);
   ud.walkPhase += moved / STEP_LENS[ud.dirRow];
   if (spd > 0.25) {
     setFrameC(ch, ud.dirRow, WALK_SEQ[Math.floor(ud.walkPhase) % 4]);
@@ -1003,10 +1034,7 @@ function animate() {
     player.position.z = THREE.MathUtils.clamp(pz + vel.y * dt, walkBounds.minZ, walkBounds.maxZ);
     resolveCollisions(player.position, 0.3);
     const moved = Math.hypot(player.position.x - px, player.position.z - pz);
-    if (spd > 0.35) {
-      const ang = Math.atan2(vel.x, vel.y);
-      dirRow = ((Math.round(ang / (Math.PI / 4)) % 8) + 8) % 8;
-    }
+    if (spd > 0.35) dirRow = rowFromVel(vel.x, vel.y);
     walkPhase += moved / STEP_LENS[dirRow];
     if (spd > 0.25) {
       const col = WALK_SEQ[Math.floor(walkPhase) % 4];
@@ -1025,6 +1053,10 @@ function animate() {
     setFrameC(player, dirRow, 1);
     player.position.y = 0;
   }
+
+  // 提灯の光をパーティに追随させる
+  partyLight.position.set(player.position.x, 1.6, player.position.z + 0.3);
+  partyGlow.position.set(player.position.x, 0.9, player.position.z + 0.2);
 
   // 仲間の追従：プレイヤーの軌跡を記録し、ユイは0.55m後・レイは1.1m後をたどる（2026-11-18 間隔を半分に）
   trailAcc += Math.hypot(player.position.x - pPrevX, player.position.z - pPrevZ);
