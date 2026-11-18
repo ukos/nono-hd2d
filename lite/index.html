@@ -479,7 +479,7 @@ function seedTrail(x, z, signX, signZ) {
   trail.length = 0;
   for (let i = 0; i <= 16; i++) trail.push({ x: x + signX * i * 0.2, z: z + signZ * i * 0.2 });
 }
-function updateCompanion(ch, target, dt, wadeZ) {
+function updateCompanion(ch, target, station, dt, wadeZ) {
   const ud = ch.userData;
   const dx = target.x - ch.position.x, dz = target.z - ch.position.z;
   const dist = Math.hypot(dx, dz);
@@ -494,7 +494,14 @@ function updateCompanion(ch, target, dt, wadeZ) {
   ch.position.x = THREE.MathUtils.clamp(px + ud.vel.x * dt, walkBounds.minX, walkBounds.maxX);
   ch.position.z = THREE.MathUtils.clamp(pz + ud.vel.y * dt, walkBounds.minZ, walkBounds.maxZ);
   const moved = Math.hypot(ch.position.x - px, ch.position.z - pz);
-  if (spd > 0.35) ud.dirRow = rowFromVel(ud.vel.x, ud.vel.y);
+  if (spd > 0.35) {
+    // 向きは追いかけ速度でなく軌跡の進行方向で決める。
+    // 速度基準だと、目標点を追い越した瞬間に反転して後ろを向いてしまうため
+    const ahead = trailPoint(Math.max(0, station - 0.25));
+    const behind = trailPoint(station + 0.25);
+    const pvx = ahead.x - behind.x, pvz = ahead.z - behind.z;
+    if (pvx * pvx + pvz * pvz > 0.0001) ud.dirRow = rowFromVel(pvx, pvz);
+  }
   ud.walkPhase += moved / STEP_LENS[ud.dirRow];
   if (spd > 0.25) {
     setFrameC(ch, ud.dirRow, WALK_SEQ[Math.floor(ud.walkPhase) % 4]);
@@ -1089,9 +1096,9 @@ function animate() {
     for (let i = 0; i < trail.length - 1; i++) total += Math.hypot(trail[i].x - trail[i + 1].x, trail[i].z - trail[i + 1].z);
     while (total > 3.4 && trail.length > 2) trail.pop();
   }
-  updateCompanion(yui, trailPoint(0.55), dt, wadeZ);
+  updateCompanion(yui, trailPoint(0.55), 0.55, dt, wadeZ);
   resolveCollisions(yui.position, 0.3);
-  updateCompanion(rei, trailPoint(1.1), dt, wadeZ);
+  updateCompanion(rei, trailPoint(1.1), 1.1, dt, wadeZ);
   resolveCollisions(rei.position, 0.3);
 
   // エリア遷移（地方データの exits に従う）
@@ -1175,7 +1182,7 @@ function animate() {
   // デバッグ表示（向き反転の切り分け用）
   if (t - dbgT > 0.12) {
     dbgT = t;
-    dbgEl.textContent = `stick ${stickVec.x.toFixed(2)},${stickVec.y.toFixed(2)} vel ${vel.x.toFixed(2)},${vel.y.toFixed(2)} row ${dirRow}`;
+    dbgEl.textContent = `P${dirRow} Y${yui.userData.dirRow} R${rei.userData.dirRow} stick ${stickVec.x.toFixed(2)},${stickVec.y.toFixed(2)} vel ${vel.x.toFixed(2)},${vel.y.toFixed(2)}`;
   }
 
   composer.render();
