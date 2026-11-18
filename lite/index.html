@@ -948,6 +948,7 @@ const REGIONS = {
     ],
     scatter: [
       { t: 'tuft', n: 1320, seed: 31, x: [154, 186], zCenter: 0.6, offMin: 1.7, offMax: 8.8, s: [1, 1] },
+      { t: 'tuft', n: 660, seed: 43, x: [154, 186], zCenter: 0.6, offMin: 1.7, offMax: 8.8, s: [1, 1], side: 1 },
       { t: 'pine', n: 10, seed: 37, x: [154.5, 186.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.5], frontS: 0.6 },
     ],
     props: [
@@ -1015,7 +1016,7 @@ function buildRegion(id, def) {
     const srng = mulberry32(s.seed);
     for (let i = 0; i < s.n; i++) {
       const x = s.x[0] + srng() * (s.x[1] - s.x[0]);
-      const side = i % 2 === 0 ? -1 : 1;
+      const side = s.side ? s.side : (i % 2 === 0 ? -1 : 1); // side指定があればその側だけに散布
       const z = s.zCenter + side * (s.offMin + srng() * (s.offMax - s.offMin));
       // 手前側（カメラ側）の木は背を低くして、道と一行を見えやすくする
       const sc = (s.s[0] + srng() * (s.s[1] - s.s[0])) * (side > 0 && s.frontS ? s.frontS : 1);
