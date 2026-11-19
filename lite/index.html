@@ -43,13 +43,12 @@
     cursor:pointer; font-family:"Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; }
   #splash { position:fixed; inset:0; z-index:15;
     background:
-      radial-gradient(95vmin 75vmin at 50% 44%, #3a3350 0%, rgba(35,33,44,0) 62%),
-      linear-gradient(180deg, #23212c 0%, #282633 55%, #352f42 100%);
+      radial-gradient(130vmin 105vmin at 50% 46%, #282633 0%, #23212c 52%, #1c1a25 100%);
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
     transition:opacity .6s; cursor:pointer; }
   #splash img { width:min(86vmin, 560px); height:auto;
-    -webkit-mask-image: radial-gradient(128% 128% at 50% 46%, #000 42%, transparent 78%);
-    mask-image: radial-gradient(128% 128% at 50% 46%, #000 42%, transparent 78%); }
+    -webkit-mask-image: radial-gradient(132% 132% at 50% 46%, #000 28%, transparent 64%);
+    mask-image: radial-gradient(132% 132% at 50% 46%, #000 28%, transparent 64%); }
   #splash .hint { color:#ffe9c9; font-size:13px; letter-spacing:.14em;
     font-family:"Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
     animation: splashBlink 1.6s ease-in-out infinite; }
@@ -244,12 +243,10 @@ function makeGroundTexture(key) {
   } else {
     t = groundTexture(td.base, td.dots, td.patch);
   }
-  // 有機質な地面はミラー繰り返しにして、タイルの明暗ムラが市松模様に見えるのを防ぐ
-  if (MIRROR_GROUND_KEYS.has(key)) t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping;
   t.anisotropy = MAX_ANISO;
   return t;
 }
-const MIRROR_GROUND_KEYS = new Set(['grass', 'sand', 'forestFloor', 'meadow', 'meadowDusk', 'dirtPath', 'wetbank', 'rock', 'snow', 'highland', 'ice', 'lavarock', 'lava', 'marsh']);
+const ORGANIC_GROUND_KEYS = new Set(['grass', 'sand', 'forestFloor', 'meadow', 'meadowDusk', 'dirtPath', 'wetbank', 'rock', 'snow', 'highland', 'ice', 'lavarock', 'lava', 'marsh']); // 有機質な地面はリピートを細かくして模様を粒状に戻す
 // 帯状の地面（小道・砂浜）の縁を、ギザギザに透かして下の地面へ馴染ませるアルファ
 function stripAlphaTexture() {
   const c = document.createElement('canvas'); c.width = c.height = 256;
@@ -1849,9 +1846,10 @@ function buildRegion(id, def) {
   }
   for (const g of def.grounds || []) {
     let mat;
+    const gm = ORGANIC_GROUND_KEYS.has(g.tex) ? 3 : 2; // 高精細化: 模様を細かく（有機質はより細かく）
     if (g.tex) {
       const tex = makeGroundTexture(g.tex);
-      tex.repeat.set(g.repeat[0] * 2, g.repeat[1] * 2); // 高精細化: 模様を細かく
+      tex.repeat.set(g.repeat[0] * gm, g.repeat[1] * gm);
       mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 1 });
     } else {
       mat = new THREE.MeshStandardMaterial({ color: g.color, roughness: 1 });
@@ -1860,7 +1858,7 @@ function buildRegion(id, def) {
       if (!_stripAlpha) { _stripAlpha = stripAlphaTexture(); _softAlpha = softAlphaTexture(); }
       const at = (g.strip ? _stripAlpha : _softAlpha).clone();
       at.wrapS = at.wrapT = THREE.RepeatWrapping;
-      at.repeat.set(g.repeat ? g.repeat[0] * 2 : 1, g.repeat ? g.repeat[1] * 2 : 1);
+      at.repeat.set(g.repeat ? g.repeat[0] * gm : 1, g.repeat ? g.repeat[1] * gm : 1);
       at.needsUpdate = true;
       mat.transparent = true;
       mat.alphaMap = at;
@@ -1875,7 +1873,7 @@ function buildRegion(id, def) {
     const g0 = (def.grounds || [])[0];
     if (g0) {
       const tex = makeGroundTexture('snow');
-      tex.repeat.set(26, 12);
+      tex.repeat.set(39, 18);
       const m = new THREE.Mesh(
         new THREE.PlaneGeometry(g0.w, g0.d),
         new THREE.MeshStandardMaterial({ map: tex, roughness: 1 })
@@ -1982,6 +1980,7 @@ function applyTimeOfDay(dt) {
   if (lakeRefs.sunMats) { const so = mix(k0.sunVis, k1.sunVis); lakeRefs.sunMats[0].opacity = 0.55 * so; lakeRefs.sunMats[1].opacity = so; }
   const rt = REGION_RT[area];
   if (rt && rt.backdropMat) rt.backdropMat.color.setRGB(mix(k0.tint[0], k1.tint[0]), mix(k0.tint[1], k1.tint[1]), mix(k0.tint[2], k1.tint[2]));
+  if (lakeRefs.mountains) lakeRefs.mountains.material.color.setRGB(mix(k0.tint[0], k1.tint[0]), mix(k0.tint[1], k1.tint[1]), mix(k0.tint[2], k1.tint[2]));
   const txt = A.sub + ' ／ いま ' + phaseName;
   if (txt !== lastHudText) { lastHudText = txt; document.getElementById('hudSub').textContent = txt; }
 }
