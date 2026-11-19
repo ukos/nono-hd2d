@@ -418,21 +418,22 @@ function treeTex(name) {
   return TREE_TEX[name];
 }
 function placeTree(parent, colliders, x, z, s = 1, rng = Math.random, snowy = false) {
-  // 広葉樹のビルボード（本編の木の形に合わせたドット絵。針葉樹の低ポリ松に代わる通常の木）
-  let tex, ar;
-  if (snowy) { tex = treeTex('tree_snow.png'); ar = 376 / 404; }
-  else if (rng() < 0.36) { tex = treeTex('tree_tall.png'); ar = 368 / 484; }
-  else if (rng() < 0.5) { tex = treeTex('tree_round.png'); ar = 433 / 469; }
-  else { tex = treeTex('tree_dense.png'); ar = 1.0; }
-  const h = 2.6 * s;
-  billboard(parent, tex, h * ar, h, x, z, { shadow: true, fixed: true });
-  blobShadow(parent, h * ar * 0.95, x, z, 0.30); // 接地の影で地面に座らせる
+  // ローポリ＋質感の広葉樹（本物の立体なので、カメラで回す必要もない）
+  const t = makeTree3D(s, rng, { snowy });
+  t.position.set(x, 0, z);
+  parent.add(t);
+  blobShadow(parent, 2.3 * s, x, z, 0.30);
   colliders.push({ x, z, r: 0.3 * s + 0.08 });
+  return t;
 }
 function placeBigTree(parent, colliders, x, z, texName, ar, h, r) {
-  billboard(parent, treeTex(texName), h * ar, h, x, z, { shadow: true, fixed: true });
-  blobShadow(parent, h * ar * 0.9, x, z, 0.32);
+  const wide = texName === 'tree_wide.png';
+  const t = makeTree3D(h / 2.65, Math.random, { wide, door: texName === 'tree_great.png' });
+  t.position.set(x, 0, z);
+  parent.add(t);
+  blobShadow(parent, h * (wide ? 1.05 : 0.8), x, z, 0.32);
   colliders.push({ x, z, r });
+  return t;
 }
 const rockMats = [0x8d8d96, 0x7c7c86, 0x9a9aa2].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true }));
 function makeRock(scale = 1, rng = Math.random) {
@@ -454,16 +455,72 @@ function makeRock(scale = 1, rng = Math.random) {
   return m;
 }
 function placeRock(parent, colliders, x, z, scale = 1, rng = Math.random, snowy = false) {
-  // 岩もドット絵ビルボードに統一（低ポリ3Dは Unity へ引き継げないため）
-  let tex, ar;
-  if (snowy) { tex = treeTex('rock_snow.png'); ar = 741 / 721; }
-  else if (rng() < 0.5) { tex = treeTex('rock_boulder.png'); ar = 742 / 722; }
-  else { tex = treeTex('rock_moss.png'); ar = 744 / 721; }
-  const h = 1.15 * scale;
-  const m = billboard(parent, tex, h * ar, h, x, z, { shadow: true, fixed: true });
-  blobShadow(parent, h * ar * 1.05, x, z, 0.30);
+  // ローポリ＋質感の岩（粗い多面体に岩肌の質感を貼る）
+  const m = makeRock3D(scale, rng, snowy);
+  m.position.set(x, 0.24 * scale, z);
+  parent.add(m);
+  blobShadow(parent, 1.2 * scale, x, z, 0.30);
   colliders.push({ x, z, r: 0.5 * scale + 0.12 });
   return m;
+}
+// ---- ローポリ＋質感テクスチャー（岩・広葉樹） ----
+const surfTexCache = {};
+function surfTex(name, rx = 2, ry = 2) {
+  if (!surfTexCache[name]) {
+    const t = loadTex('assets/' + name);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(rx, ry);
+    surfTexCache[name] = t;
+  }
+  return surfTexCache[name];
+}
+function jitterGeo(geo, seed = 0) {
+  const posA = geo.attributes.position;
+  for (let i = 0; i < posA.count; i++) {
+    const vx = posA.getX(i), vy = posA.getY(i), vz = posA.getZ(i);
+    const h1 = Math.abs(Math.sin(vx * 12.9898 + vy * 78.233 + vz * 37.719 + seed) * 43758.5453) % 1;
+    const h2 = Math.abs(Math.sin(vx * 26.651 + vy * 11.135 + vz * 83.117 + seed) * 28001.8384) % 1;
+    posA.setXYZ(i, vx * (0.85 + h1 * 0.3), vy * (0.6 + h2 * 0.25), vz * (0.85 + (1 - h1) * 0.3));
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+function makeRock3D(scale = 1, rng = Math.random, snowy = false) {
+  const geo = jitterGeo(new THREE.IcosahedronGeometry(0.55, 1), rng() * 20);
+  const mat = new THREE.MeshStandardMaterial({ map: surfTex(snowy ? 'surf_rock_snow.png' : 'surf_rock.png', 2, 2), roughness: 1, flatShading: true });
+  if (!snowy && rng() < 0.5) mat.color.set(0xb9c2a6); // 苔むした岩は少し緑に寄せる
+  const m = new THREE.Mesh(geo, mat);
+  m.castShadow = true; m.receiveShadow = true;
+  m.scale.setScalar(scale);
+  m.rotation.y = rng() * Math.PI * 2;
+  return m;
+}
+function makeTree3D(s = 1, rng = Math.random, opts = {}) {
+  // 幹（円柱）＋葉の塊（粗い多面体）に質感を貼ったローポリ広葉樹。形は粗く、細かさは質感で出す
+  const g = new THREE.Group();
+  const barkMat = new THREE.MeshStandardMaterial({ map: surfTex('surf_bark.png', 1, 1), roughness: 1, flatShading: true });
+  const leafMat = new THREE.MeshStandardMaterial({ map: surfTex(opts.snowy ? 'surf_leaf_snow.png' : 'surf_leaf.png', 3, 3), roughness: 1, flatShading: true });
+  const trunkH = 1.15 * (0.9 + rng() * 0.25);
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.17, trunkH, 7), barkMat);
+  trunk.position.y = trunkH / 2;
+  trunk.castShadow = true;
+  g.add(trunk);
+  const spread = opts.wide ? 1.5 : 1.0;
+  const base = [[0, 1.72, 0, 0.92], [-0.58, 1.4, 0.12, 0.58], [0.6, 1.44, -0.1, 0.62], [0.02, 2.1, -0.02, 0.55], [-0.12, 1.52, 0.38, 0.5]];
+  for (const [bx, by, bz, br] of base) {
+    const b = new THREE.Mesh(jitterGeo(new THREE.IcosahedronGeometry(br * (0.85 + rng() * 0.3), 1), bx * 13 + by * 7 + rng() * 5), leafMat);
+    b.position.set(bx * spread * (0.9 + rng() * 0.2), by * (0.92 + rng() * 0.16) + trunkH - 1.15, bz * (0.9 + rng() * 0.2));
+    b.castShadow = true;
+    g.add(b);
+  }
+  if (opts.door) { // 大森林の大樹の扉（南を向けて固定）
+    const door = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.72, 0.07), new THREE.MeshStandardMaterial({ color: 0x4a3220, roughness: 1 }));
+    door.position.set(0, 0.36, 0.09);
+    g.add(door);
+  }
+  g.scale.setScalar(s);
+  g.rotation.y = opts.door ? 0 : rng() * Math.PI * 2;
+  return g;
 }
 const driftMat = new THREE.MeshStandardMaterial({ color: 0xa08b6d, roughness: 1, flatShading: true });
 function makeDriftwood() {
