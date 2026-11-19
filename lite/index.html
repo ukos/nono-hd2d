@@ -3145,7 +3145,7 @@ function buildBattleDOM(kindKey, count) {
   battle.foes = [];
   battle.foeEls = []; battle.memberEls = {}; battle.plateEls = {};
   const be = bEl('benemies'); be.innerHTML = '';
-  const spots = count === 1 ? [[24, 30]] : count === 2 ? [[16, 32], [35, 26]] : [[12, 33], [26, 25], [40, 32]];
+  const spots = count === 1 ? [[21, 30]] : count === 2 ? [[13, 32], [32, 26]] : [[9, 33], [23, 25], [37, 32]];
   for (let i = 0; i < count; i++) {
     const f = { kind, name: kind.name, hp: kind.hp, maxhp: kind.hp, atk: kind.atk, def: kind.def, spd: kind.spd, dead: false };
     battle.foes.push(f);
@@ -3157,7 +3157,7 @@ function buildBattleDOM(kindKey, count) {
     be.appendChild(d); battle.foeEls.push(d);
   }
   const bp = bEl('bparty'); bp.innerHTML = '';
-  const pspots = window.innerWidth > window.innerHeight ? { nono: [85, 35], yui: [85, 20], rei: [85, 5] } : { nono: [85, 41], yui: [85, 26.5], rei: [85, 12] };
+  const pspots = window.innerWidth > window.innerHeight ? { nono: [83, 35], yui: [86.5, 20], rei: [89.5, 5] } : { nono: [83, 41], yui: [86.5, 26.5], rei: [89.5, 12] };
   for (const [id, m] of Object.entries(PARTY)) {
     const d = document.createElement('div');
     d.className = 'bunit bmember';
@@ -3166,16 +3166,17 @@ function buildBattleDOM(kindKey, count) {
     const ch = document.createElement('div');
     ch.className = 'bchar';
     ch.style.backgroundImage = `url(${m.sheet})`;
-    setCharFrame(ch, 6, 1, (Math.min(170, window.innerHeight * 0.24) * 0.8));
+    const mbase = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (id === 'yui' ? 1 : 0.9);
+    setCharFrame(ch, 6, 1, mbase);
     d.appendChild(ch);
     const dg = document.createElement('img');
     dg.className = 'bdiag'; dg.alt = '';
     dg.src = 'assets/battle_' + id + '.png';
-    dg.style.height = (Math.min(170, window.innerHeight * 0.24) * 0.8) + 'px';
+    dg.style.height = mbase + 'px';
     dg.onload = () => { ch.style.visibility = 'hidden'; };
     dg.onerror = () => dg.remove();
     d.appendChild(dg);
-    attachHeldWeapon(d, id, (Math.min(170, window.innerHeight * 0.24) * 0.8));
+    attachHeldWeapon(d, id, mbase);
     bp.appendChild(d);
     battle.memberEls[id] = d;
   }
@@ -3450,7 +3451,7 @@ function showChallenge(name) {
 }
 function buildPartyDOM() {
   const bp = bEl('bparty'); bp.innerHTML = '';
-  const pspots = window.innerWidth > window.innerHeight ? { nono: [85, 35], yui: [85, 20], rei: [85, 5] } : { nono: [85, 41], yui: [85, 26.5], rei: [85, 12] };
+  const pspots = window.innerWidth > window.innerHeight ? { nono: [83, 35], yui: [86.5, 20], rei: [89.5, 5] } : { nono: [83, 41], yui: [86.5, 26.5], rei: [89.5, 12] };
   for (const [id, m] of Object.entries(PARTY)) {
     const d = document.createElement('div');
     d.className = 'bunit bmember';
@@ -3459,16 +3460,17 @@ function buildPartyDOM() {
     const ch = document.createElement('div');
     ch.className = 'bchar';
     ch.style.backgroundImage = `url(${m.sheet})`;
-    setCharFrame(ch, 6, 1, (Math.min(170, window.innerHeight * 0.24) * 0.8));
+    const mbase = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (id === 'yui' ? 1 : 0.9);
+    setCharFrame(ch, 6, 1, mbase);
     d.appendChild(ch);
     const dg = document.createElement('img');
     dg.className = 'bdiag'; dg.alt = '';
     dg.src = 'assets/battle_' + id + '.png';
-    dg.style.height = (Math.min(170, window.innerHeight * 0.24) * 0.8) + 'px';
+    dg.style.height = mbase + 'px';
     dg.onload = () => { ch.style.visibility = 'hidden'; };
     dg.onerror = () => dg.remove();
     d.appendChild(dg);
-    attachHeldWeapon(d, id, (Math.min(170, window.innerHeight * 0.24) * 0.8));
+    attachHeldWeapon(d, id, mbase);
     bp.appendChild(d);
     battle.memberEls[id] = d;
   }
@@ -3504,7 +3506,7 @@ async function startRivalBattle(name) {
   const be = bEl('benemies'); be.innerHTML = '';
   const d = document.createElement('div');
   d.className = 'bunit benemy';
-  d.style.left = '24%'; d.style.bottom = '29%';
+  d.style.left = '21%'; d.style.bottom = '29%';
   const sh3 = document.createElement('div'); sh3.className = 'bshadow'; d.appendChild(sh3);
   const ch = document.createElement('div');
   ch.className = 'bchar';
