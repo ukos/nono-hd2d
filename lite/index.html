@@ -740,7 +740,7 @@ const BOB_AMPS = [0.035, 0.035, 0.035, 0.04, 0.06, 0.04, 0.035, 0.035];
 // プレイヤーと仲間（地方をまたいで存在するのでシーン直下に置く）
 const player = makeChar('assets/nono_sheet8c.png', 1.18, 8);
 player.userData.flipSide0 = true; // 横向き行1コマ目の顔反転（公式シート由来）対策
-player.userData.sideSlim = 0.9; // 横向きだけ横幅を9割に（太く見える対策）
+player.userData.sideSlim = 0.8; // 横向きだけ横幅を8割に（太く見える対策）
 const yui = makeChar('assets/yui_sheet8.png', 1.16, 8);
 const rei = makeChar('assets/rei_sheet8.png', 1.15, 8);
 for (const ch of [yui, rei]) {
