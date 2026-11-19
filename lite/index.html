@@ -122,6 +122,7 @@
   #evoOk { margin-top:20px; background:rgba(70,60,140,.92); color:#fff; border:1px solid rgba(255,255,255,.5);
     border-radius:8px; padding:9px 26px; font-size:15px; cursor:pointer; display:none; }
   .bunit.hurt .bchar { animation:bshake .3s; }
+  .bunit .bheld { position:absolute; margin:0; pointer-events:none; }
   .bunit .bshadow { position:absolute; left:50%; bottom:-7px; transform:translateX(-50%); width:76%;
     height:13px; background:radial-gradient(ellipse at center, rgba(0,0,0,.45), rgba(0,0,0,0) 70%);
     border-radius:50%; pointer-events:none; }
@@ -3037,7 +3038,9 @@ function buildBattleDOM(kindKey, count) {
     ch.className = 'bchar';
     ch.style.backgroundImage = `url(${m.sheet})`;
     setCharFrame(ch, 6, 1, Math.min(170, window.innerHeight * 0.24));
-    d.appendChild(ch); bp.appendChild(d);
+    d.appendChild(ch);
+    if (id === 'nono') attachHeldSword(d, Math.min(170, window.innerHeight * 0.24));
+    bp.appendChild(d);
     battle.memberEls[id] = d;
   }
   const bs = bEl('bstatus'); bs.innerHTML = '';
@@ -3220,6 +3223,16 @@ const SAVE_KEY = 'nono-hd2d-save-v1';
 let SAVE = { beaten: [] };
 try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && Array.isArray(s.beaten)) SAVE = s; } catch (e) {}
 function persistSave() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {} }
+function attachHeldSword(unitEl, hPx) {
+  const img = document.createElement('img');
+  img.className = 'bheld'; img.alt = '';
+  img.src = 'assets/held_' + swordStage() + '.png';
+  img.onerror = () => img.remove();
+  img.style.width = (hPx * 1.02) + 'px';
+  img.style.left = (-0.56 * hPx) + 'px';
+  img.style.bottom = (0.27 * hPx) + 'px';
+  unitEl.appendChild(img);
+}
 function swordStage() { return Math.min(15, SAVE.beaten.length); }
 function applySwordAtk() { PARTY.nono.atk = 11 + SWORDS[swordStage()][1]; }
 applySwordAtk();
@@ -3306,7 +3319,9 @@ function buildPartyDOM() {
     ch.className = 'bchar';
     ch.style.backgroundImage = `url(${m.sheet})`;
     setCharFrame(ch, 6, 1, Math.min(170, window.innerHeight * 0.24));
-    d.appendChild(ch); bp.appendChild(d);
+    d.appendChild(ch);
+    if (id === 'nono') attachHeldSword(d, Math.min(170, window.innerHeight * 0.24));
+    bp.appendChild(d);
     battle.memberEls[id] = d;
   }
   const bs = bEl('bstatus'); bs.innerHTML = '';
