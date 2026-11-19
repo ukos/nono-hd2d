@@ -57,6 +57,51 @@
     font-family:"Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
     animation: splashBlink 1.6s ease-in-out infinite; }
   @keyframes splashBlink { 0%,100% { opacity:.45; } 50% { opacity:.9; } }
+  /* ---------- バトル ---------- */
+  #battle { position:fixed; inset:0; z-index:13; overflow:hidden; background:#101018;
+    font-family:inherit; opacity:1; transition:opacity .45s; }
+  #bbg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 20%; }
+  #bfloor { position:absolute; left:0; right:0; bottom:0; height:36%; background-repeat:repeat;
+    -webkit-mask-image:linear-gradient(to bottom, transparent, black 22%);
+    mask-image:linear-gradient(to bottom, transparent, black 22%); }
+  #bshade { position:absolute; inset:0; background:linear-gradient(to bottom, rgba(10,8,24,.18), rgba(10,8,24,0) 40%, rgba(10,8,24,.25)); }
+  .bunit { position:absolute; transform:translateX(-50%); transition:transform .18s ease; text-align:center; }
+  .bunit img { display:block; margin:0 auto; filter:drop-shadow(0 6px 6px rgba(0,0,0,.45)); }
+  .bunit .bname { color:#fff; font-size:12px; text-shadow:0 1px 3px #000; margin-top:2px; }
+  .bunit .bbar { width:74px; height:6px; margin:3px auto 0; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.5); border-radius:3px; overflow:hidden; }
+  .bunit .bbar i { display:block; height:100%; background:#7dd069; transition:width .35s; }
+  .bunit.dead { opacity:0; transform:translateX(-50%) translateY(14px); transition:opacity .5s, transform .5s; }
+  .bunit.hurt img { animation:bshake .3s; filter:drop-shadow(0 6px 6px rgba(0,0,0,.45)) brightness(1.7) sepia(.6) hue-rotate(-40deg); }
+  @keyframes bshake { 0%,100%{ margin-left:0 } 25%{ margin-left:-7px } 75%{ margin-left:7px } }
+  .bchar { margin:0 auto; background-repeat:no-repeat; image-rendering:pixelated;
+    filter:drop-shadow(0 6px 6px rgba(0,0,0,.45)); }
+  .bmember.down .bchar { filter:grayscale(1) brightness(.6); }
+  .bmember.targetable .bchar, .benemy.targetable img { outline:2px solid #ffd75e; outline-offset:3px; border-radius:6px; cursor:pointer; }
+  #bmsg { position:absolute; top:10px; left:50%; transform:translateX(-50%); width:min(92vw, 560px);
+    background:rgba(12,12,28,.82); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:10px;
+    padding:9px 14px; font-size:15px; text-align:center; min-height:22px; }
+  #bcmd { position:absolute; left:10px; bottom:10px; display:flex; flex-direction:column; gap:6px; }
+  #bcmd button { background:rgba(12,12,28,.88); color:#fff; border:1px solid rgba(255,255,255,.45);
+    border-radius:8px; padding:9px 18px; font-size:15px; text-align:left; cursor:pointer; min-width:132px; }
+  #bcmd button:disabled { opacity:.38; }
+  #bcmd button:active { background:rgba(70,60,140,.9); }
+  #bstatus { position:absolute; right:10px; bottom:10px; display:flex; flex-direction:column; gap:6px; }
+  .bplate { background:rgba(12,12,28,.82); border:1px solid rgba(255,255,255,.3); border-radius:8px;
+    padding:5px 10px; color:#fff; font-size:12px; width:158px; }
+  .bplate.active { border-color:#ffd75e; box-shadow:0 0 8px rgba(255,215,94,.6); }
+  .bplate .prow { display:flex; justify-content:space-between; }
+  .bplate .pbar { height:5px; background:rgba(255,255,255,.18); border-radius:3px; overflow:hidden; margin-top:3px; }
+  .bplate .pbar i { display:block; height:100%; transition:width .35s; }
+  .bplate .hp i { background:#7dd069; } .bplate .mp i { background:#6aa8ff; }
+  .dmgnum { position:absolute; transform:translateX(-50%); color:#ffe27a; font-weight:bold; font-size:22px;
+    text-shadow:0 2px 3px #000; animation:dmgup 0.9s ease-out forwards; pointer-events:none; z-index:5; }
+  .dmgnum.heal { color:#8aff9a; } .dmgnum.crit { color:#ff9a5e; font-size:27px; }
+  @keyframes dmgup { 0%{ opacity:0; margin-top:0 } 15%{ opacity:1 } 100%{ opacity:0; margin-top:-52px } }
+  .fximg { position:absolute; transform:translate(-50%,-50%); mix-blend-mode:screen; pointer-events:none;
+    animation:fxpop .62s ease-out forwards; z-index:4; }
+  @keyframes fxpop { 0%{ opacity:0; scale:.55 } 25%{ opacity:1 } 100%{ opacity:0; scale:1.12 } }
+  #bgmBtn { position:fixed; top:10px; right:10px; z-index:16; background:rgba(12,12,28,.66); color:#fff;
+    border:1px solid rgba(255,255,255,.35); border-radius:8px; padding:5px 10px; font-size:12px; cursor:pointer; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -77,6 +122,17 @@
 <div id="fade"></div>
 <button id="talkBtn">話す</button>
 <div id="dialog"><div class="name" id="dialogName"></div><div class="text" id="dialogText"></div><div class="next">▼ タップ／Eキーで進む</div></div>
+<div id="battle" style="display:none">
+  <img id="bbg" alt="">
+  <div id="bfloor"></div>
+  <div id="bshade"></div>
+  <div id="benemies"></div>
+  <div id="bparty"></div>
+  <div id="bmsg"></div>
+  <div id="bstatus"></div>
+  <div id="bcmd"></div>
+</div>
+<button id="bgmBtn">♪ ON</button>
 <div id="loading">読み込み中…</div>
 <div id="splash">
   <img src="assets/logo.jpg" alt="NONO Blade of the Dawn HD-2D ver.">
@@ -1551,6 +1607,7 @@ const REGIONS = {
     sun: { i: 2.6, pos: [-14, 11, -5], tgt: [0, 0, 0] },
     sub: 'はじまりの野 ／ 移動： WASD・矢印キー ／ 話す： Eキー ／ 北の端から天嶺の霊峰へ、東の端から白嶺の雪山へ、南の端から灼砂の砂漠へ',
     spawn: { x: 0, z: 0.6, row: 0 },
+    enemies: [ { kind: 'wolf', x: -8, z: 2.0 }, { kind: 'wolf', x: 7, z: 2.6 }, { kind: 'wolf', x: 12.5, z: 0.8 } ],
     wadeZ: -2.05,
     custom: 'lake',
     grounds: [
@@ -1602,6 +1659,7 @@ const REGIONS = {
     backdrop: 'assets/far_forest.jpg',
     wadeZ: null,
     custom: 'forest',
+    enemies: [ { kind: 'spider', x: 76, z: 0.6 }, { kind: 'spider', x: 90, z: 1.8 }, { kind: 'spider', x: 99, z: 0.2 } ],
     grounds: [
       { tex: 'forestFloor', repeat: [12, 5], w: 38, d: 16, x: 85, y: 0, z: 0.4 },
       { tex: 'dirtPath', strip: true, repeat: [12, 1], w: 38, d: 3.1, x: 85, y: 0.012, z: 0.4 },
@@ -1761,6 +1819,7 @@ const REGIONS = {
     snowDepth: 0.2,
     wadeZ: null,
     spawn: { x: 325.2, z: 0.4, row: 2 },
+    enemies: [ { kind: 'yeti', x: 336, z: 1.8 }, { kind: 'yeti', x: 350, z: 2.6 } ],
     grounds: [
       { tex: 'snow', repeat: [13, 6], w: 40, d: 18, x: 340, y: 0, z: 0.6 },
       { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 340, y: 0.012, z: 0.4 },
@@ -1949,6 +2008,35 @@ const REGIONS = {
 
 // ---------- 地方の構築 ----------
 const REGION_RT = {}; // id -> {group, colliders, npcs:[{mesh, name, lines, t}]}
+const ENEMY_KINDS = {
+  wolf:   { name: 'オオカミ', img: 'assets/enemy_wolf.png',   act: 'assets/enemy_wolf_act.png', aspect: 1.23, h: 0.85, hp: 26, atk: 10, def: 2, spd: 5 },
+  spider: { name: '大蜘蛛',   img: 'assets/enemy_spider.png', act: 'assets/enemy_spider.png',   aspect: 0.95, h: 0.9,  hp: 36, atk: 12, def: 4, spd: 7 },
+  yeti:   { name: '雪男',     img: 'assets/enemy_yeti.png',   act: 'assets/enemy_yeti_act.png', aspect: 0.97, h: 1.2,  hp: 48, atk: 13, def: 5, spd: 4 },
+};
+const PARTY = {
+  nono: { name: 'nono', sheet: 'assets/nono_sheet8c.png', hp: 62, maxhp: 62, mp: 18, maxmp: 18, atk: 14, def: 6, spd: 8 },
+  yui:  { name: 'ユイ', sheet: 'assets/yui_sheet8.png',   hp: 48, maxhp: 48, mp: 14, maxmp: 14, atk: 11, def: 4, spd: 11 },
+  rei:  { name: 'レイ', sheet: 'assets/rei_sheet8.png',   hp: 44, maxhp: 44, mp: 6,  maxmp: 6,  atk: 13, def: 4, spd: 15 },
+};
+const SPELLS = [
+  { id: 'fire',    name: 'ほのお',   mp: 3, kind: 'dmgOne',  fx: 'fire',    pow: 9 },
+  { id: 'thunder', name: 'かみなり', mp: 6, kind: 'dmgAll',  fx: 'thunder', pow: 1 },
+  { id: 'heal',    name: 'いやし',   mp: 4, kind: 'heal',    fx: 'heal',    pow: 26 },
+];
+const SKILL_NONO = { name: '回転切り', kind: 'dmgAll', pow: -2, uses: 3 }; // とくぎは1戦闘3回まで
+let inBattle = false, noEncounterUntil = 0;
+let activeEnemies = [];
+const bEl = (id) => document.getElementById(id);
+const bSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function bMsg(txt) { bEl('bmsg').textContent = txt; }
+function setCharFrame(el, row, col, hPx) {
+  const s = hPx / 224;
+  el.style.width = (176 * s) + 'px'; el.style.height = hPx + 'px';
+  el.style.backgroundSize = (528 * s) + 'px ' + (1792 * s) + 'px';
+  el.style.backgroundPosition = (-col * 176 * s) + 'px ' + (-row * 224 * s) + 'px';
+}
+
+const battle = { foes: [], fieldEnemy: null, over: false, skillLeft: SKILL_NONO.uses };
 function buildRegion(id, def) {
   const group = new THREE.Group();
   group.visible = false;
@@ -2048,9 +2136,16 @@ function buildRegion(id, def) {
     setFrameC(mesh, 0, 1);
     npcs.push({ mesh, name: n.name, lines: n.lines, t: Math.random() * 4 });
   }
+  const enemies = [];
+  for (const e of def.enemies || []) {
+    const kind = ENEMY_KINDS[e.kind];
+    const mesh = billboard(group, loadTex(kind.img), kind.h * kind.aspect, kind.h, e.x, e.z, {});
+    const shadow = blobShadow(group, kind.h * 0.95, e.x, e.z, 0.3);
+    enemies.push({ mesh, shadow, kindKey: e.kind, home: { x: e.x, z: e.z }, tx: e.x, tz: e.z, wait: Math.random() * 2, alive: true, respawnAt: 0, phase: Math.random() * 6 });
+  }
   if (def.fireflies) addFireflies(group, def.fireflies.n, def.fireflies.box, def.fireflies.seed);
   if (def.custom && CUSTOM_BUILDERS[def.custom]) CUSTOM_BUILDERS[def.custom](group);
-  REGION_RT[id] = { group, colliders, npcs, backdropMat };
+  REGION_RT[id] = { group, colliders, npcs, backdropMat, enemies };
 }
 
 // ---------- 大迷宮（入るたびに生成が変わる。黄昏の地の石門から入る） ----------
@@ -2354,6 +2449,7 @@ function setRegion(name) {
   for (const [id, rt] of Object.entries(REGION_RT)) rt.group.visible = id === name;
   activeColliders = REGION_RT[name].colliders;
   activeNPCs = REGION_RT[name].npcs;
+  activeEnemies = REGION_RT[name].enemies || [];
   document.getElementById('hudSub').textContent = A.sub;
   document.getElementById('minimapWrap').style.display = name === 'labyrinth' ? 'block' : 'none';
 }
@@ -2546,6 +2642,434 @@ window.addEventListener('resize', () => {
 // ---------- メインループ ----------
 const clock = new THREE.Clock();
 
+
+// ================= BGM（WebAudioの簡易シーケンサー。フィールドとバトルで曲を切り替える） =================
+const BGM = (() => {
+  let ctx = null, master = null, timer = null, step = 0, nextT = 0, cur = 'field', muted = false;
+  const bars = (arr) => arr.flat();
+  const SONGS = {
+    field: { bpm: 92,
+      mel: bars([[76,0,79,0,81,0,79,0],[74,0,71,0,74,0,0,0],[76,0,81,0,79,0,76,0],[77,0,81,0,79,0,0,0],[76,0,79,0,84,0,79,0],[81,0,79,0,77,0,74,0],[77,0,81,0,79,0,76,0],[74,0,0,0,72,0,0,0]]),
+      bassRoot: [48,43,45,41,48,43,41,48], bassPat: [1,0,0,0,2,0,0,0] },
+    battle: { bpm: 138,
+      mel: bars([[81,0,84,0,83,0,81,0],[81,0,88,0,86,0,84,0],[84,0,81,0,77,0,81,0],[83,0,86,0,83,0,79,0],[81,0,84,0,83,0,81,0],[88,0,86,0,84,0,83,0],[86,0,89,0,88,0,86,0],[83,0,80,0,83,0,0,0]]),
+      bassRoot: [45,45,41,43,45,45,50,52], bassPat: [1,1,3,1,1,1,3,1] },
+  };
+  function freq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+  function tone(m, t, dur, type, vol) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.value = freq(m);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
+  function schedule() {
+    const S = SONGS[cur], stepDur = 60 / S.bpm / 2;
+    while (nextT < ctx.currentTime + 0.16) {
+      const bar = Math.floor(step / 8), s = step % 8;
+      const m = S.mel[step];
+      if (m) tone(m, nextT, stepDur * 1.7, 'square', 0.042);
+      const bp = S.bassPat[s];
+      if (bp) tone(S.bassRoot[bar] + (bp === 2 ? 7 : bp === 3 ? 12 : 0), nextT, stepDur * 1.4, 'triangle', 0.075);
+      step = (step + 1) % 64; nextT += stepDur;
+    }
+  }
+  function init() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      master = ctx.createGain(); master.gain.value = muted ? 0 : 0.9; master.connect(ctx.destination);
+      step = 0; nextT = ctx.currentTime + 0.06;
+      timer = setInterval(schedule, 42);
+    } catch (e) { /* 音が出ない環境では無音で続行 */ }
+  }
+  window.addEventListener('pointerdown', init);
+  return {
+    set(name) { if (SONGS[name]) cur = name; },
+    toggle() { muted = !muted; if (master) master.gain.value = muted ? 0 : 0.9; return muted; },
+  };
+})();
+document.getElementById('bgmBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  e.target.textContent = BGM.toggle() ? '♪ OFF' : '♪ ON';
+});
+
+// ================= バトル =================
+function foeEl(f) { return battle.foeEls[battle.foes.indexOf(f)]; }
+function memberEl(id) { return battle.memberEls[id]; }
+function refreshBattleUI() {
+  battle.foes.forEach((f, i) => {
+    const bar = battle.foeEls[i].querySelector('.bbar i');
+    if (bar) bar.style.width = Math.max(0, f.hp / f.maxhp * 100) + '%';
+  });
+  for (const [id, m] of Object.entries(PARTY)) {
+    const p = battle.plateEls[id];
+    if (!p) continue;
+    p.querySelector('.hpnum').textContent = Math.max(0, m.hp) + '/' + m.maxhp;
+    p.querySelector('.mpnum').textContent = Math.max(0, m.mp) + '/' + m.maxmp;
+    p.querySelector('.hp i').style.width = Math.max(0, m.hp / m.maxhp * 100) + '%';
+    p.querySelector('.mp i').style.width = Math.max(0, m.mp / m.maxmp * 100) + '%';
+    memberEl(id).classList.toggle('down', m.hp <= 0);
+  }
+}
+function dmgNumber(unitEl, val, cls = '') {
+  const r = unitEl.getBoundingClientRect(), br = bEl('battle').getBoundingClientRect();
+  const s = document.createElement('span');
+  s.className = 'dmgnum ' + cls; s.textContent = val;
+  s.style.left = (r.left - br.left + r.width / 2) + 'px';
+  s.style.top = (r.top - br.top + 6) + 'px';
+  bEl('battle').appendChild(s);
+  setTimeout(() => s.remove(), 950);
+}
+function showFx(unitEl, fx) {
+  const img = new Image();
+  img.src = 'assets/fx_' + fx + '.png';
+  img.onload = () => {
+    img.className = 'fximg';
+    const r = unitEl.getBoundingClientRect(), br = bEl('battle').getBoundingClientRect();
+    img.style.width = Math.max(120, r.width * 1.5) + 'px';
+    img.style.left = (r.left - br.left + r.width / 2) + 'px';
+    img.style.top = (r.top - br.top + r.height / 2) + 'px';
+    bEl('battle').appendChild(img);
+    setTimeout(() => img.remove(), 680);
+  };
+  // エフェクト画像がまだ無い場合は無しで進む（生成され次第そのまま表示される）
+}
+function hurtFx(unitEl) { unitEl.classList.add('hurt'); setTimeout(() => unitEl.classList.remove('hurt'), 320); }
+function lunge(unitEl, dir) {
+  unitEl.style.transform = `translateX(calc(-50% + ${dir * 56}px))`;
+  setTimeout(() => { unitEl.style.transform = 'translateX(-50%)'; }, 210);
+}
+function physDamage(att, def, mult = 1) {
+  return Math.max(1, Math.round((att.atk + Math.random() * 4 - def.def) * mult));
+}
+async function hitFoe(att, f, dmg, opt = {}) {
+  const el = foeEl(f);
+  if (opt.fx) showFx(el, opt.fx);
+  if (opt.lunge !== false && att.el) lunge(att.el, att.side);
+  await bSleep(opt.fx ? 340 : 190);
+  f.hp -= dmg;
+  hurtFx(el); dmgNumber(el, dmg, opt.crit ? 'crit' : '');
+  refreshBattleUI();
+  await bSleep(430);
+  if (f.hp <= 0 && !f.dead) { f.dead = true; el.classList.add('dead'); bMsg(f.name + ' を たおした！'); await bSleep(620); }
+}
+async function hitMember(att, id, dmg, opt = {}) {
+  const m = PARTY[id], el = memberEl(id);
+  if (opt.fx) showFx(el, opt.fx);
+  if (att.foe) { const fe = foeEl(att.foe); if (fe) { const im = fe.querySelector('img'); const old = im.src; if (att.foe.kind.act) { im.src = att.foe.kind.act; setTimeout(() => { im.src = old; }, 420); } lunge(fe, 1); } }
+  await bSleep(opt.fx ? 340 : 190);
+  if (m.defending) dmg = Math.max(1, Math.floor(dmg / 2));
+  m.hp -= dmg;
+  hurtFx(el); dmgNumber(el, dmg, opt.crit ? 'crit' : '');
+  refreshBattleUI();
+  await bSleep(430);
+  if (m.hp <= 0 && !m.down) { m.down = true; bMsg(m.name + ' は たおれた…'); await bSleep(620); }
+}
+async function healMember(att, id, val, opt = {}) {
+  const m = PARTY[id], el = memberEl(id);
+  showFx(el, 'heal');
+  await bSleep(340);
+  const real = Math.min(val, m.maxhp - m.hp);
+  m.hp += real; if (m.hp > 0) m.down = false;
+  dmgNumber(el, real, 'heal');
+  refreshBattleUI();
+  await bSleep(430);
+}
+function aliveFoes() { return battle.foes.filter((f) => !f.dead); }
+function aliveMembers() { return Object.keys(PARTY).filter((id) => PARTY[id].hp > 0); }
+function checkEnd() {
+  if (aliveFoes().length === 0) { battle.over = 'win'; return true; }
+  if (aliveMembers().length === 0) { battle.over = 'lose'; return true; }
+  return false;
+}
+// ターゲット選択（敵・味方どちらもタップ）
+function pickTarget(units, els) {
+  return new Promise((resolve) => {
+    const clean = () => units.forEach((u, i) => { els[i].classList.remove('targetable'); els[i].onclick = null; });
+    units.forEach((u, i) => {
+      els[i].classList.add('targetable');
+      els[i].onclick = () => { clean(); resolve(u); };
+    });
+  });
+}
+function showCommands(buttons) {
+  return new Promise((resolve) => {
+    const box = bEl('bcmd'); box.innerHTML = '';
+    for (const b of buttons) {
+      const btn = document.createElement('button');
+      btn.textContent = b.label; btn.disabled = !!b.disabled;
+      btn.onclick = () => { box.innerHTML = ''; resolve(b.id); };
+      box.appendChild(btn);
+    }
+  });
+}
+async function nonoTurn() {
+  const m = PARTY.nono;
+  battle.plateEls.nono.classList.add('active');
+  while (true) {
+    const cmd = await showCommands([
+      { id: 'attack', label: 'こうげき' },
+      { id: 'skill', label: `とくぎ（${SKILL_NONO.name} あと${battle.skillLeft}回）`, disabled: battle.skillLeft <= 0 },
+      { id: 'magic', label: 'まほう' },
+      { id: 'defend', label: 'ぼうぎょ' },
+      { id: 'flee', label: 'にげる' },
+    ]);
+    if (cmd === 'attack') {
+      const foes = aliveFoes();
+      const t = foes.length === 1 ? foes[0] : await pickTarget(foes, foes.map((f) => foeEl(f)));
+      bMsg('nono の こうげき！');
+      await hitFoe({ el: memberEl('nono'), side: -1 }, t, physDamage(m, t));
+      break;
+    }
+    if (cmd === 'skill') {
+      battle.skillLeft--;
+      bMsg('nono の とくぎ！ ' + SKILL_NONO.name + '！');
+      lunge(memberEl('nono'), -1);
+      for (const f of aliveFoes()) await hitFoe({ el: null }, f, Math.max(1, physDamage(m, f) + SKILL_NONO.pow), { lunge: false });
+      break;
+    }
+    if (cmd === 'magic') {
+      const sp = await showCommands([
+        ...SPELLS.map((s) => ({ id: s.id, label: `${s.name}（MP${s.mp}）`, disabled: m.mp < s.mp })),
+        { id: 'back', label: 'もどる' },
+      ]);
+      if (sp === 'back') continue;
+      const spell = SPELLS.find((s) => s.id === sp);
+      m.mp -= spell.mp; refreshBattleUI();
+      if (spell.kind === 'dmgOne') {
+        const foes = aliveFoes();
+        const t = foes.length === 1 ? foes[0] : await pickTarget(foes, foes.map((f) => foeEl(f)));
+        bMsg('nono は ' + spell.name + ' を となえた！');
+        await hitFoe({ el: memberEl('nono'), side: -1 }, t, Math.max(1, m.atk + spell.pow + Math.floor(Math.random() * 4) - Math.floor(t.def / 2)), { fx: spell.fx });
+      } else if (spell.kind === 'dmgAll') {
+        bMsg('nono は ' + spell.name + ' を となえた！');
+        for (const f of aliveFoes()) await hitFoe({ el: null }, f, Math.max(1, m.atk + Math.floor(Math.random() * 4) - f.def), { fx: spell.fx, lunge: false });
+      } else if (spell.kind === 'heal') {
+        const ids = Object.keys(PARTY);
+        const t = await pickTarget(ids, ids.map((id) => memberEl(id)));
+        bMsg('nono は ' + spell.name + ' を となえた！');
+        await healMember({ el: memberEl('nono') }, t, spell.pow);
+      }
+      break;
+    }
+    if (cmd === 'defend') { m.defending = true; bMsg('nono は 身を守っている。'); await bSleep(500); break; }
+    if (cmd === 'flee') {
+      if (Math.random() < 0.75) { battle.over = 'fled'; bMsg('うまく 逃げ切った！'); await runAwayAnim(); }
+      else { bMsg('逃げられなかった！'); await bSleep(650); }
+      break;
+    }
+  }
+  battle.plateEls.nono.classList.remove('active');
+}
+async function runAwayAnim() {
+  // 右を向いて全員で走って逃げる
+  const units = ['nono', 'yui', 'rei'].map((id) => memberEl(id));
+  let col = 0;
+  const iv = setInterval(() => {
+    col = (col + 1) % 4;
+    const c = [0, 1, 2, 1][col];
+    units.forEach((u, i) => { const ch = u.querySelector('.bchar'); setCharFrame(ch, 2, c, parseFloat(ch.style.height)); });
+  }, 115);
+  units.forEach((u, i) => {
+    u.style.transition = 'transform 0.95s linear';
+    u.style.transform = `translateX(calc(-50% + ${62 + i * 4}vw))`;
+  });
+  await bSleep(1020);
+  clearInterval(iv);
+  units.forEach((u) => { u.style.transition = ''; u.style.transform = 'translateX(-50%)'; });
+}
+async function npcTurn(id) {
+  const m = PARTY[id];
+  if (m.hp <= 0) return;
+  battle.plateEls[id].classList.add('active');
+  await bSleep(280);
+  if (id === 'yui') {
+    const hurt = Object.keys(PARTY).filter((k) => PARTY[k].hp > 0 && PARTY[k].hp <= PARTY[k].maxhp * 0.45)
+      .sort((a, b) => PARTY[a].hp / PARTY[a].maxhp - PARTY[b].hp / PARTY[b].maxhp)[0];
+    if (hurt && m.mp >= 4) {
+      m.mp -= 4; refreshBattleUI();
+      bMsg('ユイ は いやし を となえた！');
+      await healMember({ el: memberEl('yui') }, hurt, 26);
+    } else if (Math.random() < 0.35) {
+      bMsg('ユイ の とくぎ！ れんしゃ！');
+      for (let i = 0; i < 2; i++) {
+        const foes = aliveFoes(); if (!foes.length) break;
+        const t = foes[Math.floor(Math.random() * foes.length)];
+        await hitFoe({ el: memberEl('yui'), side: -1 }, t, physDamage(m, t, 0.7));
+      }
+    } else {
+      const foes = aliveFoes(); const t = foes[Math.floor(Math.random() * foes.length)];
+      bMsg('ユイ の こうげき！');
+      await hitFoe({ el: memberEl('yui'), side: -1 }, t, physDamage(m, t));
+    }
+  } else if (id === 'rei') {
+    const foes = aliveFoes(); const t = foes[Math.floor(Math.random() * foes.length)];
+    if (Math.random() < 0.25) {
+      bMsg('レイ の とくぎ！ かげぬい！');
+      await hitFoe({ el: memberEl('rei'), side: -1 }, t, physDamage(m, t, 1.6), { crit: true });
+    } else {
+      const crit = Math.random() < 0.22;
+      bMsg('レイ の こうげき！' + (crit ? ' 会心の一撃！' : ''));
+      await hitFoe({ el: memberEl('rei'), side: -1 }, t, physDamage(m, t, crit ? 1.8 : 1), { crit });
+    }
+  }
+  battle.plateEls[id].classList.remove('active');
+}
+async function foeTurn(f) {
+  if (f.dead) return;
+  const ids = aliveMembers(); if (!ids.length) return;
+  const t = ids[Math.floor(Math.random() * ids.length)];
+  bMsg(f.name + ' の こうげき！');
+  await hitMember({ foe: f }, t, physDamage(f, PARTY[t]));
+}
+async function battleLoop() {
+  while (!battle.over) {
+    for (const id of Object.keys(PARTY)) PARTY[id].defending = false;
+    const order = [
+      ...Object.keys(PARTY).filter((id) => PARTY[id].hp > 0).map((id) => ({ spd: PARTY[id].spd, run: () => (id === 'nono' ? nonoTurn() : npcTurn(id)) })),
+      ...aliveFoes().map((f) => ({ spd: f.spd, run: () => foeTurn(f) })),
+    ].sort((a, b) => b.spd - a.spd + Math.random() * 2);
+    for (const a of order) {
+      if (battle.over) break;
+      await a.run();
+      if (checkEnd()) break;
+    }
+  }
+}
+function buildBattleDOM(kindKey, count) {
+  const kind = ENEMY_KINDS[kindKey];
+  battle.foes = [];
+  battle.foeEls = []; battle.memberEls = {}; battle.plateEls = {};
+  const be = bEl('benemies'); be.innerHTML = '';
+  const spots = count === 1 ? [[24, 32]] : count === 2 ? [[16, 34], [35, 28]] : [[12, 35], [26, 27], [40, 34]];
+  for (let i = 0; i < count; i++) {
+    const f = { kind, name: kind.name, hp: kind.hp, maxhp: kind.hp, atk: kind.atk, def: kind.def, spd: kind.spd, dead: false };
+    battle.foes.push(f);
+    const d = document.createElement('div');
+    d.className = 'bunit benemy';
+    d.style.left = spots[i][0] + '%'; d.style.bottom = spots[i][1] + '%';
+    const hPx = Math.min(205, window.innerHeight * 0.28) * (kind.h / 0.95) * (count === 3 ? 0.82 : count === 2 ? 0.92 : 1);
+    d.innerHTML = `<img src="${kind.img}" style="height:${hPx}px" alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
+    be.appendChild(d); battle.foeEls.push(d);
+  }
+  const bp = bEl('bparty'); bp.innerHTML = '';
+  const pspots = { nono: [76, 31], yui: [86, 27], rei: [94, 32] };
+  for (const [id, m] of Object.entries(PARTY)) {
+    const d = document.createElement('div');
+    d.className = 'bunit bmember';
+    d.style.left = pspots[id][0] + '%'; d.style.bottom = pspots[id][1] + '%';
+    const ch = document.createElement('div');
+    ch.className = 'bchar';
+    ch.style.backgroundImage = `url(${m.sheet})`;
+    setCharFrame(ch, 6, 1, Math.min(170, window.innerHeight * 0.24));
+    d.appendChild(ch); bp.appendChild(d);
+    battle.memberEls[id] = d;
+  }
+  const bs = bEl('bstatus'); bs.innerHTML = '';
+  for (const [id, m] of Object.entries(PARTY)) {
+    const p = document.createElement('div');
+    p.className = 'bplate';
+    p.innerHTML = `<div class="prow"><span>${m.name}</span><span>HP <span class="hpnum"></span></span></div>` +
+      `<div class="pbar hp"><i></i></div>` +
+      `<div class="prow" style="margin-top:3px"><span></span><span>MP <span class="mpnum"></span></span></div>` +
+      `<div class="pbar mp"><i></i></div>`;
+    bs.appendChild(p); battle.plateEls[id] = p;
+  }
+  refreshBattleUI();
+}
+async function startBattle(fieldEnemy) {
+  if (inBattle) return;
+  inBattle = true;
+  BGM.set('battle');
+  battle.over = false; battle.skillLeft = SKILL_NONO.uses; battle.fieldEnemy = fieldEnemy;
+  const R = REGIONS[area];
+  const bg = bEl('bbg');
+  const fallback = { hajimari: 'assets/far_mountains.jpg' }[area] || R.backdrop;
+  bg.onerror = () => { if (fallback) { bg.onerror = null; bg.src = fallback; } else bg.style.display = 'none'; };
+  bg.style.display = 'block';
+  bg.src = 'assets/battlebg_' + area + '.jpg';
+  const g0 = (R.grounds && R.grounds[0] && GROUND_TEX[R.grounds[0].tex]) || GROUND_TEX.grass;
+  bEl('bfloor').style.backgroundImage = `url(${g0.img})`;
+  bEl('bfloor').style.backgroundSize = '190px';
+  const roll = Math.random();
+  const count = roll < 0.5 ? 1 : roll < 0.85 ? 2 : 3;
+  buildBattleDOM(fieldEnemy.kindKey, count);
+  const el = bEl('battle');
+  el.style.display = 'block'; el.style.opacity = '0';
+  requestAnimationFrame(() => { el.style.opacity = '1'; });
+  bMsg(ENEMY_KINDS[fieldEnemy.kindKey].name + ' が あらわれた！');
+  await bSleep(900);
+  await battleLoop();
+  await endBattle();
+}
+async function endBattle() {
+  const el = bEl('battle');
+  if (battle.over === 'win') {
+    bMsg('戦いに 勝った！ みんな 少し 回復した。');
+    for (const m of Object.values(PARTY)) { m.hp = Math.min(m.maxhp, m.hp + Math.ceil(m.maxhp * 0.3)); m.down = m.hp <= 0; }
+    if (battle.fieldEnemy && battle.fieldEnemy.mesh) {
+      battle.fieldEnemy.alive = false;
+      battle.fieldEnemy.mesh.visible = false;
+      battle.fieldEnemy.respawnAt = clock.elapsedTime + 45;
+    }
+    await bSleep(1100);
+  } else if (battle.over === 'lose') {
+    bMsg('全員 たおれてしまった…');
+    await bSleep(1200);
+    const sp = REGIONS[area].spawn || { x: REGIONS[area].centerX, z: 0.4, row: 0 };
+    teleportTo(sp.x, sp.z, sp.row || 0, [0, -1]);
+    for (const m of Object.values(PARTY)) { m.hp = m.maxhp; m.mp = m.maxmp; m.down = false; }
+  } else if (battle.over === 'fled') {
+    noEncounterUntil = clock.elapsedTime + 2.5;
+    await bSleep(250);
+  }
+  el.style.opacity = '0';
+  await bSleep(480);
+  el.style.display = 'none';
+  BGM.set('field');
+  inBattle = false; battle.over = false;
+}
+// フィールドの敵の徘徊とエンカウント判定（animate から毎フレーム呼ばれる）
+function updateFieldEnemies(dt, t) {
+  for (const e of activeEnemies) {
+    if (!e.alive) {
+      if (t > e.respawnAt) { e.alive = true; e.mesh.visible = true; e.mesh.position.set(e.home.x, 0, e.home.z); e.tx = e.home.x; e.tz = e.home.z; }
+      else continue;
+    }
+    const p = e.mesh.position;
+    const dx = e.tx - p.x, dz = e.tz - p.z, d = Math.hypot(dx, dz);
+    if (d < 0.2) {
+      e.wait -= dt;
+      if (e.wait <= 0) {
+        const R = REGIONS[area];
+        e.tx = THREE.MathUtils.clamp(e.home.x + (Math.random() - 0.5) * 7, R.bounds.minX + 0.6, R.bounds.maxX - 0.6);
+        e.tz = THREE.MathUtils.clamp(e.home.z + (Math.random() - 0.5) * 3.4, R.bounds.minZ + 0.5, R.bounds.maxZ - 0.5);
+        e.wait = 1.2 + Math.random() * 2.6;
+      }
+      p.y = 0;
+    } else {
+      const sp = 0.55 * dt;
+      p.x += dx / d * sp; p.z += dz / d * sp;
+      p.y = Math.abs(Math.sin(t * 7 + e.phase)) * 0.035;
+      e.mesh.scale.x = dx < 0 ? -1 : 1;
+    }
+    if (e.shadow) { e.shadow.position.x = p.x; e.shadow.position.z = p.z; }
+    if (!inBattle && !transitioning && !dialog.open && t > noEncounterUntil &&
+        Math.hypot(player.position.x - p.x, player.position.z - p.z) < 0.8) {
+      startBattle(e);
+    }
+  }
+}
+
+// デバッグ用: ?battle=wolf などで直接バトルを開始
+{
+  const bk = new URLSearchParams(location.search).get('battle');
+  if (bk && ENEMY_KINDS[bk]) setTimeout(() => startBattle({ kindKey: bk, mesh: null, alive: true, respawnAt: 0 }), 2000);
+}
+
 function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05);
@@ -2557,7 +3081,7 @@ function animate() {
 
   // 移動（目標速度へなめらかに追随させ、歩幅は実際に進んだ距離で進める）
   const pPrevX = player.position.x, pPrevZ = player.position.z;
-  const iv = dialog.open ? { x: 0, z: 0, mag: 0 } : inputVector();
+  const iv = (dialog.open || inBattle) ? { x: 0, z: 0, mag: 0 } : inputVector();
   const MAX_SPEED = 2.5; // 移動速度[m/s]（2026-11-18 実機感想で 3.1 → 2.5 に）
   const accel = 1 - Math.pow(0.0025, dt); // 立ち上がり・停止をなめらかに
   vel.x += (iv.x * MAX_SPEED - vel.x) * accel;
@@ -2632,6 +3156,7 @@ function animate() {
     if (Math.hypot(player.position.x - 778, player.position.z + 2.2) < 1.0) enterLabyrinth();
   }
   labTick(t);
+  updateFieldEnemies(dt, t);
 
   // NPC：近づく／会話中はプレイヤーの方を向く。それ以外は正面で待機アニメ
   const near = nearestNPC();
