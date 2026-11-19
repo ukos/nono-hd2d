@@ -61,7 +61,7 @@
   #battle { position:fixed; inset:0; z-index:13; overflow:hidden; background:#101018;
     font-family:inherit; opacity:1; transition:opacity .45s; }
   #bbg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 20%; }
-  #bfloor { position:absolute; left:0; right:0; bottom:0; height:36%; background-repeat:repeat;
+  #bfloor { position:absolute; left:0; right:0; bottom:0; height:54%; background-repeat:repeat;
     -webkit-mask-image:linear-gradient(to bottom, transparent, black 22%);
     mask-image:linear-gradient(to bottom, transparent, black 22%); }
   #bshade { position:absolute; inset:0; background:linear-gradient(to bottom, rgba(10,8,24,.18), rgba(10,8,24,0) 40%, rgba(10,8,24,.25)); }
@@ -115,11 +115,16 @@
   #evoCanvas.evoGlow { animation:evoGlowA 1.5s ease-in-out forwards; }
   @keyframes evoGlowA { 0%{ filter:brightness(1) } 55%{ filter:brightness(1.9) drop-shadow(0 0 22px #ffe27a) } 100%{ filter:brightness(1.25) drop-shadow(0 0 12px #ffe27a) } }
   #evoCanvas.evoFlash { filter:brightness(3.4) drop-shadow(0 0 30px #fff); }
+  #evoImg.evoGlow { animation:evoGlowA 1.5s ease-in-out forwards; }
+  #evoImg.evoFlash { filter:brightness(2.6) drop-shadow(0 0 30px #fff); }
   #evoTitle { font-size:22px; margin-top:18px; letter-spacing:.08em; }
   #evoText { font-size:14px; line-height:1.8; margin-top:8px; opacity:.92; }
   #evoOk { margin-top:20px; background:rgba(70,60,140,.92); color:#fff; border:1px solid rgba(255,255,255,.5);
     border-radius:8px; padding:9px 26px; font-size:15px; cursor:pointer; display:none; }
   .bunit.hurt .bchar { animation:bshake .3s; }
+  .bunit .bshadow { position:absolute; left:50%; bottom:-7px; transform:translateX(-50%); width:76%;
+    height:13px; background:radial-gradient(ellipse at center, rgba(0,0,0,.45), rgba(0,0,0,0) 70%);
+    border-radius:50%; pointer-events:none; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -152,7 +157,7 @@
 </div>
 <button id="bgmBtn">♪ ON</button>
 <div id="challenge"><div id="challengeText"></div><div class="crow"><button id="challengeYes">勝負する</button><button id="challengeNo" class="no">やめる</button></div></div>
-<div id="evolve"><canvas id="evoCanvas" width="8" height="16"></canvas><div id="evoTitle"></div><div id="evoText"></div><button id="evoOk">わかった</button></div>
+<div id="evolve"><canvas id="evoCanvas" width="8" height="16"></canvas><img id="evoImg" alt="" style="display:none; width:250px; height:250px; object-fit:contain"><div id="evoTitle"></div><div id="evoText"></div><button id="evoOk">わかった</button></div>
 <div id="loading">読み込み中…</div>
 <div id="splash">
   <img src="assets/logo.jpg" alt="NONO Blade of the Dawn HD-2D ver.">
@@ -3010,7 +3015,7 @@ function buildBattleDOM(kindKey, count) {
   battle.foes = [];
   battle.foeEls = []; battle.memberEls = {}; battle.plateEls = {};
   const be = bEl('benemies'); be.innerHTML = '';
-  const spots = count === 1 ? [[24, 32]] : count === 2 ? [[16, 34], [35, 28]] : [[12, 35], [26, 27], [40, 34]];
+  const spots = count === 1 ? [[24, 30]] : count === 2 ? [[16, 32], [35, 26]] : [[12, 33], [26, 25], [40, 32]];
   for (let i = 0; i < count; i++) {
     const f = { kind, name: kind.name, hp: kind.hp, maxhp: kind.hp, atk: kind.atk, def: kind.def, spd: kind.spd, dead: false };
     battle.foes.push(f);
@@ -3018,15 +3023,16 @@ function buildBattleDOM(kindKey, count) {
     d.className = 'bunit benemy';
     d.style.left = spots[i][0] + '%'; d.style.bottom = spots[i][1] + '%';
     const hPx = Math.min(205, window.innerHeight * 0.28) * (kind.h / 0.95) * (count === 3 ? 0.82 : count === 2 ? 0.92 : 1);
-    d.innerHTML = `<img src="${kind.img}" style="height:${hPx}px; transform:scaleX(-1)" alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
+    d.innerHTML = `<div class="bshadow"></div><img src="${kind.img}" style="height:${hPx}px; transform:scaleX(-1)" alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
     be.appendChild(d); battle.foeEls.push(d);
   }
   const bp = bEl('bparty'); bp.innerHTML = '';
-  const pspots = { nono: [76, 31], yui: [86, 27], rei: [94, 32] };
+  const pspots = { nono: [76, 29], yui: [86, 25], rei: [94, 30] };
   for (const [id, m] of Object.entries(PARTY)) {
     const d = document.createElement('div');
     d.className = 'bunit bmember';
     d.style.left = pspots[id][0] + '%'; d.style.bottom = pspots[id][1] + '%';
+    const sh2 = document.createElement('div'); sh2.className = 'bshadow'; d.appendChild(sh2);
     const ch = document.createElement('div');
     ch.className = 'bchar';
     ch.style.backgroundImage = `url(${m.sheet})`;
@@ -3254,23 +3260,29 @@ async function runEvolve(a, b) {
   bEl('evoTitle').textContent = '';
   bEl('evoText').innerHTML = '';
   bEl('evoOk').style.display = 'none';
+  const img = bEl('evoImg');
+  const showSword = (st) => new Promise((res) => {
+    img.onload = () => { img.style.display = 'block'; cv.style.display = 'none'; res(); };
+    img.onerror = () => { img.style.display = 'none'; cv.style.display = 'block'; drawSword(cv, st); res(); };
+    img.src = 'assets/sword_' + st + '.png';
+  });
+  for (const elx of [cv, img]) elx.classList.remove('evoGlow', 'evoFlash');
   ov.style.display = 'flex';
-  drawSword(cv, a);
-  cv.className = '';
+  await showSword(a);
   await bSleep(500);
-  cv.classList.add('evoGlow');
+  for (const elx of [cv, img]) elx.classList.add('evoGlow');
   await bSleep(1500);
-  cv.classList.add('evoFlash');
-  drawSword(cv, b);
+  for (const elx of [cv, img]) elx.classList.add('evoFlash');
+  await showSword(b);
   if (BGM.fanfare) BGM.fanfare();
   await bSleep(420);
-  cv.classList.remove('evoFlash');
+  for (const elx of [cv, img]) elx.classList.remove('evoFlash');
   bEl('evoTitle').textContent = '剣が姿を変えた！';
   bEl('evoText').innerHTML = SWORDS[a][0] + ' が <b>' + SWORDS[b][0] + '</b> になった。<br>必殺技「' + SWORDS[b][2] + '」：' + SWORDS[b][3] + '<br><span style="opacity:.75">（剣の段階 ' + b + '/15）</span>';
   bEl('evoOk').style.display = 'block';
   await new Promise((r) => { bEl('evoOk').onclick = r; });
   ov.style.display = 'none';
-  cv.classList.remove('evoGlow');
+  for (const elx of [cv, bEl('evoImg')]) elx.classList.remove('evoGlow');
 }
 // ---------- ライバルへの勝負申し込み ----------
 function showChallenge(name) {
@@ -3284,11 +3296,12 @@ function showChallenge(name) {
 }
 function buildPartyDOM() {
   const bp = bEl('bparty'); bp.innerHTML = '';
-  const pspots = { nono: [76, 31], yui: [86, 27], rei: [94, 32] };
+  const pspots = { nono: [76, 29], yui: [86, 25], rei: [94, 30] };
   for (const [id, m] of Object.entries(PARTY)) {
     const d = document.createElement('div');
     d.className = 'bunit bmember';
     d.style.left = pspots[id][0] + '%'; d.style.bottom = pspots[id][1] + '%';
+    const sh2 = document.createElement('div'); sh2.className = 'bshadow'; d.appendChild(sh2);
     const ch = document.createElement('div');
     ch.className = 'bchar';
     ch.style.backgroundImage = `url(${m.sheet})`;
@@ -3328,7 +3341,8 @@ async function startRivalBattle(name) {
   const be = bEl('benemies'); be.innerHTML = '';
   const d = document.createElement('div');
   d.className = 'bunit benemy';
-  d.style.left = '24%'; d.style.bottom = '31%';
+  d.style.left = '24%'; d.style.bottom = '29%';
+  const sh3 = document.createElement('div'); sh3.className = 'bshadow'; d.appendChild(sh3);
   const ch = document.createElement('div');
   ch.className = 'bchar';
   ch.style.backgroundImage = `url(${rv.sheet})`;
