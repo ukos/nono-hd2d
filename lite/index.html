@@ -168,6 +168,7 @@ function blurredTex(path, scale = 0.28, passes = 2) {
 
 // ---------- レンダラ / シーン / カメラ ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+const MAX_ANISO = renderer.capabilities.getMaxAnisotropy(); // 地面の遠方を潰さないための異方性フィルタ
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
@@ -236,13 +237,19 @@ function groundTexture(base, dots, patch) {
 // 地面テクスチャ: 本編タイル画像があればそれを使い、なければ色指定から生成する
 function makeGroundTexture(key) {
   const td = GROUND_TEX[key];
+  let t;
   if (td.img) {
-    const t = loadTex(td.img);
+    t = loadTex(td.img);
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    return t;
+  } else {
+    t = groundTexture(td.base, td.dots, td.patch);
   }
-  return groundTexture(td.base, td.dots, td.patch);
+  // 有機質な地面はミラー繰り返しにして、タイルの明暗ムラが市松模様に見えるのを防ぐ
+  if (MIRROR_GROUND_KEYS.has(key)) t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping;
+  t.anisotropy = MAX_ANISO;
+  return t;
 }
+const MIRROR_GROUND_KEYS = new Set(['grass', 'sand', 'forestFloor', 'meadow', 'meadowDusk', 'dirtPath', 'wetbank', 'rock', 'snow', 'highland', 'ice', 'lavarock', 'lava', 'marsh']);
 // 帯状の地面（小道・砂浜）の縁を、ギザギザに透かして下の地面へ馴染ませるアルファ
 function stripAlphaTexture() {
   const c = document.createElement('canvas'); c.width = c.height = 256;
@@ -902,6 +909,8 @@ function spawnRipple(x, z) {
 // ---------- 湖畔の専用景観（水面・夕日・背景ボード） ----------
 const waterUniforms = {
   uTime: { value: 0 },
+  uWtr: { value: 1.0 }, // 水面の明るさ（時刻で変化。夜は落とす）
+  uGlintCol: { value: new THREE.Color(1.0, 0.42, 0.13) }, // 反射の色（夜は月明かり色へ）
   uSunPos: { value: new THREE.Vector3(-11, 3.15, -33) },
   uShoreZ: { value: -3.4 },
 };
@@ -914,7 +923,7 @@ const WATER_VERT = `
           gl_Position = projectionMatrix * viewMatrix * wp;
         }`;
 const WATER_FRAG = `
-        uniform float uTime; uniform vec3 uSunPos; uniform float uShoreZ;
+        uniform float uTime; uniform vec3 uSunPos; uniform float uShoreZ; uniform float uWtr; uniform vec3 uGlintCol;
         varying vec3 vWorld;
         // 波の合成（4つの方向・周波数の異なる波の勾配から水面の法線を作る）
         vec3 waveNormal(vec2 p, float t) {
@@ -938,16 +947,17 @@ const WATER_FRAG = `
           vec3 skyc = vec3(0.125, 0.185, 0.325);
           vec3 col = mix(deep, skyc, clamp(dist * 0.45 + fres * 0.6, 0.0, 1.0));
           col *= 0.94 + 0.06 * N.y; // 波の谷をわずかに暗く
+          col *= uWtr; // 時刻による水面の明るさ
           // 夕日の映り込み：法線で反射ベクトルを揺らし、反射柱とグリッターを作る
           vec3 R = reflect(-V, N);
           float rl = max(dot(R, L), 0.0);
           float column = pow(rl, 20.0) * 0.55;              // 柔らかい反射柱
           float glit = pow(rl, 260.0) * 3.2;                // 鋭いきらめき
           float glit2 = pow(rl, 60.0) * 0.5 * (0.5 + 0.5 * N.x * 8.0); // 中間のまたたき
-          col += vec3(1.0, 0.42, 0.13) * (column + glit + max(glit2, 0.0)) * (0.35 + dist * 0.65);
+          col += uGlintCol * (column + glit + max(glit2, 0.0)) * (0.35 + dist * 0.65);
           // 空のきらめき（太陽以外の微反射）
           float sparkle = pow(rl, 90.0) * 0.25;
-          col += vec3(0.65, 0.75, 0.8) * sparkle * fres;
+          col += vec3(0.65, 0.75, 0.8) * sparkle * fres * uWtr;
           float alpha = mix(0.62, 0.96, smoothstep(0.0, 1.6, uShoreZ - wp.z));
           gl_FragColor = vec4(col, alpha);
         }`;
@@ -1013,13 +1023,14 @@ function buildLakeCustom(group) {
   );
   const core = new THREE.Mesh(
     new THREE.CircleGeometry(1.12, 40),
-    new THREE.MeshBasicMaterial({ color: 0xffd9a0, fog: false })
+    new THREE.MeshBasicMaterial({ color: 0xffd9a0, fog: false, transparent: true })
   );
   core.position.z = 0.01;
   sunGroup.add(glow); sunGroup.add(core);
   sunGroup.position.set(-11, 3.15, -33);
   group.add(sunGroup);
   lakeRefs.sunGroup = sunGroup;
+  lakeRefs.sunMats = [glow.material, core.material];
 }
 function buildForestCustom(group) {
   // 東の奥の樹林ボード
@@ -1048,7 +1059,7 @@ function buildValleyCustom(group) {
   const river = new THREE.Mesh(
     riverGeo,
     new THREE.ShaderMaterial({
-      uniforms: { uTime: waterUniforms.uTime },
+      uniforms: { uTime: waterUniforms.uTime, uWtr: waterUniforms.uWtr },
       transparent: true,
       depthWrite: false,
       vertexShader: `
@@ -1058,7 +1069,7 @@ function buildValleyCustom(group) {
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }`,
       fragmentShader: `
-        uniform float uTime;
+        uniform float uTime; uniform float uWtr;
         varying vec2 vUv;
         void main() {
           float t = uTime;
@@ -1078,6 +1089,7 @@ function buildValleyCustom(group) {
           float bank = smoothstep(0.0, 0.22, dEdge);
           float foam = (1.0 - bank) * smoothstep(0.45, 0.9, foamN);
           col = mix(col, vec3(0.82, 0.88, 0.88), foam * 0.55);
+          col *= uWtr; // 時刻による水面の明るさ
           float alpha = 0.97 * smoothstep(0.0, 0.13, dEdge);
           gl_FragColor = vec4(col, alpha);
         }`,
@@ -1839,7 +1851,7 @@ function buildRegion(id, def) {
     let mat;
     if (g.tex) {
       const tex = makeGroundTexture(g.tex);
-      tex.repeat.set(g.repeat[0], g.repeat[1]);
+      tex.repeat.set(g.repeat[0] * 2, g.repeat[1] * 2); // 高精細化: 模様を細かく
       mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 1 });
     } else {
       mat = new THREE.MeshStandardMaterial({ color: g.color, roughness: 1 });
@@ -1848,7 +1860,7 @@ function buildRegion(id, def) {
       if (!_stripAlpha) { _stripAlpha = stripAlphaTexture(); _softAlpha = softAlphaTexture(); }
       const at = (g.strip ? _stripAlpha : _softAlpha).clone();
       at.wrapS = at.wrapT = THREE.RepeatWrapping;
-      at.repeat.set(g.repeat ? g.repeat[0] : 1, g.repeat ? g.repeat[1] : 1);
+      at.repeat.set(g.repeat ? g.repeat[0] * 2 : 1, g.repeat ? g.repeat[1] * 2 : 1);
       at.needsUpdate = true;
       mat.transparent = true;
       mat.alphaMap = at;
@@ -1863,7 +1875,7 @@ function buildRegion(id, def) {
     const g0 = (def.grounds || [])[0];
     if (g0) {
       const tex = makeGroundTexture('snow');
-      tex.repeat.set(13, 6);
+      tex.repeat.set(26, 12);
       const m = new THREE.Mesh(
         new THREE.PlaneGeometry(g0.w, g0.d),
         new THREE.MeshStandardMaterial({ map: tex, roughness: 1 })
@@ -1928,11 +1940,11 @@ let area = 'hajimari';
 const DAY_LEN = 300; // 1日 = 300秒
 // fog/bg が null のキー（夕）は地方データの値を使う＝その地方本来の夕景に戻る
 const DAY_KEYS = [ // t は各時間帯の「中心」。中心でその時間帯が最も純粋になり、境目でなめらかに移る
-  { t: 0.1, name: '早朝', fog: 0xa7b4c4, bg: 0x8ea6c4, sunColor: 0xffd9a8, sunMul: 0.85, sunDx: 0.95, sunY: 0.7, hemiSky: 0xbccde6, hemiGnd: 0x46543f, hemiI: 1.05, fillI: 0.3, lantern: 1.4, glow: 0.025, ff: 0.5, tint: [1.0, 0.9, 0.78] },
-  { t: 0.3, name: '朝', fog: 0x9fb2c8, bg: 0x87a6c9, sunColor: 0xffe3b3, sunMul: 0.95, sunDx: 0.55, sunY: 1.15, hemiSky: 0xbfd0e8, hemiGnd: 0x4a5a48, hemiI: 1.15, fillI: 0.3, lantern: 0, glow: 0, ff: 0, tint: [1.0, 0.96, 0.88] },
-  { t: 0.5, name: '昼', fog: 0xa8c4de, bg: 0x8fb8dd, sunColor: 0xfff2d8, sunMul: 1.3, sunDx: 0.1, sunY: 1.9, hemiSky: 0xcfe2f5, hemiGnd: 0x5a6b52, hemiI: 1.35, fillI: 0.25, lantern: 0, glow: 0, ff: 0, tint: [1.03, 1.01, 0.99] },
-  { t: 0.7, name: '夕', fog: null, bg: null, sunColor: 0xffb36b, sunMul: 1.0, sunDx: -0.95, sunY: 1.0, hemiSky: 0x8a6bb8, hemiGnd: 0x2e4038, hemiI: 1.0, fillI: 0.35, lantern: 3.2, glow: 0.055, ff: 0.8, tint: [1, 1, 1] },
-  { t: 0.9, name: '夜', fog: 0x1c2440, bg: 0x0d1226, sunColor: 0x8fa8ff, sunMul: 0.35, sunDx: -0.95, sunY: 1.2, hemiSky: 0x35406e, hemiGnd: 0x0e1420, hemiI: 0.5, fillI: 0.5, lantern: 4.2, glow: 0.075, ff: 1, tint: [0.13, 0.18, 0.42] },
+  { t: 0.1, name: '早朝', fog: 0xa7b4c4, bg: 0x8ea6c4, sunColor: 0xffd9a8, sunMul: 0.85, sunDx: 0.95, sunY: 0.7, hemiSky: 0xbccde6, hemiGnd: 0x46543f, hemiI: 1.05, fillI: 0.3, lantern: 1.4, glow: 0.025, ff: 0.5, tint: [1.0, 0.9, 0.78], wtr: 0.6, glint: [0.75, 0.45, 0.25], sunVis: 0.85 },
+  { t: 0.3, name: '朝', fog: 0x9fb2c8, bg: 0x87a6c9, sunColor: 0xffe3b3, sunMul: 0.95, sunDx: 0.55, sunY: 1.15, hemiSky: 0xbfd0e8, hemiGnd: 0x4a5a48, hemiI: 1.15, fillI: 0.3, lantern: 0, glow: 0, ff: 0, tint: [1.0, 0.96, 0.88], wtr: 0.9, glint: [0.85, 0.55, 0.3], sunVis: 1 },
+  { t: 0.5, name: '昼', fog: 0xa8c4de, bg: 0x8fb8dd, sunColor: 0xfff2d8, sunMul: 1.3, sunDx: 0.1, sunY: 1.9, hemiSky: 0xcfe2f5, hemiGnd: 0x5a6b52, hemiI: 1.35, fillI: 0.25, lantern: 0, glow: 0, ff: 0, tint: [1.03, 1.01, 0.99], wtr: 1.0, glint: [0.95, 0.55, 0.28], sunVis: 1 },
+  { t: 0.7, name: '夕', fog: null, bg: null, sunColor: 0xffb36b, sunMul: 1.0, sunDx: -0.95, sunY: 1.0, hemiSky: 0x8a6bb8, hemiGnd: 0x2e4038, hemiI: 1.0, fillI: 0.35, lantern: 3.2, glow: 0.055, ff: 0.8, tint: [1, 1, 1], wtr: 1.0, glint: [1.0, 0.42, 0.13], sunVis: 1 },
+  { t: 0.9, name: '夜', fog: 0x1c2440, bg: 0x0d1226, sunColor: 0x8fa8ff, sunMul: 0.35, sunDx: -0.95, sunY: 1.2, hemiSky: 0x35406e, hemiGnd: 0x0e1420, hemiI: 0.5, fillI: 0.5, lantern: 4.2, glow: 0.075, ff: 1, tint: [0.13, 0.18, 0.42], wtr: 0.3, glint: [0.16, 0.2, 0.3], sunVis: 0 },
 ];
 let dayT = 0.7; // 夕方から始める
 let dayFixed = null; // 動作確認用: ?time=0..1 で時刻を固定できる
@@ -1965,6 +1977,9 @@ function applyTimeOfDay(dt) {
   partyLight.intensity = mix(k0.lantern, k1.lantern);
   partyGlow.material.opacity = mix(k0.glow, k1.glow);
   fireflyGain = mix(k0.ff, k1.ff);
+  waterUniforms.uWtr.value = mix(k0.wtr, k1.wtr);
+  waterUniforms.uGlintCol.value.setRGB(mix(k0.glint[0], k1.glint[0]), mix(k0.glint[1], k1.glint[1]), mix(k0.glint[2], k1.glint[2]));
+  if (lakeRefs.sunMats) { const so = mix(k0.sunVis, k1.sunVis); lakeRefs.sunMats[0].opacity = 0.55 * so; lakeRefs.sunMats[1].opacity = so; }
   const rt = REGION_RT[area];
   if (rt && rt.backdropMat) rt.backdropMat.color.setRGB(mix(k0.tint[0], k1.tint[0]), mix(k0.tint[1], k1.tint[1]), mix(k0.tint[2], k1.tint[2]));
   const txt = A.sub + ' ／ いま ' + phaseName;
