@@ -664,6 +664,34 @@ function placeTorii(parent, colliders, x, z, scale = 1, rotY = 0, snowy = false)
 const stoneMat = new THREE.MeshStandardMaterial({ color: 0x8d8d96, roughness: 1, flatShading: true });
 const shrineWoodMat = new THREE.MeshStandardMaterial({ color: 0x5d4433, roughness: 1, flatShading: true });
 const shrineRoofMat = new THREE.MeshStandardMaterial({ color: 0x3f4652, roughness: 1, flatShading: true });
+const houseWallMat = new THREE.MeshStandardMaterial({ color: 0xe8dcc4, roughness: 1 });
+const houseWoodMat = new THREE.MeshStandardMaterial({ color: 0x6b4a30, roughness: 1 });
+const houseRoofMat = new THREE.MeshStandardMaterial({ color: 0x4a4a58, roughness: 1, flatShading: true });
+const houseThatchMat = new THREE.MeshStandardMaterial({ color: 0x8a6f4d, roughness: 1, flatShading: true });
+const windowMats = []; // 窓の明かり（時刻で明るさを変える）
+function placeHouse(parent, colliders, x, z, s = 1, thatch = false) {
+  // 外観のみの民家（コード製ローポリ。祠と同じ四角錐の屋根）
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.18, 2.2), stoneMat);
+  base.position.y = 0.09; base.receiveShadow = true;
+  const walls = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.5, 2.0), houseWallMat);
+  walls.position.y = 0.93; walls.castShadow = true; walls.receiveShadow = true;
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(2.05, 0.95, 4), thatch ? houseThatchMat : houseRoofMat);
+  roof.position.y = 2.15; roof.rotation.y = Math.PI / 4; roof.scale.set(1, 1, 0.82); roof.castShadow = true;
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.05, 0.04), houseWoodMat);
+  door.position.set(0.55, 0.7, 1.01);
+  const winMat = new THREE.MeshStandardMaterial({ color: 0x59452a, emissive: 0xff9a3c, emissiveIntensity: 0.3, roughness: 1 });
+  windowMats.push(winMat);
+  const win = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.5, 0.04), winMat);
+  win.position.set(-0.6, 1.05, 1.01);
+  g.add(base); g.add(walls); g.add(roof); g.add(door); g.add(win);
+  g.position.set(x, 0, z);
+  g.scale.setScalar(s);
+  parent.add(g);
+  blobShadow(parent, 3.3 * s, x, z, 0.30);
+  colliders.push({ x, z, r: 1.55 * s });
+  return g;
+}
 function placeShrine(parent, colliders, x, z, scale = 1, rotY = 0, snowy = false) {
   const g = new THREE.Group();
   const base = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.24, 0.75), stoneMat);
@@ -1162,12 +1190,19 @@ function buildValleyCustom(group) {
   river.renderOrder = 2;
   group.add(river);
 }
+const seaUniforms = {
+  uTime: waterUniforms.uTime,
+  uSunPos: { value: new THREE.Vector3(1105 - 11, 3.15, -33) }, // 海の上空に太陽を置く（湖と同じ相対位置）
+  uShoreZ: waterUniforms.uShoreZ,
+  uWtr: waterUniforms.uWtr,
+  uGlintCol: waterUniforms.uGlintCol,
+};
 function buildSeaCustom(group) {
   // 群青の海: 北に広がる海（湖と同じ水シェーダー。汀の z は湖と共通）と波打ち際の泡ライン
   const water = new THREE.Mesh(
     new THREE.PlaneGeometry(110, 36, 1, 1),
     new THREE.ShaderMaterial({
-      uniforms: waterUniforms,
+      uniforms: seaUniforms,
       transparent: true,
       depthWrite: false,
       vertexShader: WATER_VERT,
@@ -1608,6 +1643,8 @@ const REGIONS = {
       { t: 'tree', n: 10, seed: 37, x: [154.5, 186.5], zCenter: 0.6, offMin: 5.6, offMax: 8.6, s: [0.9, 1.5], frontS: 0.6 },
     ],
     props: [
+      { t: 'house', x: 162, z: -2.55, s: 1.0 },
+      { t: 'house', x: 168.3, z: -2.65, s: 0.88, thatch: true },
       { t: 'torii', x: 176, z: -2.3 },
       { t: 'shrine', x: 176, z: -3.2 },
       { t: 'tree', x: 186.4, z: -3.0, s: 1.8 },
@@ -1961,6 +1998,7 @@ function buildRegion(id, def) {
     else if (p.t === 'signpost') placeSignpost(group, colliders, p.x, p.z, p.rot || 0);
     else if (p.t === 'torii') placeTorii(group, colliders, p.x, p.z, p.s || 1, p.rot || 0, snowy);
     else if (p.t === 'shrine') placeShrine(group, colliders, p.x, p.z, p.s || 1, p.rot || 0, snowy);
+    else if (p.t === 'house') placeHouse(group, colliders, p.x, p.z, p.s || 1, !!p.thatch);
     else if (p.t === 'tuft') placeTuft(group, p.x, p.z, r, p.s || 1, def.lush ? grassLushTex : grassTuftTex);
     else if (p.t === 'drift') placeDrift(group, p.x, p.z, p.s || 1, def.snowDepth || 0);
     else if (p.t === 'flower') placeFlower(group, p.x, p.z, r, p.s || 1);
@@ -2038,6 +2076,7 @@ function applyTimeOfDay(dt) {
   hemi.intensity = mix(k0.hemiI, k1.hemiI);
   fill.intensity = mix(k0.fillI, k1.fillI);
   partyLight.intensity = mix(k0.lantern, k1.lantern);
+  for (const wm of windowMats) wm.emissiveIntensity = partyLight.intensity * 0.22; // 家の窓の明かりも提灯と連動
   partyGlow.material.opacity = mix(k0.glow, k1.glow);
   fireflyGain = mix(k0.ff, k1.ff);
   waterUniforms.uWtr.value = mix(k0.wtr, k1.wtr);
