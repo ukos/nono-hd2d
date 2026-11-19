@@ -102,6 +102,24 @@
   @keyframes fxpop { 0%{ opacity:0; scale:.55 } 25%{ opacity:1 } 100%{ opacity:0; scale:1.12 } }
   #bgmBtn { position:fixed; top:10px; right:10px; z-index:16; background:rgba(12,12,28,.66); color:#fff;
     border:1px solid rgba(255,255,255,.35); border-radius:8px; padding:5px 10px; font-size:12px; cursor:pointer; }
+  #challenge { position:fixed; left:50%; bottom:118px; transform:translateX(-50%); z-index:12;
+    background:rgba(12,12,28,.92); border:1px solid rgba(255,255,255,.4); border-radius:10px;
+    padding:12px 16px; color:#fff; text-align:center; display:none; font-size:14px; }
+  #challenge .crow { display:flex; gap:8px; justify-content:center; margin-top:9px; }
+  #challenge button { background:rgba(70,60,140,.92); color:#fff; border:1px solid rgba(255,255,255,.5);
+    border-radius:8px; padding:8px 16px; font-size:14px; cursor:pointer; }
+  #challenge button.no { background:rgba(40,40,60,.92); }
+  #evolve { position:fixed; inset:0; z-index:17; background:#05050c; display:none;
+    flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; padding:20px; }
+  #evoCanvas { width:120px; height:240px; image-rendering:pixelated; }
+  #evoCanvas.evoGlow { animation:evoGlowA 1.5s ease-in-out forwards; }
+  @keyframes evoGlowA { 0%{ filter:brightness(1) } 55%{ filter:brightness(1.9) drop-shadow(0 0 22px #ffe27a) } 100%{ filter:brightness(1.25) drop-shadow(0 0 12px #ffe27a) } }
+  #evoCanvas.evoFlash { filter:brightness(3.4) drop-shadow(0 0 30px #fff); }
+  #evoTitle { font-size:22px; margin-top:18px; letter-spacing:.08em; }
+  #evoText { font-size:14px; line-height:1.8; margin-top:8px; opacity:.92; }
+  #evoOk { margin-top:20px; background:rgba(70,60,140,.92); color:#fff; border:1px solid rgba(255,255,255,.5);
+    border-radius:8px; padding:9px 26px; font-size:15px; cursor:pointer; display:none; }
+  .bunit.hurt .bchar { animation:bshake .3s; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -133,6 +151,8 @@
   <div id="bcmd"></div>
 </div>
 <button id="bgmBtn">♪ ON</button>
+<div id="challenge"><div id="challengeText"></div><div class="crow"><button id="challengeYes">勝負する</button><button id="challengeNo" class="no">やめる</button></div></div>
+<div id="evolve"><canvas id="evoCanvas" width="8" height="16"></canvas><div id="evoTitle"></div><div id="evoText"></div><button id="evoOk">わかった</button></div>
 <div id="loading">読み込み中…</div>
 <div id="splash">
   <img src="assets/logo.jpg" alt="NONO Blade of the Dawn HD-2D ver.">
@@ -2029,10 +2049,10 @@ let activeEnemies = [];
 const bEl = (id) => document.getElementById(id);
 const bSleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function bMsg(txt) { bEl('bmsg').textContent = txt; }
-function setCharFrame(el, row, col, hPx) {
+function setCharFrame(el, row, col, hPx, rows = 8) {
   const s = hPx / 224;
   el.style.width = (176 * s) + 'px'; el.style.height = hPx + 'px';
-  el.style.backgroundSize = (528 * s) + 'px ' + (1792 * s) + 'px';
+  el.style.backgroundSize = (528 * s) + 'px ' + (rows * 224 * s) + 'px';
   el.style.backgroundPosition = (-col * 176 * s) + 'px ' + (-row * 224 * s) + 'px';
 }
 
@@ -2537,6 +2557,7 @@ function openDialog(npc) {
   dialog.idx = 0;
   dialog.npc = npc;
   dialog.onClose = npc.onClose || null;
+  if (RIVALS[npc.name]) dialog.onClose = () => showChallenge(npc.name);
   dialogName.textContent = npc.name;
   dialogText.textContent = npc.lines[0];
   dialogEl.style.display = 'block';
@@ -2687,6 +2708,11 @@ const BGM = (() => {
   }
   window.addEventListener('pointerdown', init);
   return {
+    fanfare() {
+      if (!ctx) return;
+      const t0 = ctx.currentTime + 0.03;
+      [72, 76, 79, 84, 79, 84, 88].forEach((n, i) => tone(n, t0 + i * 0.11, 0.34, 'square', 0.05));
+    },
     set(name) { if (SONGS[name]) cur = name; },
     toggle() { muted = !muted; if (master) master.gain.value = muted ? 0 : 0.9; return muted; },
   };
@@ -2743,7 +2769,8 @@ function lunge(unitEl, dir) {
   setTimeout(() => { unitEl.style.transform = 'translateX(-50%)'; }, 210);
 }
 function physDamage(att, def, mult = 1) {
-  return Math.max(1, Math.round((att.atk + Math.random() * 4 - def.def) * mult));
+  const effDef = def.defDown ? Math.floor(def.def / 2) : def.def;
+  return Math.max(1, Math.round((att.atk + Math.random() * 4 - effDef) * mult));
 }
 async function hitFoe(att, f, dmg, opt = {}) {
   const el = foeEl(f);
@@ -2812,7 +2839,7 @@ async function nonoTurn() {
   while (true) {
     const cmd = await showCommands([
       { id: 'attack', label: 'こうげき' },
-      { id: 'skill', label: `とくぎ（${SKILL_NONO.name} あと${battle.skillLeft}回）`, disabled: battle.skillLeft <= 0 },
+      { id: 'skill', label: `とくぎ（必殺技 ${SWORDS[swordStage()][2]} あと${battle.skillLeft}回）`, disabled: battle.skillLeft <= 0 },
       { id: 'magic', label: 'まほう' },
       { id: 'defend', label: 'ぼうぎょ' },
       { id: 'flee', label: 'にげる' },
@@ -2826,9 +2853,25 @@ async function nonoTurn() {
     }
     if (cmd === 'skill') {
       battle.skillLeft--;
-      bMsg('nono の とくぎ！ ' + SKILL_NONO.name + '！');
-      lunge(memberEl('nono'), -1);
-      for (const f of aliveFoes()) await hitFoe({ el: null }, f, Math.max(1, physDamage(m, f) + SKILL_NONO.pow), { lunge: false, fx: 'spin' });
+      const st = swordStage(), beh = SWORD_BEHAVIOR[st];
+      bMsg('nono の 必殺技！ ' + SWORDS[st][2] + '！');
+      if (beh.type === 'all') {
+        lunge(memberEl('nono'), -1);
+        const hits = beh.hits || 1;
+        for (let h = 0; h < hits; h++) for (const f of aliveFoes()) await hitFoe({ el: null }, f, physDamage(m, f, beh.mult), { lunge: false, fx: beh.fx });
+      } else if (beh.type === 'one') {
+        const foes = aliveFoes();
+        const t = foes.length === 1 ? foes[0] : await pickTarget(foes, foes.map((f) => foeEl(f)));
+        const hits = beh.hits || 1;
+        for (let i = 0; i < hits && !t.dead; i++) await hitFoe({ el: memberEl('nono'), side: -1 }, t, physDamage(m, t, beh.mult), { fx: i === 0 ? beh.fx : null, lunge: i === 0 });
+      } else if (beh.type === 'multi') {
+        for (let i = 0; i < beh.hits; i++) {
+          const foes = aliveFoes(); if (!foes.length) break;
+          const t = foes[Math.floor(Math.random() * foes.length)];
+          await hitFoe({ el: null }, t, physDamage(m, t, beh.mult), { lunge: false, fx: i === 0 ? beh.fx : null });
+        }
+      }
+      if (beh.debuff) for (const f of aliveFoes()) { f.defDown = true; }
       break;
     }
     if (cmd === 'magic') {
@@ -2920,6 +2963,29 @@ async function npcTurn(id) {
 }
 async function foeTurn(f) {
   if (f.dead) return;
+  if (f.rival && !f.moveUsed && f.hp <= f.maxhp * 0.55) {
+    f.moveUsed = true;
+    const mv = RIVALS[f.name].move;
+    if (mv.type === 'heal') {
+      bMsg(f.name + ' の とくぎ！ ' + mv.name + '！');
+      showFx(foeEl(f), 'heal');
+      await bSleep(340);
+      f.hp = Math.min(f.maxhp, f.hp + mv.val);
+      dmgNumber(foeEl(f), mv.val, 'heal');
+      refreshBattleUI();
+      await bSleep(500);
+      return;
+    }
+    const ids0 = aliveMembers(); if (!ids0.length) return;
+    const t0 = ids0[Math.floor(Math.random() * ids0.length)];
+    bMsg(f.name + ' の とくぎ！ ' + mv.name + '！');
+    const hits = mv.type === 'hit2' ? 2 : 1;
+    for (let i = 0; i < hits; i++) {
+      if (PARTY[t0].hp <= 0) break;
+      await hitMember({ foe: f }, t0, physDamage(f, PARTY[t0], mv.mult), { fx: i === 0 ? mv.fx : null });
+    }
+    return;
+  }
   const ids = aliveMembers(); if (!ids.length) return;
   const t = ids[Math.floor(Math.random() * ids.length)];
   bMsg(f.name + ' の こうげき！');
@@ -2952,7 +3018,7 @@ function buildBattleDOM(kindKey, count) {
     d.className = 'bunit benemy';
     d.style.left = spots[i][0] + '%'; d.style.bottom = spots[i][1] + '%';
     const hPx = Math.min(205, window.innerHeight * 0.28) * (kind.h / 0.95) * (count === 3 ? 0.82 : count === 2 ? 0.92 : 1);
-    d.innerHTML = `<img src="${kind.img}" style="height:${hPx}px" alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
+    d.innerHTML = `<img src="${kind.img}" style="height:${hPx}px; transform:scaleX(-1)" alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
     be.appendChild(d); battle.foeEls.push(d);
   }
   const bp = bEl('bparty'); bp.innerHTML = '';
@@ -2984,7 +3050,7 @@ async function startBattle(fieldEnemy) {
   if (inBattle) return;
   inBattle = true;
   BGM.set('battle');
-  battle.over = false; battle.skillLeft = SKILL_NONO.uses; battle.fieldEnemy = fieldEnemy;
+  battle.over = false; battle.skillLeft = 3; battle.fieldEnemy = fieldEnemy; battle.rival = null;
   const R = REGIONS[area];
   const bg = bEl('bbg');
   const fallback = { hajimari: 'assets/far_mountains.jpg' }[area] || R.backdrop;
@@ -3007,6 +3073,31 @@ async function startBattle(fieldEnemy) {
 }
 async function endBattle() {
   const el = bEl('battle');
+  if (battle.rival) {
+    const name = battle.rival;
+    if (battle.over === 'win') {
+      const wasBeaten = SAVE.beaten.includes(name);
+      const oldStage = swordStage();
+      if (!wasBeaten) { SAVE.beaten.push(name); persistSave(); }
+      const newStage = swordStage();
+      bMsg(name + ' に 勝った！');
+      for (const m of Object.values(PARTY)) { m.hp = Math.min(m.maxhp, m.hp + Math.ceil(m.maxhp * 0.3)); m.down = m.hp <= 0; }
+      await bSleep(1100);
+      el.style.opacity = '0'; await bSleep(480); el.style.display = 'none';
+      BGM.set('field'); inBattle = false; battle.over = false; battle.rival = null;
+      applySwordAtk();
+      if (!wasBeaten && newStage > oldStage) await runEvolve(oldStage, newStage);
+      return;
+    }
+    if (battle.over === 'lose') {
+      bMsg(name + ' に 負けてしまった…（その場で回復した）');
+      for (const m of Object.values(PARTY)) { m.hp = m.maxhp; m.mp = m.maxmp; m.down = false; }
+      await bSleep(1300);
+    }
+    el.style.opacity = '0'; await bSleep(480); el.style.display = 'none';
+    BGM.set('field'); inBattle = false; battle.over = false; battle.rival = null;
+    return;
+  }
   if (battle.over === 'win') {
     bMsg('戦いに 勝った！ みんな 少し 回復した。');
     for (const m of Object.values(PARTY)) { m.hp = Math.min(m.maxhp, m.hp + Math.ceil(m.maxhp * 0.3)); m.down = m.hp <= 0; }
@@ -3054,7 +3145,7 @@ function updateFieldEnemies(dt, t) {
       const sp = 0.55 * dt;
       p.x += dx / d * sp; p.z += dz / d * sp;
       p.y = Math.abs(Math.sin(t * 7 + e.phase)) * 0.035;
-      e.mesh.scale.x = dx < 0 ? -1 : 1;
+      e.mesh.scale.x = dx < 0 ? 1 : -1; // 原画が左向きのため、進行方向へ向くよう反転
     }
     if (e.shadow) { e.shadow.position.x = p.x; e.shadow.position.z = p.z; }
     if (!inBattle && !transitioning && !dialog.open && t > noEncounterUntil &&
@@ -3068,6 +3159,202 @@ function updateFieldEnemies(dt, t) {
 {
   const bk = new URLSearchParams(location.search).get('battle');
   if (bk && ENEMY_KINDS[bk]) setTimeout(() => startBattle({ kindKey: bk, mesh: null, alive: true, respawnAt: 0 }), 2000);
+}
+
+
+// ================= 名無しの剣（本編 SWORDS の移植）とライバル戦 =================
+const SWORDS = [
+  ['無名の剣', 3, '回転切り', '自分のまわりを1周切る', { len: 9, w: 2, bl: ['#c8c0b0', '#8a8070'], gd: '#7a6a50', gp: '#c0b8a0', sh: 'plain', rust: 1 }],
+  ['偃月刀', 3, '三日月払い', '前方を大きく薙ぎ払い、敵を押し返す', { len: 10, w: 3, bl: ['#f0f2f6', '#a8b0c0'], gd: '#c08030', gp: '#6a3818', sh: 'moon' }],
+  ['ロングソード', 4, '大回転切り', '大きな回転切りを2周', { len: 12, w: 2, bl: ['#f4f6fa', '#a8b0c0'], gd: '#e8b030', gp: '#5a3418', sh: 'plain' }],
+  ['ブロードソード', 4, '兜割り', '跳び上がって振り下ろし、着地点に衝撃波', { len: 11, w: 3, bl: ['#e8ecf2', '#9098a8'], gd: '#9aa0b0', gp: '#4a2c14', sh: 'broad' }],
+  ['ソードブレイカー', 4, '刃返し', '攻撃をはじいて、まわりの敵の守りを崩す', { len: 11, w: 2, bl: ['#e0e4ec', '#88909c'], gd: '#40485a', gp: '#2a2a34', sh: 'breaker' }],
+  ['ロングスピア', 5, '疾風突き', '前へ踏み込み、一直線の敵をまとめて突く', { len: 14, w: 1, bl: ['#f4f6fa', '#a8b0c0'], gd: '#c03020', gp: '#8a5a30', sh: 'spear' }],
+  ['双剣', 5, '乱れ斬り', 'その場で6連続の斬撃', { len: 8, w: 2, bl: ['#f0f4ff', '#98a8c8'], gd: '#3a60b0', gp: '#202848', sh: 'twin' }],
+  ['レイピア', 5, '閃光突き', '遠くまで届く5連の突き', { len: 13, w: 1, bl: ['#ffffff', '#b8c0d0'], gd: '#e8c040', gp: '#6a2030', sh: 'rapier' }],
+  ['刀', 6, '居合い一閃', '前方へ瞬時に駆け抜けて斬る', { len: 12, w: 2, bl: ['#f8f8fc', '#9aa0ae'], gd: '#202020', gp: '#3a2a5a', sh: 'katana' }],
+  ['斬馬刀', 6, '地裂き', '地面を割る一直線の衝撃', { len: 14, w: 3, bl: ['#d8dce4', '#7a808c'], gd: '#5a4a3a', gp: '#3a2414', sh: 'broad' }],
+  ['蛇腹剣', 6, '蛇咬み', '伸びる刃で中距離の敵を引き寄せる', { len: 12, w: 2, bl: ['#c8f0d8', '#5a9a78'], gd: '#2a6a48', gp: '#1a3a28', sh: 'whip' }],
+  ['大剣', 7, '旋風', '回転しながら進む', { len: 15, w: 3, bl: ['#eef0f6', '#8890a0'], gd: '#806040', gp: '#402810', sh: 'broad' }],
+  ['七支刀', 7, '七星陣', 'まわりに7つの光を落とす', { len: 12, w: 2, bl: ['#f0e0a0', '#b09040'], gd: '#c8a040', gp: '#5a3a18', sh: 'seven' }],
+  ['波刃の剣', 7, '炎波', '前方へ広がる炎の波', { len: 12, w: 2, bl: ['#ffd090', '#e05828'], gd: '#802010', gp: '#401008', sh: 'wave' }],
+  ['光刃の剣', 8, '光の十字', '縦と横に光の斬撃を飛ばす', { len: 13, w: 2, bl: ['#ffffff', '#90e0ff'], gd: '#f0f0ff', gp: '#4060c0', sh: 'light' }],
+  ['暁の聖剣', 9, '暁光斬', '大きな光の刃を飛ばす', { len: 13, w: 2, bl: ['#ffffff', '#b8c8e8'], gd: '#5a78c8', gp: '#3a50a0', sh: 'dawn' }],
+];
+// 必殺技の lite での振る舞い（段階ごと）: type all=全体 one=単体 multi=ランダム多段、mult=倍率、hits=段数、debuff=守りを崩す
+const SWORD_BEHAVIOR = [
+  { type: 'all', mult: 0.85, fx: 'spin' }, { type: 'all', mult: 0.9, fx: 'spin' },
+  { type: 'all', mult: 0.5, hits: 2, fx: 'spin' }, { type: 'one', mult: 1.9, fx: 'hit' },
+  { type: 'all', mult: 0.8, debuff: true, fx: 'hit' }, { type: 'all', mult: 1.0, fx: 'gale' },
+  { type: 'multi', mult: 0.45, hits: 6, fx: 'hit' }, { type: 'one', mult: 0.5, hits: 5, fx: 'hit' },
+  { type: 'one', mult: 2.1, fx: 'gale' }, { type: 'all', mult: 1.15, fx: 'hit' },
+  { type: 'one', mult: 1.5, debuff: true, fx: 'shadow' }, { type: 'all', mult: 1.2, fx: 'spin' },
+  { type: 'multi', mult: 0.4, hits: 7, fx: 'thunder' }, { type: 'all', mult: 1.25, fx: 'fire' },
+  { type: 'all', mult: 1.35, fx: 'thunder' }, { type: 'one', mult: 2.6, fx: 'thunder' },
+];
+const RIVALS = {
+  'メイ':     { sheet: 'assets/mei_sheet.png',     hp: 55,  atk: 11, def: 3, spd: 7,  move: { name: 'すずの音', type: 'heal', val: 18 } },
+  'コガネ':   { sheet: 'assets/kogane_sheet.png',  hp: 60,  atk: 12, def: 3, spd: 12, move: { name: '天嶺の矢', type: 'hit', mult: 1.6 } },
+  'クロガネ': { sheet: 'assets/kurogane_sheet.png', hp: 78, atk: 13, def: 6, spd: 6,  move: { name: '騎士の一撃', type: 'hit', mult: 1.6 } },
+  'ゴウ':     { sheet: 'assets/gou_sheet.png',     hp: 84,  atk: 14, def: 4, spd: 8,  move: { name: '猪突猛進', type: 'hit', mult: 1.7 } },
+  'シロ':     { sheet: 'assets/shiro_sheet.png',   hp: 58,  atk: 12, def: 3, spd: 14, move: { name: '雪うさぎキック', type: 'hit2', mult: 0.85 } },
+  'ヨル':     { sheet: 'assets/yoru_sheet.png',    hp: 62,  atk: 13, def: 4, spd: 15, move: { name: '黒猫の爪', type: 'hit', mult: 1.6 } },
+  'タヌリオ': { sheet: 'assets/tanurio_sheet.png', hp: 70,  atk: 12, def: 4, spd: 9,  move: { name: '化けの術', type: 'hit', mult: 1.5 } },
+  'アカネ':   { sheet: 'assets/akane_sheet.png',   hp: 66,  atk: 13, def: 3, spd: 11, move: { name: '狐火', type: 'hit', mult: 1.6, fx: 'fire' } },
+  'ミズチ':   { sheet: 'assets/mizuchi_sheet.png', hp: 72,  atk: 14, def: 4, spd: 10, move: { name: '毒の牙', type: 'hit', mult: 1.6 } },
+  'ハヤテ':   { sheet: 'assets/hayate_sheet.png',  hp: 76,  atk: 14, def: 4, spd: 16, move: { name: '疾風キック', type: 'hit', mult: 1.6 } },
+  'ニブルス': { sheet: 'assets/nibulus_sheet.png', hp: 52,  atk: 11, def: 2, spd: 13, move: { name: 'こそどろの一撃', type: 'hit', mult: 1.5 } },
+  'サスケ':   { sheet: 'assets/sasuke_sheet.png',  hp: 68,  atk: 13, def: 4, spd: 15, move: { name: '分身の術', type: 'hit2', mult: 0.9 } },
+  '虎鉄':     { sheet: 'assets/kotetsu_sheet.png', hp: 88,  atk: 15, def: 5, spd: 9,  move: { name: '虎の爪', type: 'hit', mult: 1.7 } },
+  'ホムラ':   { sheet: 'assets/homura_sheet.png',  hp: 92,  atk: 15, def: 5, spd: 8,  move: { name: '紅蓮の炎', type: 'hit', mult: 1.7, fx: 'fire' } },
+  'イワオ':   { sheet: 'assets/iwao_sheet.png',    hp: 100, atk: 16, def: 7, spd: 5,  move: { name: '関所の大岩', type: 'hit', mult: 1.8 } },
+};
+const RIVAL_ORDER = ['メイ', 'コガネ', 'クロガネ', 'ゴウ', 'シロ', 'ヨル', 'タヌリオ', 'アカネ', 'ミズチ', 'ハヤテ', 'ニブルス', 'サスケ', '虎鉄', 'ホムラ', 'イワオ'];
+const SAVE_KEY = 'nono-hd2d-save-v1';
+let SAVE = { beaten: [] };
+try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && Array.isArray(s.beaten)) SAVE = s; } catch (e) {}
+function persistSave() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {} }
+function swordStage() { return Math.min(15, SAVE.beaten.length); }
+function applySwordAtk() { PARTY.nono.atk = 11 + SWORDS[swordStage()][1]; }
+applySwordAtk();
+// 本編 swordIcon の描画ロジックを Canvas に移植（8x16 ドットで剣を描く）
+function drawSword(cv, st) {
+  const L = SWORDS[st][4];
+  const g = cv.getContext('2d');
+  g.clearRect(0, 0, cv.width, cv.height);
+  const set = (x, y, c) => { if (x >= 0 && x < 8 && y >= 0 && y < 16) { g.fillStyle = c; g.fillRect(x, y, 1, 1); } };
+  const top = Math.max(0, 11 - L.len);
+  for (let y = top; y < 11; y++) {
+    const t = (y - top) / (11 - top);
+    let cx = 3 + (L.sh === 'moon' || L.sh === 'katana' ? Math.round(Math.sin(t * Math.PI) * (L.sh === 'moon' ? 1.5 : .8)) : 0);
+    if (L.sh === 'spear') { if (y < top + 3) { set(cx, y, L.bl[0]); set(cx + 1, y, L.bl[1]); if (y === top + 2) { set(cx - 1, y, L.bl[1]); set(cx + 2, y, L.bl[1]); } } else { set(cx, y, '#8a5a30'); set(cx + 1, y, '#5a3418'); } continue; }
+    if (L.sh === 'twin') { set(1, y + 2, L.bl[0]); set(2, y + 2, L.bl[1]); set(5, y, L.bl[0]); set(6, y, L.bl[1]); continue; }
+    if (L.sh === 'moon') { const o = Math.round(Math.sin(t * Math.PI) * 2.2); set(2, y, L.bl[0]); for (let i = 3; i <= 4 + o; i++) set(i, y, i === 4 + o ? L.bl[1] : L.bl[0]); continue; }
+    set(cx, y, L.bl[0]); if (L.w > 1) set(cx + 1, y, L.bl[1]); if (L.w > 2) set(cx - 1, y, L.bl[0]);
+    if (L.sh === 'breaker' && y % 2 === 0) set(cx + 2, y, L.bl[1]);
+    if (L.sh === 'wave' && y % 3 === 0) set(cx + 2, y, L.bl[0]);
+    if (L.sh === 'seven' && (y === top + 2 || y === top + 5 || y === top + 8)) { set(cx - 1, y, L.bl[1]); set(cx + 2, y - 1, L.bl[1]); }
+    if (L.sh === 'light' || L.sh === 'dawn') { if (y % 2) set(cx, y, '#ffffff'); }
+    if (L.rust && (y * 7) % 5 === 0) set(cx + 1, y, '#8a5a3a');
+  }
+  if (L.sh !== 'twin') {
+    for (let x = 0; x < 8; x++) { const wide = L.sh === 'rapier' || L.sh === 'dawn' || L.sh === 'light' ? 8 : L.sh === 'spear' ? 4 : 6; if (Math.abs(x - 3.5) < wide / 2) set(x, 11, L.gd); }
+    if (L.sh === 'dawn' || L.sh === 'light') { set(0, 10, L.gd); set(7, 10, L.gd); set(3, 11, '#f8a040'); }
+    const gl = L.sh === 'spear' ? 3 : L.sh === 'broad' && L.len > 13 ? 4 : 3;
+    for (let y = 12; y < 12 + gl; y++) { set(3, y, L.gp); set(4, y, L.gp); }
+    set(3, 12 + gl, L.gd); set(4, 12 + gl, L.gd);
+  } else {
+    for (const x of [1, 5]) { set(x, 13, L.gd); set(x + 1, 13, L.gd); set(x, 14, L.gp); set(x + 1, 14, L.gp); set(x, 15, L.gp); set(x + 1, 15, L.gp); }
+  }
+}
+// ---------- 剣の進化演出（暗転 → 旧い剣が光って新しい剣へ） ----------
+async function runEvolve(a, b) {
+  const ov = bEl('evolve');
+  const cv = bEl('evoCanvas');
+  bEl('evoTitle').textContent = '';
+  bEl('evoText').innerHTML = '';
+  bEl('evoOk').style.display = 'none';
+  ov.style.display = 'flex';
+  drawSword(cv, a);
+  cv.className = '';
+  await bSleep(500);
+  cv.classList.add('evoGlow');
+  await bSleep(1500);
+  cv.classList.add('evoFlash');
+  drawSword(cv, b);
+  if (BGM.fanfare) BGM.fanfare();
+  await bSleep(420);
+  cv.classList.remove('evoFlash');
+  bEl('evoTitle').textContent = '剣が姿を変えた！';
+  bEl('evoText').innerHTML = SWORDS[a][0] + ' が <b>' + SWORDS[b][0] + '</b> になった。<br>必殺技「' + SWORDS[b][2] + '」：' + SWORDS[b][3] + '<br><span style="opacity:.75">（剣の段階 ' + b + '/15）</span>';
+  bEl('evoOk').style.display = 'block';
+  await new Promise((r) => { bEl('evoOk').onclick = r; });
+  ov.style.display = 'none';
+  cv.classList.remove('evoGlow');
+}
+// ---------- ライバルへの勝負申し込み ----------
+function showChallenge(name) {
+  if (inBattle) return;
+  const box = bEl('challenge');
+  const beaten = SAVE.beaten.includes(name);
+  bEl('challengeText').textContent = beaten ? name + ' と 再戦する？（剣はもう成長しない）' : name + ' に 勝負を申し込む？';
+  box.style.display = 'block';
+  bEl('challengeYes').onclick = () => { box.style.display = 'none'; startRivalBattle(name); };
+  bEl('challengeNo').onclick = () => { box.style.display = 'none'; };
+}
+function buildPartyDOM() {
+  const bp = bEl('bparty'); bp.innerHTML = '';
+  const pspots = { nono: [76, 31], yui: [86, 27], rei: [94, 32] };
+  for (const [id, m] of Object.entries(PARTY)) {
+    const d = document.createElement('div');
+    d.className = 'bunit bmember';
+    d.style.left = pspots[id][0] + '%'; d.style.bottom = pspots[id][1] + '%';
+    const ch = document.createElement('div');
+    ch.className = 'bchar';
+    ch.style.backgroundImage = `url(${m.sheet})`;
+    setCharFrame(ch, 6, 1, Math.min(170, window.innerHeight * 0.24));
+    d.appendChild(ch); bp.appendChild(d);
+    battle.memberEls[id] = d;
+  }
+  const bs = bEl('bstatus'); bs.innerHTML = '';
+  for (const [id, m] of Object.entries(PARTY)) {
+    const p = document.createElement('div');
+    p.className = 'bplate';
+    p.innerHTML = `<div class="prow"><span>${m.name}</span><span>HP <span class="hpnum"></span></span></div>` +
+      `<div class="pbar hp"><i></i></div>` +
+      `<div class="prow" style="margin-top:3px"><span></span><span>MP <span class="mpnum"></span></span></div>` +
+      `<div class="pbar mp"><i></i></div>`;
+    bs.appendChild(p); battle.plateEls[id] = p;
+  }
+}
+async function startRivalBattle(name) {
+  if (inBattle) return;
+  inBattle = true;
+  BGM.set('battle');
+  battle.over = false; battle.skillLeft = 3; battle.fieldEnemy = null; battle.rival = name;
+  const R = REGIONS[area];
+  const bg = bEl('bbg');
+  const fallback = { hajimari: 'assets/far_mountains.jpg' }[area] || R.backdrop;
+  bg.onerror = () => { if (fallback) { bg.onerror = null; bg.src = fallback; } else bg.style.display = 'none'; };
+  bg.style.display = 'block';
+  bg.src = 'assets/battlebg_' + area + '.jpg';
+  const g0 = (R.grounds && R.grounds[0] && GROUND_TEX[R.grounds[0].tex]) || GROUND_TEX.grass;
+  bEl('bfloor').style.backgroundImage = `url(${g0.img})`;
+  bEl('bfloor').style.backgroundSize = '190px';
+  // ライバルを1体だけ配置（歩行シートの横向きコマ）
+  const rv = RIVALS[name];
+  battle.foes = [{ rival: true, name, kind: {}, hp: rv.hp, maxhp: rv.hp, atk: rv.atk, def: rv.def, spd: rv.spd, dead: false, moveUsed: false }];
+  battle.foeEls = []; battle.memberEls = {}; battle.plateEls = {};
+  const be = bEl('benemies'); be.innerHTML = '';
+  const d = document.createElement('div');
+  d.className = 'bunit benemy';
+  d.style.left = '24%'; d.style.bottom = '31%';
+  const ch = document.createElement('div');
+  ch.className = 'bchar';
+  ch.style.backgroundImage = `url(${rv.sheet})`;
+  setCharFrame(ch, 1, 1, Math.min(215, window.innerHeight * 0.3), 3);
+  ch.style.transform = 'scaleX(-1)'; // 歩行シートの横向きは左向き原画なので、nono の方（右）へ向ける
+  d.appendChild(ch);
+  const nm = document.createElement('div'); nm.className = 'bname'; nm.textContent = name;
+  const bar = document.createElement('div'); bar.className = 'bbar'; bar.innerHTML = '<i></i>';
+  d.appendChild(nm); d.appendChild(bar);
+  be.appendChild(d); battle.foeEls.push(d);
+  buildPartyDOM();
+  refreshBattleUI();
+  const el = bEl('battle');
+  el.style.display = 'block'; el.style.opacity = '0';
+  requestAnimationFrame(() => { el.style.opacity = '1'; });
+  bMsg(name + ' との 勝負が はじまった！');
+  await bSleep(900);
+  await battleLoop();
+  await endBattle();
+}
+// デバッグ用フック
+{
+  const q = new URLSearchParams(location.search);
+  if (q.get('sword')) { SAVE.beaten = RIVAL_ORDER.slice(0, Math.min(15, parseInt(q.get('sword')) || 0)); applySwordAtk(); }
+  if (q.get('rival') && RIVALS[q.get('rival')]) setTimeout(() => startRivalBattle(q.get('rival')), 2200);
+  if (q.get('evolve')) { const a = parseInt(q.get('evolve')) || 0; setTimeout(() => runEvolve(a, Math.min(15, a + 1)), 1200); }
 }
 
 function animate() {
