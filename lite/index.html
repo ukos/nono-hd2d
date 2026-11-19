@@ -78,6 +78,7 @@
   .bmember.down .bchar { filter:grayscale(1) brightness(.6); }
   .bmember.targetable .bchar, .benemy.targetable img { outline:2px solid #ffd75e; outline-offset:3px; border-radius:6px; cursor:pointer; }
   .benemy img { image-rendering:pixelated; }
+  .benemy img.diag { image-rendering:auto; }
   #bmsg { position:absolute; top:104px; left:0; right:0; margin-left:auto; margin-right:auto; width:fit-content; max-width:min(92vw, 560px);
     background:rgba(12,12,28,.82); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:10px;
     padding:9px 14px; font-size:15px; text-align:center; min-height:22px; }
@@ -2920,7 +2921,7 @@ async function hitFoe(att, f, dmg, opt = {}) {
 async function hitMember(att, id, dmg, opt = {}) {
   const m = PARTY[id], el = memberEl(id);
   if (opt.fx) showFx(el, opt.fx);
-  if (att.foe) { const fe = foeEl(att.foe); if (fe) { const im = fe.querySelector('img'); if (im && att.foe.kind.act) { const old = im.src; im.src = att.foe.kind.act; setTimeout(() => { im.src = old; }, 420); } lunge(fe, 1); } }
+  if (att.foe) { const fe = foeEl(att.foe); if (fe) { const im = fe.querySelector('img'); if (im && att.foe.kind.act && !im.src.includes('_diag.png')) { const old = im.src; im.src = att.foe.kind.act; setTimeout(() => { im.src = old; }, 420); } lunge(fe, 1); } }
   await bSleep(opt.fx ? 340 : 190);
   if (m.defending) dmg = Math.max(1, Math.floor(dmg / 2));
   m.hp -= dmg;
@@ -3153,7 +3154,9 @@ function buildBattleDOM(kindKey, count) {
     d.className = 'bunit benemy';
     d.style.left = spots[i][0] + '%'; d.style.bottom = spots[i][1] + '%';
     const hPx = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (kind.h / 1.18) * (count === 3 ? 0.82 : count === 2 ? 0.92 : 1) * ((kind.tier === 'boss' || kind.tier === 'mid') ? 1.3 : 1);
-    d.innerHTML = `<div class="bshadow"></div><img src="${kind.img}" style="height:${hPx}px; transform:scaleX(-1)" alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
+    const useDiag = (kind.tier === 'boss' || kind.tier === 'mid');
+    const dsrc = useDiag ? kind.img.replace('.png', '_diag.png') : kind.img;
+    d.innerHTML = `<div class="bshadow"></div><img ${useDiag ? 'class="diag" ' : ''}src="${dsrc}" style="height:${hPx}px${useDiag ? '' : '; transform:scaleX(-1)'}" onerror="this.onerror=null;this.src='${kind.img}';this.style.transform='scaleX(-1)';this.classList.remove('diag')" ${useDiag ? `onload="const a=this.naturalWidth/this.naturalHeight,mw=innerWidth*0.58,c=parseFloat(this.style.height);if(c*a>mw)this.style.height=(mw/a)+'px'"` : ''} alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
     be.appendChild(d); battle.foeEls.push(d);
   }
   const bp = bEl('bparty'); bp.innerHTML = '';
