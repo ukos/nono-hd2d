@@ -2117,8 +2117,6 @@ const ENEMY_KINDS = {
   yougan: { name: '溶岩スライム', img: 'assets/enemy_yougan.png', act: 'assets/enemy_yougan_act.png', aspect: 2.82, h: 0.7, hp: 18, atk: 12, def: 1, spd: 4, tier: 'zako' },
   yukio: { name: '雪男', img: 'assets/enemy_yukio.png', act: 'assets/enemy_yukio_act.png', aspect: 0.97, h: 1.2, hp: 48, atk: 13, def: 5, spd: 4, tier: 'mid' },
   yukiookami: { name: '雪オオカミ', img: 'assets/enemy_yukiookami.png', act: 'assets/enemy_yukiookami_act.png', aspect: 1.48, h: 0.95, hp: 27, atk: 12, def: 2, spd: 9, tier: 'zako' },
-  kingcrab: { name: 'オオガニ', img: 'assets/enemy_kani.png', act: 'assets/enemy_kani_act.png', aspect: 0.99, h: 1.9, hp: 66, atk: 14, def: 6, spd: 4, tier: 'boss' },
-  morikuma: { name: '森の大熊', img: 'assets/enemy_bear.png', act: 'assets/enemy_bear_act.png', aspect: 1.55, h: 1.9, hp: 46, atk: 14, def: 4, spd: 5, tier: 'boss' },
 };
 const KIND_ALIAS = { spider: 'kumo', yeti: 'yukio' };
 const PARTY = {
@@ -2261,7 +2259,7 @@ REGIONS.hajimari.enemies = [ { kind: 'wolf', x: -8, z: 2.0 }, { kind: 'wolf', x:
 REGIONS.reihou.enemies = [ { kind: 'eagle', x: 504, z: 1.5 }, { kind: 'hawk', x: 515, z: 2.2 }, { kind: 'bear', x: 520, z: 1.0 }, { kind: 'oowashi', x: 510, z: 2.8 } ];
 REGIONS.shumatsu.enemies = [ { kind: 'yamiinu', x: 248, z: 1.8 }, { kind: 'gaikotsu', x: 259, z: 2.4 }, { kind: 'akuryou', x: 264, z: 1.2 }, { kind: 'tonosama', x: 254, z: 3.0 }, { kind: 'kyojin', x: 267, z: 2.6 } ];
 REGIONS.hakurei.enemies = [ { kind: 'yukio', x: 336, z: 1.8 }, { kind: 'yukiookami', x: 346, z: 2.4 }, { kind: 'fox', x: 351, z: 1.2 }, { kind: 'x_whiterabbit', x: 330, z: 2.8 } ];
-REGIONS.daishinrin.enemies = [ { kind: 'kumo', x: 76, z: 0.6 }, { kind: 'kinokoob', x: 87, z: 1.8 }, { kind: 'kitsune', x: 94, z: 0.2 }, { kind: 'x_boar', x: 98, z: 2.2 }, { kind: 'x_acorn', x: 82, z: 2.8 }, { kind: 'morikuma', x: 90, z: 2.9 } ];
+REGIONS.daishinrin.enemies = [ { kind: 'kumo', x: 76, z: 0.6 }, { kind: 'kinokoob', x: 87, z: 1.8 }, { kind: 'kitsune', x: 94, z: 0.2 }, { kind: 'x_boar', x: 98, z: 2.2 }, { kind: 'x_acorn', x: 82, z: 2.8 } ];
 REGIONS.daikeikoku.enemies = [ { kind: 'bandit', x: 419, z: 1.6 }, { kind: 'x_kappa', x: 429, z: 2.2 }, { kind: 'vulture', x: 435, z: 1.0 }, { kind: 'kgolem', x: 425, z: 2.9 } ];
 REGIONS.umisoko.enemies = [ { kind: 'kurage', x: 589, z: 1.8 }, { kind: 'x_bluejelly', x: 598, z: 2.4 }, { kind: 'tako', x: 604, z: 1.2 }, { kind: 'x_darkocto', x: 584, z: 2.6 }, { kind: 'utsubo', x: 607, z: 2.0 } ];
 REGIONS.youkai.enemies = [ { kind: 'hitotsume', x: 162, z: 1.6 }, { kind: 'chouchin', x: 168, z: 2.4 }, { kind: 'karakasa', x: 175, z: 1.2 }, { kind: 'nurikabe', x: 181, z: 2.0 }, { kind: 'pontanuki', x: 178, z: 3.0 }, { kind: 'onibi', x: 158, z: 2.6 } ];
@@ -2270,7 +2268,7 @@ REGIONS.tasogare.enemies = [ { kind: 'yamiinu', x: 759, z: 1.8 }, { kind: 'akury
 REGIONS.hyouga.enemies = [ { kind: 'koorioni', x: 844, z: 1.8 }, { kind: 'yukio', x: 854, z: 2.4 }, { kind: 'raichou', x: 860, z: 1.2 }, { kind: 'hyouga', x: 850, z: 3.0 } ];
 REGIONS.kikai.enemies = [ { kind: 'robo', x: 928, z: 1.8 }, { kind: 'drone', x: 937, z: 2.4 }, { kind: 'iwagani', x: 944, z: 1.2 }, { kind: 'kishin', x: 934, z: 3.0 } ];
 REGIONS.shakusa.enemies = [ { kind: 'scorpion', x: 1012, z: 1.6 }, { kind: 'x_cactus', x: 1018, z: 2.4 }, { kind: 'komori', x: 1025, z: 1.2 }, { kind: 'dwolf', x: 1031, z: 2.2 }, { kind: 'mogura', x: 1028, z: 3.0 }, { kind: 'mummy', x: 1008, z: 2.6 } ];
-REGIONS.gunjou.enemies = [ { kind: 'kani', x: 1099, z: 1.8 }, { kind: 'yadokari', x: 1106, z: 2.4 }, { kind: 'kamome', x: 1112, z: 1.4 }, { kind: 'same', x: 1117, z: 2.2 }, { kind: 'kingcrab', x: 1094, z: 2.9 } ];
+REGIONS.gunjou.enemies = [ { kind: 'kani', x: 1099, z: 1.8 }, { kind: 'yadokari', x: 1106, z: 2.4 }, { kind: 'kamome', x: 1112, z: 1.4 }, { kind: 'same', x: 1117, z: 2.2 } ];
 REGIONS.kouren.enemies = [ { kind: 'yougan', x: 1184, z: 1.8 }, { kind: 'hibat', x: 1192, z: 2.4 }, { kind: 'karyu', x: 1199, z: 1.2 }, { kind: 'iwaryu', x: 1190, z: 3.0 } ];
 REGIONS.kasumi.enemies = [ { kind: 'tengu', x: 1269, z: 1.8 }, { kind: 'oni', x: 1278, z: 2.4 }, { kind: 'karasu', x: 1285, z: 1.4 }, { kind: 'x_owl', x: 1264, z: 2.6 }, { kind: 'ninja', x: 1282, z: 3.0 } ];
 
