@@ -2828,7 +2828,7 @@ async function nonoTurn() {
       battle.skillLeft--;
       bMsg('nono の とくぎ！ ' + SKILL_NONO.name + '！');
       lunge(memberEl('nono'), -1);
-      for (const f of aliveFoes()) await hitFoe({ el: null }, f, Math.max(1, physDamage(m, f) + SKILL_NONO.pow), { lunge: false });
+      for (const f of aliveFoes()) await hitFoe({ el: null }, f, Math.max(1, physDamage(m, f) + SKILL_NONO.pow), { lunge: false, fx: 'spin' });
       break;
     }
     if (cmd === 'magic') {
@@ -2898,7 +2898,7 @@ async function npcTurn(id) {
       for (let i = 0; i < 2; i++) {
         const foes = aliveFoes(); if (!foes.length) break;
         const t = foes[Math.floor(Math.random() * foes.length)];
-        await hitFoe({ el: memberEl('yui'), side: -1 }, t, physDamage(m, t, 0.7));
+        await hitFoe({ el: memberEl('yui'), side: -1 }, t, physDamage(m, t, 0.7), { fx: 'arrows' });
       }
     } else {
       const foes = aliveFoes(); const t = foes[Math.floor(Math.random() * foes.length)];
@@ -2909,7 +2909,7 @@ async function npcTurn(id) {
     const foes = aliveFoes(); const t = foes[Math.floor(Math.random() * foes.length)];
     if (Math.random() < 0.25) {
       bMsg('レイ の とくぎ！ かげぬい！');
-      await hitFoe({ el: memberEl('rei'), side: -1 }, t, physDamage(m, t, 1.6), { crit: true });
+      await hitFoe({ el: memberEl('rei'), side: -1 }, t, physDamage(m, t, 1.6), { crit: true, fx: 'shadow' });
     } else {
       const crit = Math.random() < 0.22;
       bMsg('レイ の こうげき！' + (crit ? ' 会心の一撃！' : ''));
