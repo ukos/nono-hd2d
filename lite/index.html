@@ -121,6 +121,14 @@
   #evoImg.evoFlash { filter:brightness(2.6) drop-shadow(0 0 30px #fff); }
   #evoTitle { font-size:22px; margin-top:18px; letter-spacing:.08em; }
   #evoText { font-size:14px; line-height:1.8; margin-top:8px; opacity:.92; }
+  #evoSide { display:flex; flex-direction:column; align-items:center; }
+  @media (orientation: landscape) and (max-height: 520px) {
+    #evolve { flex-direction:row; gap:28px; }
+    #evoSide { align-items:flex-start; text-align:left; max-width:54vw; }
+    #evoTitle { margin-top:0; }
+    #evoImg { width:min(250px, 80vh) !important; height:min(250px, 80vh) !important; }
+    #evoCanvas { height:80vh; width:auto; }
+  }
   #evoOk { margin-top:20px; background:rgba(70,60,140,.92); color:#fff; border:1px solid rgba(255,255,255,.5);
     border-radius:8px; padding:9px 26px; font-size:15px; cursor:pointer; display:none; }
   .bunit.hurt .bchar { animation:bshake .3s; }
@@ -164,7 +172,7 @@
 </div>
 <button id="bgmBtn">♪ ON</button>
 <div id="challenge"><div id="challengeText"></div><div class="crow"><button id="challengeYes">勝負する</button><button id="challengeNo" class="no">やめる</button></div></div>
-<div id="evolve"><canvas id="evoCanvas" width="8" height="16"></canvas><img id="evoImg" alt="" style="display:none; width:250px; height:250px; object-fit:contain"><div id="evoTitle"></div><div id="evoText"></div><button id="evoOk">わかった</button></div>
+<div id="evolve"><canvas id="evoCanvas" width="8" height="16"></canvas><img id="evoImg" alt="" style="display:none; width:250px; height:250px; object-fit:contain"><div id="evoSide"><div id="evoTitle"></div><div id="evoText"></div><button id="evoOk">わかった</button></div></div>
 <div id="loading">読み込み中…</div>
 <div id="splash">
   <img src="assets/logo.jpg" alt="NONO Blade of the Dawn HD-2D ver.">
