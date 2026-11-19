@@ -460,7 +460,7 @@ function placeRock(parent, colliders, x, z, scale = 1, rng = Math.random, snowy 
   else if (rng() < 0.5) { tex = treeTex('rock_boulder.png'); ar = 742 / 722; }
   else { tex = treeTex('rock_moss.png'); ar = 744 / 721; }
   const h = 1.15 * scale;
-  const m = billboard(parent, tex, h * ar, h, x, z, { shadow: true });
+  const m = billboard(parent, tex, h * ar, h, x, z, { shadow: true, fixed: true });
   blobShadow(parent, h * ar * 1.05, x, z, 0.30);
   colliders.push({ x, z, r: 0.5 * scale + 0.12 });
   return m;
@@ -533,7 +533,7 @@ function placeSignpost(parent, colliders, x, z, rotY = 0) {
 const toriiMat = new THREE.MeshStandardMaterial({ color: 0xa83c2a, roughness: 0.9, flatShading: true });
 const toriiDarkMat = new THREE.MeshStandardMaterial({ color: 0x7e2d20, roughness: 0.9, flatShading: true });
 // ---------- ドット絵スプライト小物（画像素材なので Unity 版へそのまま引き継げる） ----------
-const FIXED_PROP_TEX = new Set(['bamboo.png', 'tree_dead.png', 'tree_willow.png']); // 木類の小物は向きを固定する
+const FIXED_PROP_TEX = new Set(['bamboo.png', 'tree_dead.png', 'tree_willow.png', 'rock_lava.png']); // 木類・岩の小物は向きを固定する
 function placeSpriteProp(parent, colliders, x, z, texName, ar, h, r) {
   billboard(parent, treeTex(texName), h * ar, h, x, z, { shadow: true, fixed: FIXED_PROP_TEX.has(texName) });
   blobShadow(parent, h * ar * 0.95, x, z, 0.26);
