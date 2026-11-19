@@ -493,6 +493,11 @@ function jitterGeo(geo, seed = 0) {
 function makeRock3D(scale = 1, rng = Math.random, snowy = false) {
   const geo = jitterGeo(new THREE.IcosahedronGeometry(0.55, 2), rng() * 20);
   const mat = new THREE.MeshStandardMaterial({ map: surfTex(snowy ? 'surf_rock_snow.png' : 'surf_rock.png', 2, 2), roughness: 1, flatShading: true });
+  if (snowy) { // 雪の岩も同調させる
+    mat.emissive = new THREE.Color(0xaebadd);
+    mat.emissiveMap = mat.map;
+    mat.emissiveIntensity = 0.26;
+  }
   if (!snowy && rng() < 0.5) mat.color.set(0xb9c2a6); // 苔むした岩は少し緑に寄せる
   const m = new THREE.Mesh(geo, mat);
   m.castShadow = true; m.receiveShadow = true;
@@ -505,6 +510,11 @@ function makeTree3D(s = 1, rng = Math.random, opts = {}) {
   const g = new THREE.Group();
   const barkMat = new THREE.MeshStandardMaterial({ map: surfTex('surf_bark.png', 1, 1), roughness: 1, flatShading: true });
   const leafMat = new THREE.MeshStandardMaterial({ map: surfTex(opts.snowy ? 'surf_leaf_snow.png' : 'surf_leaf.png', 3, 3), roughness: 1, flatShading: true });
+  if (opts.snowy) { // 雪の葉は淡く自発光させ、夕方でも青灰色に沈まないようにする
+    leafMat.emissive = new THREE.Color(0xaebadd);
+    leafMat.emissiveMap = leafMat.map;
+    leafMat.emissiveIntensity = 0.33;
+  }
   const trunkH = 1.15 * (0.9 + rng() * 0.25);
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.17, trunkH, 7), barkMat);
   trunk.position.y = trunkH / 2;
