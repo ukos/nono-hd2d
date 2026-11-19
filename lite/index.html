@@ -3331,8 +3331,8 @@ function attachHeldWeapon(unitEl, id, hPx) {
   img.className = 'bheld'; img.alt = '';
   img.src = id === 'nono' ? 'assets/held_' + swordStage() + '.png' : 'assets/held_' + id + '.png';
   img.onerror = () => img.remove();
-  img.style.width = (hPx * 1.02) + 'px';
-  img.style.left = (-0.56 * hPx) + 'px';
+  img.style.width = (hPx * 0.68) + 'px';
+  img.style.left = (-0.22 * hPx) + 'px';
   img.style.bottom = (0.27 * hPx) + 'px';
   unitEl.appendChild(img);
 }
