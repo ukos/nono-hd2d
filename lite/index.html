@@ -124,6 +124,10 @@
     border-radius:8px; padding:9px 26px; font-size:15px; cursor:pointer; display:none; }
   .bunit.hurt .bchar { animation:bshake .3s; }
   .bunit .bheld { position:absolute; margin:0; pointer-events:none; }
+  .bunit .bdiag { position:absolute; left:50%; bottom:0; transform:translateX(-50%); image-rendering:pixelated; pointer-events:none; }
+  .bmember.down .bdiag { filter:grayscale(1) brightness(.6); }
+  .bmember.targetable .bdiag { outline:2px solid #ffd75e; outline-offset:3px; border-radius:6px; cursor:pointer; }
+  .bunit.hurt .bdiag { animation:bshake .3s; }
   .bunit .bshadow { position:absolute; left:50%; bottom:-7px; transform:translateX(-50%); width:76%;
     height:13px; background:radial-gradient(ellipse at center, rgba(0,0,0,.45), rgba(0,0,0,0) 70%);
     border-radius:50%; pointer-events:none; }
@@ -3015,6 +3019,7 @@ async function nonoTurn() {
 async function runAwayAnim() {
   // 右を向いて全員で走って逃げる
   const units = ['nono', 'yui', 'rei'].map((id) => memberEl(id));
+  units.forEach((u) => { const dg = u.querySelector('.bdiag'); if (dg) dg.style.display = 'none'; const ch = u.querySelector('.bchar'); if (ch) ch.style.visibility = ''; });
   let col = 0;
   const iv = setInterval(() => {
     col = (col + 1) % 4;
@@ -3138,6 +3143,13 @@ function buildBattleDOM(kindKey, count) {
     ch.style.backgroundImage = `url(${m.sheet})`;
     setCharFrame(ch, 6, 1, Math.min(170, window.innerHeight * 0.24));
     d.appendChild(ch);
+    const dg = document.createElement('img');
+    dg.className = 'bdiag'; dg.alt = '';
+    dg.src = 'assets/battle_' + id + '.png';
+    dg.style.height = Math.min(170, window.innerHeight * 0.24) + 'px';
+    dg.onload = () => { ch.style.visibility = 'hidden'; };
+    dg.onerror = () => dg.remove();
+    d.appendChild(dg);
     attachHeldWeapon(d, id, Math.min(170, window.innerHeight * 0.24));
     bp.appendChild(d);
     battle.memberEls[id] = d;
@@ -3330,9 +3342,10 @@ function attachHeldWeapon(unitEl, id, hPx) {
   img.className = 'bheld'; img.alt = '';
   img.src = id === 'nono' ? 'assets/held_' + swordStage() + '.png' : 'assets/held_' + id + '.png';
   img.onerror = () => img.remove();
-  img.style.width = (hPx * 0.68) + 'px';
-  img.style.left = (-0.22 * hPx) + 'px';
-  img.style.bottom = (0.16 * hPx) + 'px';
+  const pos = { nono: [0.68, -0.40, 0.30], rei: [0.68, -0.52, 0.28] }[id] || [0.68, -0.22, 0.16];
+  img.style.width = (hPx * pos[0]) + 'px';
+  img.style.left = (pos[1] * hPx) + 'px';
+  img.style.bottom = (pos[2] * hPx) + 'px';
   unitEl.appendChild(img);
 }
 function swordStage() { return Math.min(15, SAVE.beaten.length); }
@@ -3422,6 +3435,13 @@ function buildPartyDOM() {
     ch.style.backgroundImage = `url(${m.sheet})`;
     setCharFrame(ch, 6, 1, Math.min(170, window.innerHeight * 0.24));
     d.appendChild(ch);
+    const dg = document.createElement('img');
+    dg.className = 'bdiag'; dg.alt = '';
+    dg.src = 'assets/battle_' + id + '.png';
+    dg.style.height = Math.min(170, window.innerHeight * 0.24) + 'px';
+    dg.onload = () => { ch.style.visibility = 'hidden'; };
+    dg.onerror = () => dg.remove();
+    d.appendChild(dg);
     attachHeldWeapon(d, id, Math.min(170, window.innerHeight * 0.24));
     bp.appendChild(d);
     battle.memberEls[id] = d;
