@@ -3331,7 +3331,7 @@ function attachHeldWeapon(unitEl, id, hPx) {
   img.onerror = () => img.remove();
   img.style.width = (hPx * 0.68) + 'px';
   img.style.left = (-0.22 * hPx) + 'px';
-  img.style.bottom = (0.27 * hPx) + 'px';
+  img.style.bottom = (0.16 * hPx) + 'px';
   unitEl.appendChild(img);
 }
 function swordStage() { return Math.min(15, SAVE.beaten.length); }
