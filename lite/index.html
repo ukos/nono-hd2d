@@ -358,7 +358,7 @@ function billboard(parent, tex, w, h, x, z, opts = {}) {
       depthPacking: THREE.RGBADepthPacking, map: tex, alphaTest: 0.45,
     });
   }
-  m.userData.billboard = true;
+  if (!opts.fixed) m.userData.billboard = true; // fixed: 木などは向きを固定し、カメラで回さない
   parent.add(m);
   return m;
 }
@@ -425,11 +425,11 @@ function placeTree(parent, colliders, x, z, s = 1, rng = Math.random, snowy = fa
   else if (rng() < 0.5) { tex = treeTex('tree_round.png'); ar = 433 / 469; }
   else { tex = treeTex('tree_dense.png'); ar = 1.0; }
   const h = 2.6 * s;
-  billboard(parent, tex, h * ar, h, x, z, { shadow: true });
+  billboard(parent, tex, h * ar, h, x, z, { shadow: true, fixed: true });
   colliders.push({ x, z, r: 0.3 * s + 0.08 });
 }
 function placeBigTree(parent, colliders, x, z, texName, ar, h, r) {
-  billboard(parent, treeTex(texName), h * ar, h, x, z, { shadow: true });
+  billboard(parent, treeTex(texName), h * ar, h, x, z, { shadow: true, fixed: true });
   colliders.push({ x, z, r });
 }
 const rockMats = [0x8d8d96, 0x7c7c86, 0x9a9aa2].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true }));
@@ -530,8 +530,9 @@ function placeSignpost(parent, colliders, x, z, rotY = 0) {
 const toriiMat = new THREE.MeshStandardMaterial({ color: 0xa83c2a, roughness: 0.9, flatShading: true });
 const toriiDarkMat = new THREE.MeshStandardMaterial({ color: 0x7e2d20, roughness: 0.9, flatShading: true });
 // ---------- ドット絵スプライト小物（画像素材なので Unity 版へそのまま引き継げる） ----------
+const FIXED_PROP_TEX = new Set(['bamboo.png', 'tree_dead.png', 'tree_willow.png']); // 木類の小物は向きを固定する
 function placeSpriteProp(parent, colliders, x, z, texName, ar, h, r) {
-  billboard(parent, treeTex(texName), h * ar, h, x, z, { shadow: true });
+  billboard(parent, treeTex(texName), h * ar, h, x, z, { shadow: true, fixed: FIXED_PROP_TEX.has(texName) });
   if (r) colliders.push({ x, z, r });
 }
 function placeStumpSprite(parent, colliders, x, z) {
