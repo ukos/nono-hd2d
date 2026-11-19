@@ -486,7 +486,7 @@ function jitterGeo(geo, seed = 0) {
   return geo;
 }
 function makeRock3D(scale = 1, rng = Math.random, snowy = false) {
-  const geo = jitterGeo(new THREE.IcosahedronGeometry(0.55, 1), rng() * 20);
+  const geo = jitterGeo(new THREE.IcosahedronGeometry(0.55, 2), rng() * 20);
   const mat = new THREE.MeshStandardMaterial({ map: surfTex(snowy ? 'surf_rock_snow.png' : 'surf_rock.png', 2, 2), roughness: 1, flatShading: true });
   if (!snowy && rng() < 0.5) mat.color.set(0xb9c2a6); // 苔むした岩は少し緑に寄せる
   const m = new THREE.Mesh(geo, mat);
@@ -508,7 +508,7 @@ function makeTree3D(s = 1, rng = Math.random, opts = {}) {
   const spread = opts.wide ? 1.5 : 1.0;
   const base = [[0, 1.72, 0, 0.92], [-0.58, 1.4, 0.12, 0.58], [0.6, 1.44, -0.1, 0.62], [0.02, 2.1, -0.02, 0.55], [-0.12, 1.52, 0.38, 0.5]];
   for (const [bx, by, bz, br] of base) {
-    const b = new THREE.Mesh(jitterGeo(new THREE.IcosahedronGeometry(br * (0.85 + rng() * 0.3), 1), bx * 13 + by * 7 + rng() * 5), leafMat);
+    const b = new THREE.Mesh(jitterGeo(new THREE.IcosahedronGeometry(br * (0.85 + rng() * 0.3), opts.detail || 2), bx * 13 + by * 7 + rng() * 5), leafMat);
     b.position.set(bx * spread * (0.9 + rng() * 0.2), by * (0.92 + rng() * 0.16) + trunkH - 1.15, bz * (0.9 + rng() * 0.2));
     b.castShadow = true;
     g.add(b);
