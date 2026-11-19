@@ -2791,7 +2791,7 @@ async function hitFoe(att, f, dmg, opt = {}) {
 async function hitMember(att, id, dmg, opt = {}) {
   const m = PARTY[id], el = memberEl(id);
   if (opt.fx) showFx(el, opt.fx);
-  if (att.foe) { const fe = foeEl(att.foe); if (fe) { const im = fe.querySelector('img'); const old = im.src; if (att.foe.kind.act) { im.src = att.foe.kind.act; setTimeout(() => { im.src = old; }, 420); } lunge(fe, 1); } }
+  if (att.foe) { const fe = foeEl(att.foe); if (fe) { const im = fe.querySelector('img'); if (im && att.foe.kind.act) { const old = im.src; im.src = att.foe.kind.act; setTimeout(() => { im.src = old; }, 420); } lunge(fe, 1); } }
   await bSleep(opt.fx ? 340 : 190);
   if (m.defending) dmg = Math.max(1, Math.floor(dmg / 2));
   m.hp -= dmg;
