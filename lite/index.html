@@ -117,6 +117,7 @@
     #bstatus { top:10px; }
     #bcmd { grid-template-columns:1fr 1fr 1fr; left:50%; right:auto; transform:translateX(-50%); }
     body.inbattle #bgmBtn { top:74px; right:calc((100vw - min(96vw, 620px)) / 2); }
+    #bmsg { top:50%; transform:translateY(-50%); }
   }
   #challenge { position:fixed; left:50%; bottom:118px; transform:translateX(-50%); z-index:12;
     background:rgba(12,12,28,.92); border:1px solid rgba(255,255,255,.4); border-radius:10px;
@@ -3367,7 +3368,7 @@ function attachHeldWeapon(unitEl, id, hPx) {
   img.className = 'bheld'; img.alt = '';
   img.src = id === 'nono' ? 'assets/held_' + swordStage() + '.png' : 'assets/held_' + id + '.png';
   img.onerror = () => img.remove();
-  const pos = { nono: [0.68, -0.40, 0.30], rei: [0.68, -0.36, 0.28], yui: [0.68, -0.49, 0.04] }[id] || [0.68, -0.22, 0.16];
+  const pos = { nono: [0.68, -0.40, 0.30], rei: [0.68, -0.36, 0.28], yui: [0.68, -0.38, 0.04] }[id] || [0.68, -0.22, 0.16];
   img.style.width = (hPx * pos[0]) + 'px';
   img.style.left = (pos[1] * hPx) + 'px';
   img.style.bottom = (pos[2] * hPx) + 'px';
