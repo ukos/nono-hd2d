@@ -77,7 +77,7 @@
     filter:drop-shadow(0 6px 6px rgba(0,0,0,.45)); }
   .bmember.down .bchar { filter:grayscale(1) brightness(.6); }
   .bmember.targetable .bchar, .benemy.targetable img { outline:2px solid #ffd75e; outline-offset:3px; border-radius:6px; cursor:pointer; }
-  #bmsg { position:absolute; top:10px; left:50%; transform:translateX(-50%); width:min(92vw, 560px);
+  #bmsg { position:absolute; top:104px; left:50%; transform:translateX(-50%); width:min(92vw, 560px);
     background:rgba(12,12,28,.82); color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:10px;
     padding:9px 14px; font-size:15px; text-align:center; min-height:22px; }
   #bcmd { position:absolute; left:10px; bottom:10px; display:flex; flex-direction:column; gap:6px; }
@@ -85,9 +85,10 @@
     border-radius:8px; padding:9px 18px; font-size:15px; text-align:left; cursor:pointer; min-width:132px; }
   #bcmd button:disabled { opacity:.38; }
   #bcmd button:active { background:rgba(70,60,140,.9); }
-  #bstatus { position:absolute; right:10px; bottom:10px; display:flex; flex-direction:column; gap:6px; }
+  #bstatus { position:absolute; top:40px; left:50%; transform:translateX(-50%); width:min(96vw, 620px); display:flex; flex-direction:row; gap:6px; }
   .bplate { background:rgba(12,12,28,.82); border:1px solid rgba(255,255,255,.3); border-radius:8px;
-    padding:5px 10px; color:#fff; font-size:12px; width:158px; }
+    padding:5px 8px; color:#fff; font-size:11.5px; flex:1 1 0; min-width:0; }
+  .bplate .prow span { white-space:nowrap; }
   .bplate.active { border-color:#ffd75e; box-shadow:0 0 8px rgba(255,215,94,.6); }
   .bplate .prow { display:flex; justify-content:space-between; }
   .bplate .pbar { height:5px; background:rgba(255,255,255,.18); border-radius:3px; overflow:hidden; margin-top:3px; }
@@ -2035,10 +2036,91 @@ const REGIONS = {
 // ---------- 地方の構築 ----------
 const REGION_RT = {}; // id -> {group, colliders, npcs:[{mesh, name, lines, t}]}
 const ENEMY_KINDS = {
-  wolf:   { name: 'オオカミ', img: 'assets/enemy_wolf.png',   act: 'assets/enemy_wolf_act.png', aspect: 1.23, h: 0.85, hp: 26, atk: 10, def: 2, spd: 5 },
-  spider: { name: '大蜘蛛',   img: 'assets/enemy_spider.png', act: 'assets/enemy_spider.png',   aspect: 0.95, h: 0.9,  hp: 36, atk: 12, def: 4, spd: 7 },
-  yeti:   { name: '雪男',     img: 'assets/enemy_yeti.png',   act: 'assets/enemy_yeti_act.png', aspect: 0.97, h: 1.2,  hp: 48, atk: 13, def: 5, spd: 4 },
+  akuryou: { name: '悪霊', img: 'assets/enemy_akuryou.png', act: 'assets/enemy_akuryou_act.png', aspect: 0.83, h: 0.8, hp: 18, atk: 12, def: 1, spd: 6, tier: 'zako' },
+  bandit: { name: '盗賊', img: 'assets/enemy_bandit.png', act: 'assets/enemy_bandit_act.png', aspect: 0.54, h: 1.35, hp: 24, atk: 12, def: 2, spd: 6, tier: 'zako' },
+  bear: { name: 'クマ', img: 'assets/enemy_bear.png', act: 'assets/enemy_bear_act.png', aspect: 1.55, h: 0.95, hp: 40, atk: 14, def: 3, spd: 3, tier: 'mid' },
+  chouchin: { name: '提灯お化け', img: 'assets/enemy_chouchin.png', act: 'assets/enemy_chouchin_act.png', aspect: 0.57, h: 1.0, hp: 18, atk: 12, def: 1, spd: 5, tier: 'zako' },
+  dokuhebi: { name: '毒ヘビ', img: 'assets/enemy_dokuhebi.png', act: 'assets/enemy_dokuhebi_act.png', aspect: 1.62, h: 0.95, hp: 21, atk: 12, def: 1, spd: 8, tier: 'zako' },
+  drone: { name: '見張りドローン', img: 'assets/enemy_drone.png', act: 'assets/enemy_drone_act.png', aspect: 1.28, h: 0.95, hp: 18, atk: 12, def: 1, spd: 9, tier: 'zako' },
+  dwolf: { name: '砂漠オオカミ', img: 'assets/enemy_dwolf.png', act: 'assets/enemy_dwolf_act.png', aspect: 1.09, h: 0.95, hp: 18, atk: 10, def: 1, spd: 7, tier: 'zako' },
+  eagle: { name: 'ワシ', img: 'assets/enemy_eagle.png', act: 'assets/enemy_eagle_act.png', aspect: 1.11, h: 0.95, hp: 18, atk: 12, def: 1, spd: 8, tier: 'zako' },
+  fox: { name: 'キツネ', img: 'assets/enemy_fox.png', act: 'assets/enemy_fox_act.png', aspect: 1.61, h: 0.95, hp: 14, atk: 10, def: 1, spd: 6, tier: 'zako' },
+  gaikotsu: { name: '骸骨の戦士', img: 'assets/enemy_gaikotsu.png', act: 'assets/enemy_gaikotsu_act.png', aspect: 0.59, h: 1.35, hp: 30, atk: 14, def: 2, spd: 6, tier: 'mid' },
+  gama: { name: '大ガマ', img: 'assets/enemy_gama.png', act: 'assets/enemy_gama_act.png', aspect: 1.27, h: 0.7, hp: 24, atk: 12, def: 2, spd: 3, tier: 'zako' },
+  griffon: { name: 'ハゲワシ', img: 'assets/enemy_griffon.png', act: 'assets/enemy_griffon_act.png', aspect: 1.43, h: 0.95, hp: 21, atk: 12, def: 1, spd: 7, tier: 'zako' },
+  hawk: { name: 'タカ', img: 'assets/enemy_hawk.png', act: 'assets/enemy_hawk_act.png', aspect: 1.31, h: 0.95, hp: 14, atk: 10, def: 1, spd: 10, tier: 'zako' },
+  hibat: { name: '火コウモリ', img: 'assets/enemy_hibat.png', act: 'assets/enemy_hibat_act.png', aspect: 0.99, h: 0.5, hp: 14, atk: 10, def: 1, spd: 9, tier: 'zako' },
+  hitotsume: { name: '一つ目入道', img: 'assets/enemy_hitotsume.png', act: 'assets/enemy_hitotsume_act.png', aspect: 0.51, h: 1.1, hp: 37, atk: 14, def: 3, spd: 4, tier: 'mid' },
+  hyouga: { name: '氷の巨人', img: 'assets/enemy_hyouga.png', act: 'assets/enemy_hyouga_act.png', aspect: 0.96, h: 1.9, hp: 104, atk: 17, def: 9, spd: 3, tier: 'boss' },
+  iwagani: { name: '岩ガニ', img: 'assets/enemy_iwagani.png', act: 'assets/enemy_iwagani_act.png', aspect: 0.61, h: 1.35, hp: 27, atk: 12, def: 2, spd: 4, tier: 'zako' },
+  iwaryu: { name: '岩竜', img: 'assets/enemy_iwaryu.png', act: 'assets/enemy_iwaryu_act.png', aspect: 1.53, h: 1.9, hp: 104, atk: 17, def: 9, spd: 6, tier: 'boss' },
+  kaeru: { name: '毒ガエル', img: 'assets/enemy_kaeru.png', act: 'assets/enemy_kaeru_act.png', aspect: 1.06, h: 0.95, hp: 18, atk: 12, def: 1, spd: 4, tier: 'zako' },
+  kaizoku: { name: '海賊', img: 'assets/enemy_kaizoku.png', act: 'assets/enemy_kaizoku_act.png', aspect: 0.67, h: 1.35, hp: 24, atk: 12, def: 2, spd: 6, tier: 'zako' },
+  kamome: { name: 'カモメ', img: 'assets/enemy_kamome.png', act: 'assets/enemy_kamome_act.png', aspect: 0.83, h: 0.6, hp: 11, atk: 10, def: 1, spd: 9, tier: 'zako' },
+  kani: { name: 'カニ', img: 'assets/enemy_kani.png', act: 'assets/enemy_kani_act.png', aspect: 0.99, h: 0.7, hp: 18, atk: 10, def: 1, spd: 4, tier: 'zako' },
+  karakasa: { name: '唐傘お化け', img: 'assets/enemy_karakasa.png', act: 'assets/enemy_karakasa_act.png', aspect: 0.81, h: 1.0, hp: 18, atk: 12, def: 1, spd: 8, tier: 'zako' },
+  karasu: { name: 'カラス', img: 'assets/enemy_karasu.png', act: 'assets/enemy_karasu_act.png', aspect: 1.24, h: 0.6, hp: 14, atk: 10, def: 1, spd: 10, tier: 'zako' },
+  karyu: { name: '火トカゲ', img: 'assets/enemy_karyu.png', act: 'assets/enemy_karyu_act.png', aspect: 1.66, h: 0.6, hp: 18, atk: 10, def: 1, spd: 8, tier: 'zako' },
+  kgolem: { name: 'からくり巨兵', img: 'assets/enemy_kgolem.png', act: 'assets/enemy_kgolem_act.png', aspect: 1.05, h: 1.9, hp: 66, atk: 17, def: 6, spd: 3, tier: 'boss' },
+  kinokoob: { name: 'キノコお化け', img: 'assets/enemy_kinokoob.png', act: 'assets/enemy_kinokoob_act.png', aspect: 0.67, h: 0.9, hp: 21, atk: 12, def: 1, spd: 4, tier: 'zako' },
+  kishin: { name: '機神', img: 'assets/enemy_kishin.png', act: 'assets/enemy_kishin_act.png', aspect: 0.53, h: 1.9, hp: 117, atk: 17, def: 9, spd: 4, tier: 'boss' },
+  kitsune: { name: '化けギツネ', img: 'assets/enemy_kitsune.png', act: 'assets/enemy_kitsune_act.png', aspect: 1.72, h: 0.7, hp: 21, atk: 12, def: 1, spd: 7, tier: 'zako' },
+  komori: { name: '洞窟コウモリ', img: 'assets/enemy_komori.png', act: 'assets/enemy_komori_act.png', aspect: 0.98, h: 0.95, hp: 14, atk: 10, def: 1, spd: 10, tier: 'zako' },
+  koorioni: { name: '氷の鬼', img: 'assets/enemy_koorioni.png', act: 'assets/enemy_koorioni_act.png', aspect: 0.96, h: 0.95, hp: 53, atk: 14, def: 5, spd: 3, tier: 'mid' },
+  kumo: { name: '大蜘蛛', img: 'assets/enemy_kumo.png', act: 'assets/enemy_kumo_act.png', aspect: 0.95, h: 0.9, hp: 36, atk: 12, def: 4, spd: 7, tier: 'zako' },
+  kurage: { name: 'クラゲ', img: 'assets/enemy_kurage.png', act: 'assets/enemy_kurage_act.png', aspect: 0.76, h: 0.8, hp: 14, atk: 12, def: 1, spd: 4, tier: 'zako' },
+  kyojin: { name: '闇の巨人', img: 'assets/enemy_kyojin.png', act: 'assets/enemy_kyojin_act.png', aspect: 0.98, h: 1.9, hp: 72, atk: 17, def: 7, spd: 3, tier: 'boss' },
+  leever: { name: 'スナモグリ', img: 'assets/enemy_leever.png', act: 'assets/enemy_leever_act.png', aspect: 1.0, h: 0.95, hp: 18, atk: 10, def: 1, spd: 3, tier: 'zako' },
+  marten: { name: 'テン', img: 'assets/enemy_marten.png', act: 'assets/enemy_marten_act.png', aspect: 1.93, h: 0.95, hp: 14, atk: 10, def: 1, spd: 8, tier: 'zako' },
+  mogura: { name: '大モグラ', img: 'assets/enemy_mogura.png', act: 'assets/enemy_mogura_act.png', aspect: 0.91, h: 0.6, hp: 21, atk: 12, def: 1, spd: 6, tier: 'zako' },
+  mukade: { name: '大ムカデ', img: 'assets/enemy_mukade.png', act: 'assets/enemy_mukade_act.png', aspect: 1.28, h: 0.5, hp: 21, atk: 12, def: 1, spd: 8, tier: 'zako' },
+  mummy: { name: 'ミイラ', img: 'assets/enemy_mummy.png', act: 'assets/enemy_mummy_act.png', aspect: 0.49, h: 1.35, hp: 27, atk: 12, def: 2, spd: 3, tier: 'zako' },
+  ninja: { name: '忍び', img: 'assets/enemy_ninja.png', act: 'assets/enemy_ninja_act.png', aspect: 0.54, h: 1.35, hp: 24, atk: 12, def: 2, spd: 8, tier: 'zako' },
+  nue: { name: '鵺', img: 'assets/enemy_nue.png', act: 'assets/enemy_nue_act.png', aspect: 1.72, h: 1.9, hp: 91, atk: 14, def: 9, spd: 8, tier: 'boss' },
+  nurikabe: { name: 'ぬりかべ', img: 'assets/enemy_nurikabe.png', act: 'assets/enemy_nurikabe_act.png', aspect: 0.7, h: 1.35, hp: 59, atk: 14, def: 5, spd: 3, tier: 'mid' },
+  oni: { name: '鬼', img: 'assets/enemy_oni.png', act: 'assets/enemy_oni_act.png', aspect: 0.53, h: 1.35, hp: 34, atk: 14, def: 3, spd: 4, tier: 'mid' },
+  onibi: { name: '鬼火', img: 'assets/enemy_onibi.png', act: 'assets/enemy_onibi_act.png', aspect: 1.02, h: 0.8, hp: 14, atk: 12, def: 1, spd: 4, tier: 'zako' },
+  oogumo: { name: '森の大蜘蛛', img: 'assets/enemy_oogumo.png', act: 'assets/enemy_oogumo_act.png', aspect: 1.48, h: 1.9, hp: 85, atk: 14, def: 8, spd: 6, tier: 'boss' },
+  oowani: { name: '密林の主 大ワニ', img: 'assets/enemy_oowani.png', act: 'assets/enemy_oowani_act.png', aspect: 2.76, h: 1.9, hp: 104, atk: 17, def: 9, spd: 6, tier: 'boss' },
+  oowashi: { name: '天の大鷲', img: 'assets/enemy_oowashi.png', act: 'assets/enemy_oowashi_act.png', aspect: 1.82, h: 1.9, hp: 78, atk: 14, def: 7, spd: 8, tier: 'boss' },
+  oozaru: { name: '大猿', img: 'assets/enemy_oozaru.png', act: 'assets/enemy_oozaru_act.png', aspect: 0.89, h: 0.95, hp: 46, atk: 14, def: 4, spd: 6, tier: 'mid' },
+  oumu: { name: 'オウム', img: 'assets/enemy_oumu.png', act: 'assets/enemy_oumu_act.png', aspect: 1.4, h: 0.95, hp: 14, atk: 10, def: 1, spd: 10, tier: 'zako' },
+  pontanuki: { name: 'タヌリオ', img: 'assets/enemy_pontanuki.png', act: 'assets/enemy_pontanuki_act.png', aspect: 0.63, h: 1.35, hp: 98, atk: 14, def: 9, spd: 7, tier: 'mid' },
+  raichou: { name: '雷鳥', img: 'assets/enemy_raichou.png', act: 'assets/enemy_raichou_act.png', aspect: 2.57, h: 0.6, hp: 18, atk: 12, def: 1, spd: 10, tier: 'zako' },
+  robo: { name: 'からくり兵', img: 'assets/enemy_robo.png', act: 'assets/enemy_robo_act.png', aspect: 0.76, h: 1.1, hp: 34, atk: 14, def: 3, spd: 4, tier: 'mid' },
+  same: { name: 'サメ', img: 'assets/enemy_same.png', act: 'assets/enemy_same_act.png', aspect: 1.77, h: 0.7, hp: 24, atk: 12, def: 2, spd: 8, tier: 'zako' },
+  scorpion: { name: 'サソリ', img: 'assets/enemy_scorpion.png', act: 'assets/enemy_scorpion_act.png', aspect: 2.29, h: 0.95, hp: 21, atk: 12, def: 1, spd: 4, tier: 'zako' },
+  shinigami: { name: '死神', img: 'assets/enemy_shinigami.png', act: 'assets/enemy_shinigami_act.png', aspect: 0.78, h: 1.1, hp: 27, atk: 14, def: 2, spd: 6, tier: 'zako' },
+  shirofukuro: { name: '白フクロウ', img: 'assets/enemy_shirofukuro.png', act: 'assets/enemy_shirofukuro_act.png', aspect: 0.8, h: 0.95, hp: 18, atk: 12, def: 1, spd: 10, tier: 'zako' },
+  squirrel: { name: 'リス', img: 'assets/enemy_squirrel.png', act: 'assets/enemy_squirrel_act.png', aspect: 1.01, h: 0.95, hp: 11, atk: 7, def: 1, spd: 6, tier: 'zako' },
+  tako: { name: 'タコ', img: 'assets/enemy_tako.png', act: 'assets/enemy_tako_act.png', aspect: 0.65, h: 0.9, hp: 21, atk: 10, def: 1, spd: 4, tier: 'zako' },
+  tanuki: { name: 'タヌキ', img: 'assets/enemy_tanuki.png', act: 'assets/enemy_tanuki_act.png', aspect: 0.89, h: 0.7, hp: 14, atk: 7, def: 1, spd: 6, tier: 'zako' },
+  tengu: { name: '天狗', img: 'assets/enemy_tengu.png', act: 'assets/enemy_tengu_act.png', aspect: 0.84, h: 0.95, hp: 27, atk: 12, def: 2, spd: 8, tier: 'zako' },
+  tonosama: { name: '朧丸', img: 'assets/enemy_tonosama.png', act: 'assets/enemy_tonosama_act.png', aspect: 0.55, h: 1.9, hp: 98, atk: 14, def: 9, spd: 6, tier: 'boss' },
+  utsubo: { name: 'ウツボ', img: 'assets/enemy_utsubo.png', act: 'assets/enemy_utsubo_act.png', aspect: 1.6, h: 0.5, hp: 21, atk: 12, def: 1, spd: 6, tier: 'zako' },
+  vulture: { name: 'ハゲタカ', img: 'assets/enemy_vulture.png', act: 'assets/enemy_vulture_act.png', aspect: 0.96, h: 0.95, hp: 14, atk: 10, def: 1, spd: 8, tier: 'zako' },
+  wani: { name: 'ワニ', img: 'assets/enemy_wani.png', act: 'assets/enemy_wani_act.png', aspect: 2.15, h: 0.6, hp: 30, atk: 14, def: 2, spd: 5, tier: 'mid' },
+  wolf: { name: 'オオカミ', img: 'assets/enemy_wolf.png', act: 'assets/enemy_wolf_act.png', aspect: 1.23, h: 0.85, hp: 26, atk: 10, def: 2, spd: 5, tier: 'zako' },
+  x_acorn: { name: 'ドングリこぞう', img: 'assets/enemy_x_acorn.png', act: 'assets/enemy_x_acorn_act.png', aspect: 0.55, h: 0.8, hp: 20, atk: 9, def: 2, spd: 6, tier: 'zako' },
+  x_bluejelly: { name: 'あおクラゲ', img: 'assets/enemy_x_bluejelly.png', act: 'assets/enemy_x_bluejelly_act.png', aspect: 1.08, h: 0.8, hp: 20, atk: 9, def: 2, spd: 6, tier: 'zako' },
+  x_boar: { name: 'イノシシ', img: 'assets/enemy_x_boar.png', act: 'assets/enemy_x_boar_act.png', aspect: 2.03, h: 0.8, hp: 20, atk: 9, def: 2, spd: 6, tier: 'zako' },
+  x_cactus: { name: 'サボテンじん', img: 'assets/enemy_x_cactus.png', act: 'assets/enemy_x_cactus_act.png', aspect: 0.68, h: 0.8, hp: 20, atk: 9, def: 2, spd: 6, tier: 'zako' },
+  x_darkocto: { name: 'くろタコ', img: 'assets/enemy_x_darkocto.png', act: 'assets/enemy_x_darkocto_act.png', aspect: 1.17, h: 0.8, hp: 20, atk: 9, def: 2, spd: 6, tier: 'zako' },
+  x_kappa: { name: 'カッパ', img: 'assets/enemy_x_kappa.png', act: 'assets/enemy_x_kappa_act.png', aspect: 0.77, h: 0.8, hp: 20, atk: 9, def: 2, spd: 6, tier: 'zako' },
+  x_mushcat: { name: 'キノコねこ', img: 'assets/enemy_x_mushcat.png', act: 'assets/enemy_x_mushcat_act.png', aspect: 0.82, h: 0.8, hp: 20, atk: 9, def: 2, spd: 6, tier: 'zako' },
+  x_owl: { name: 'フクロウ', img: 'assets/enemy_x_owl.png', act: 'assets/enemy_x_owl_act.png', aspect: 0.77, h: 0.8, hp: 20, atk: 9, def: 2, spd: 6, tier: 'zako' },
+  x_purpmush: { name: 'むらさきキノコ', img: 'assets/enemy_x_purpmush.png', act: 'assets/enemy_x_purpmush_act.png', aspect: 0.73, h: 0.8, hp: 20, atk: 9, def: 2, spd: 6, tier: 'zako' },
+  x_rabbit: { name: 'ウサギ', img: 'assets/enemy_x_rabbit.png', act: 'assets/enemy_x_rabbit_act.png', aspect: 0.8, h: 0.8, hp: 20, atk: 9, def: 2, spd: 6, tier: 'zako' },
+  x_whiterabbit: { name: 'しろウサギ', img: 'assets/enemy_x_whiterabbit.png', act: 'assets/enemy_x_whiterabbit_act.png', aspect: 0.95, h: 0.8, hp: 20, atk: 9, def: 2, spd: 6, tier: 'zako' },
+  yadokari: { name: 'ヤドカリ', img: 'assets/enemy_yadokari.png', act: 'assets/enemy_yadokari_act.png', aspect: 0.99, h: 0.7, hp: 21, atk: 10, def: 1, spd: 3, tier: 'zako' },
+  yamiinu: { name: '闇オオカミ', img: 'assets/enemy_yamiinu.png', act: 'assets/enemy_yamiinu_act.png', aspect: 0.92, h: 0.7, hp: 27, atk: 14, def: 2, spd: 10, tier: 'zako' },
+  yougan: { name: '溶岩スライム', img: 'assets/enemy_yougan.png', act: 'assets/enemy_yougan_act.png', aspect: 2.82, h: 0.7, hp: 18, atk: 12, def: 1, spd: 4, tier: 'zako' },
+  yukio: { name: '雪男', img: 'assets/enemy_yukio.png', act: 'assets/enemy_yukio_act.png', aspect: 0.97, h: 1.2, hp: 48, atk: 13, def: 5, spd: 4, tier: 'mid' },
+  yukiookami: { name: '雪オオカミ', img: 'assets/enemy_yukiookami.png', act: 'assets/enemy_yukiookami_act.png', aspect: 1.48, h: 0.95, hp: 27, atk: 12, def: 2, spd: 9, tier: 'zako' },
+  kingcrab: { name: 'オオガニ', img: 'assets/enemy_kani.png', act: 'assets/enemy_kani_act.png', aspect: 0.99, h: 1.9, hp: 66, atk: 14, def: 6, spd: 4, tier: 'boss' },
+  morikuma: { name: '森の大熊', img: 'assets/enemy_bear.png', act: 'assets/enemy_bear_act.png', aspect: 1.55, h: 1.9, hp: 46, atk: 14, def: 4, spd: 5, tier: 'boss' },
 };
+const KIND_ALIAS = { spider: 'kumo', yeti: 'yukio' };
 const PARTY = {
   nono: { name: 'nono', sheet: 'assets/nono_sheet8c.png', hp: 62, maxhp: 62, mp: 18, maxmp: 18, atk: 14, def: 6, spd: 8 },
   yui:  { name: 'ユイ', sheet: 'assets/yui_sheet8.png',   hp: 48, maxhp: 48, mp: 14, maxmp: 14, atk: 11, def: 4, spd: 11 },
@@ -2173,6 +2255,24 @@ function buildRegion(id, def) {
   if (def.custom && CUSTOM_BUILDERS[def.custom]) CUSTOM_BUILDERS[def.custom](group);
   REGION_RT[id] = { group, colliders, npcs, backdropMat, enemies };
 }
+
+// ---------- モンスター配置（2D版から全種移植。地方=生息地ベース） ----------
+REGIONS.hajimari.enemies = [ { kind: 'wolf', x: -8, z: 2.0 }, { kind: 'wolf', x: 7, z: 2.6 }, { kind: 'x_rabbit', x: -3, z: 1.2 }, { kind: 'squirrel', x: 11, z: 1.6 }, { kind: 'tanuki', x: 3, z: 3.0 } ];
+REGIONS.reihou.enemies = [ { kind: 'eagle', x: 504, z: 1.5 }, { kind: 'hawk', x: 515, z: 2.2 }, { kind: 'bear', x: 520, z: 1.0 }, { kind: 'oowashi', x: 510, z: 2.8 } ];
+REGIONS.shumatsu.enemies = [ { kind: 'yamiinu', x: 248, z: 1.8 }, { kind: 'gaikotsu', x: 259, z: 2.4 }, { kind: 'akuryou', x: 264, z: 1.2 }, { kind: 'tonosama', x: 254, z: 3.0 }, { kind: 'kyojin', x: 267, z: 2.6 } ];
+REGIONS.hakurei.enemies = [ { kind: 'yukio', x: 336, z: 1.8 }, { kind: 'yukiookami', x: 346, z: 2.4 }, { kind: 'fox', x: 351, z: 1.2 }, { kind: 'x_whiterabbit', x: 330, z: 2.8 } ];
+REGIONS.daishinrin.enemies = [ { kind: 'kumo', x: 76, z: 0.6 }, { kind: 'kinokoob', x: 87, z: 1.8 }, { kind: 'kitsune', x: 94, z: 0.2 }, { kind: 'x_boar', x: 98, z: 2.2 }, { kind: 'x_acorn', x: 82, z: 2.8 }, { kind: 'morikuma', x: 90, z: 2.9 } ];
+REGIONS.daikeikoku.enemies = [ { kind: 'bandit', x: 419, z: 1.6 }, { kind: 'x_kappa', x: 429, z: 2.2 }, { kind: 'vulture', x: 435, z: 1.0 }, { kind: 'kgolem', x: 425, z: 2.9 } ];
+REGIONS.umisoko.enemies = [ { kind: 'kurage', x: 589, z: 1.8 }, { kind: 'x_bluejelly', x: 598, z: 2.4 }, { kind: 'tako', x: 604, z: 1.2 }, { kind: 'x_darkocto', x: 584, z: 2.6 }, { kind: 'utsubo', x: 607, z: 2.0 } ];
+REGIONS.youkai.enemies = [ { kind: 'hitotsume', x: 162, z: 1.6 }, { kind: 'chouchin', x: 168, z: 2.4 }, { kind: 'karakasa', x: 175, z: 1.2 }, { kind: 'nurikabe', x: 181, z: 2.0 }, { kind: 'pontanuki', x: 178, z: 3.0 }, { kind: 'onibi', x: 158, z: 2.6 } ];
+REGIONS.jungle.enemies = [ { kind: 'wani', x: 673, z: 1.8 }, { kind: 'kaeru', x: 680, z: 2.4 }, { kind: 'dokuhebi', x: 687, z: 1.2 }, { kind: 'oumu', x: 692, z: 2.6 }, { kind: 'gama', x: 668, z: 1.0 }, { kind: 'oowani', x: 683, z: 3.0 } ];
+REGIONS.tasogare.enemies = [ { kind: 'yamiinu', x: 759, z: 1.8 }, { kind: 'akuryou', x: 768, z: 2.4 }, { kind: 'mukade', x: 774, z: 1.4 }, { kind: 'shinigami', x: 754, z: 2.6 }, { kind: 'nue', x: 765, z: 3.0 } ];
+REGIONS.hyouga.enemies = [ { kind: 'koorioni', x: 844, z: 1.8 }, { kind: 'yukio', x: 854, z: 2.4 }, { kind: 'raichou', x: 860, z: 1.2 }, { kind: 'hyouga', x: 850, z: 3.0 } ];
+REGIONS.kikai.enemies = [ { kind: 'robo', x: 928, z: 1.8 }, { kind: 'drone', x: 937, z: 2.4 }, { kind: 'iwagani', x: 944, z: 1.2 }, { kind: 'kishin', x: 934, z: 3.0 } ];
+REGIONS.shakusa.enemies = [ { kind: 'scorpion', x: 1012, z: 1.6 }, { kind: 'x_cactus', x: 1018, z: 2.4 }, { kind: 'komori', x: 1025, z: 1.2 }, { kind: 'dwolf', x: 1031, z: 2.2 }, { kind: 'mogura', x: 1028, z: 3.0 }, { kind: 'mummy', x: 1008, z: 2.6 } ];
+REGIONS.gunjou.enemies = [ { kind: 'kani', x: 1099, z: 1.8 }, { kind: 'yadokari', x: 1106, z: 2.4 }, { kind: 'kamome', x: 1112, z: 1.4 }, { kind: 'same', x: 1117, z: 2.2 }, { kind: 'kingcrab', x: 1094, z: 2.9 } ];
+REGIONS.kouren.enemies = [ { kind: 'yougan', x: 1184, z: 1.8 }, { kind: 'hibat', x: 1192, z: 2.4 }, { kind: 'karyu', x: 1199, z: 1.2 }, { kind: 'iwaryu', x: 1190, z: 3.0 } ];
+REGIONS.kasumi.enemies = [ { kind: 'tengu', x: 1269, z: 1.8 }, { kind: 'oni', x: 1278, z: 2.4 }, { kind: 'karasu', x: 1285, z: 1.4 }, { kind: 'x_owl', x: 1264, z: 2.6 }, { kind: 'ninja', x: 1282, z: 3.0 } ];
 
 // ---------- 大迷宮（入るたびに生成が変わる。黄昏の地の石門から入る） ----------
 REGIONS.labyrinth = {
@@ -3023,12 +3123,12 @@ function buildBattleDOM(kindKey, count) {
     const d = document.createElement('div');
     d.className = 'bunit benemy';
     d.style.left = spots[i][0] + '%'; d.style.bottom = spots[i][1] + '%';
-    const hPx = Math.min(205, window.innerHeight * 0.28) * (kind.h / 0.95) * (count === 3 ? 0.82 : count === 2 ? 0.92 : 1);
+    const hPx = Math.min(170, window.innerHeight * 0.24) * (kind.h / 1.18) * (count === 3 ? 0.82 : count === 2 ? 0.92 : 1);
     d.innerHTML = `<div class="bshadow"></div><img src="${kind.img}" style="height:${hPx}px; transform:scaleX(-1)" alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
     be.appendChild(d); battle.foeEls.push(d);
   }
   const bp = bEl('bparty'); bp.innerHTML = '';
-  const pspots = { nono: [76, 29], yui: [86, 25], rei: [94, 30] };
+  const pspots = { nono: [85, 54], yui: [85, 39], rei: [85, 24] };
   for (const [id, m] of Object.entries(PARTY)) {
     const d = document.createElement('div');
     d.className = 'bunit bmember';
@@ -3039,7 +3139,7 @@ function buildBattleDOM(kindKey, count) {
     ch.style.backgroundImage = `url(${m.sheet})`;
     setCharFrame(ch, 6, 1, Math.min(170, window.innerHeight * 0.24));
     d.appendChild(ch);
-    if (id === 'nono') attachHeldSword(d, Math.min(170, window.innerHeight * 0.24));
+    attachHeldWeapon(d, id, Math.min(170, window.innerHeight * 0.24));
     bp.appendChild(d);
     battle.memberEls[id] = d;
   }
@@ -3069,8 +3169,9 @@ async function startBattle(fieldEnemy) {
   const g0 = (R.grounds && R.grounds[0] && GROUND_TEX[R.grounds[0].tex]) || GROUND_TEX.grass;
   bEl('bfloor').style.backgroundImage = `url(${g0.img})`;
   bEl('bfloor').style.backgroundSize = '190px';
+  const kt = ENEMY_KINDS[fieldEnemy.kindKey].tier;
   const roll = Math.random();
-  const count = roll < 0.5 ? 1 : roll < 0.85 ? 2 : 3;
+  const count = kt === 'boss' ? 1 : kt === 'mid' ? (roll < 0.6 ? 1 : 2) : (roll < 0.5 ? 1 : roll < 0.85 ? 2 : 3);
   buildBattleDOM(fieldEnemy.kindKey, count);
   const el = bEl('battle');
   el.style.display = 'block'; el.style.opacity = '0';
@@ -3166,7 +3267,8 @@ function updateFieldEnemies(dt, t) {
 
 // デバッグ用: ?battle=wolf などで直接バトルを開始
 {
-  const bk = new URLSearchParams(location.search).get('battle');
+  const bk0 = new URLSearchParams(location.search).get('battle');
+  const bk = KIND_ALIAS[bk0] || bk0;
   if (bk && ENEMY_KINDS[bk]) setTimeout(() => startBattle({ kindKey: bk, mesh: null, alive: true, respawnAt: 0 }), 2000);
 }
 
@@ -3223,10 +3325,11 @@ const SAVE_KEY = 'nono-hd2d-save-v1';
 let SAVE = { beaten: [] };
 try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && Array.isArray(s.beaten)) SAVE = s; } catch (e) {}
 function persistSave() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {} }
-function attachHeldSword(unitEl, hPx) {
+function attachHeldSword(unitEl, hPx) { attachHeldWeapon(unitEl, 'nono', hPx); }
+function attachHeldWeapon(unitEl, id, hPx) {
   const img = document.createElement('img');
   img.className = 'bheld'; img.alt = '';
-  img.src = 'assets/held_' + swordStage() + '.png';
+  img.src = id === 'nono' ? 'assets/held_' + swordStage() + '.png' : 'assets/held_' + id + '.png';
   img.onerror = () => img.remove();
   img.style.width = (hPx * 1.02) + 'px';
   img.style.left = (-0.56 * hPx) + 'px';
@@ -3309,7 +3412,7 @@ function showChallenge(name) {
 }
 function buildPartyDOM() {
   const bp = bEl('bparty'); bp.innerHTML = '';
-  const pspots = { nono: [76, 29], yui: [86, 25], rei: [94, 30] };
+  const pspots = { nono: [85, 54], yui: [85, 39], rei: [85, 24] };
   for (const [id, m] of Object.entries(PARTY)) {
     const d = document.createElement('div');
     d.className = 'bunit bmember';
@@ -3320,7 +3423,7 @@ function buildPartyDOM() {
     ch.style.backgroundImage = `url(${m.sheet})`;
     setCharFrame(ch, 6, 1, Math.min(170, window.innerHeight * 0.24));
     d.appendChild(ch);
-    if (id === 'nono') attachHeldSword(d, Math.min(170, window.innerHeight * 0.24));
+    attachHeldWeapon(d, id, Math.min(170, window.innerHeight * 0.24));
     bp.appendChild(d);
     battle.memberEls[id] = d;
   }
@@ -3361,7 +3464,7 @@ async function startRivalBattle(name) {
   const ch = document.createElement('div');
   ch.className = 'bchar';
   ch.style.backgroundImage = `url(${rv.sheet})`;
-  setCharFrame(ch, 1, 1, Math.min(215, window.innerHeight * 0.3), 3);
+  setCharFrame(ch, 1, 1, Math.min(170, window.innerHeight * 0.24), 3);
   ch.style.transform = 'scaleX(-1)'; // 歩行シートの横向きは左向き原画なので、nono の方（右）へ向ける
   d.appendChild(ch);
   const nm = document.createElement('div'); nm.className = 'bname'; nm.textContent = name;
