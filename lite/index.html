@@ -2150,6 +2150,8 @@ const ENEMY_KINDS = {
   yukiookami: { name: '雪オオカミ', img: 'assets/enemy_yukiookami.png', act: 'assets/enemy_yukiookami_act.png', aspect: 1.48, h: 0.95, hp: 27, atk: 12, def: 2, spd: 9, tier: 'zako' },
 };
 const KIND_ALIAS = { spider: 'kumo', yeti: 'yukio' };
+// 中ボス・ボスの右斜めリアル絵の縦横比（フィールド表示にも同じ絵を使う）
+const DIAG_ASPECT = { kishin: 0.5, nue: 1.67, bear: 1.54, gaikotsu: 0.58, hitotsume: 0.51, hyouga: 0.95, iwaryu: 1.54, kgolem: 0.54, koorioni: 0.97, kyojin: 0.95, nurikabe: 0.67, oni: 0.52, oogumo: 1.47, oowani: 2.8, oowashi: 1.87, pontanuki: 0.64, robo: 0.75, tonosama: 0.56, wani: 2.19, yukio: 0.96, oozaru: 0.62, golem: 0.69 };
 const PARTY = {
   nono: { name: 'nono', sheet: 'assets/nono_sheet8c.png', hp: 62, maxhp: 62, mp: 18, maxmp: 18, atk: 14, def: 6, spd: 8 },
   yui:  { name: 'ユイ', sheet: 'assets/yui_sheet8.png',   hp: 48, maxhp: 48, mp: 14, maxmp: 14, atk: 11, def: 4, spd: 11 },
@@ -2277,7 +2279,8 @@ function buildRegion(id, def) {
   for (const e of def.enemies || []) {
     const kind = ENEMY_KINDS[e.kind];
     const tscale = (kind.tier === 'boss' || kind.tier === 'mid') ? 1.3 : 0.8;
-    const mesh = billboard(group, loadTex(kind.img), kind.h * tscale * kind.aspect, kind.h * tscale, e.x, e.z, {});
+    const useDiag = tscale > 1 && DIAG_ASPECT[e.kind];
+    const mesh = billboard(group, loadTex(useDiag ? `assets/enemy_${e.kind}_diag.png` : kind.img), kind.h * tscale * (useDiag ? DIAG_ASPECT[e.kind] : kind.aspect), kind.h * tscale, e.x, e.z, {});
     const shadow = blobShadow(group, kind.h * tscale * 0.95, e.x, e.z, 0.3);
     enemies.push({ mesh, shadow, kindKey: e.kind, home: { x: e.x, z: e.z }, tx: e.x, tz: e.z, wait: Math.random() * 2, alive: true, respawnAt: 0, phase: Math.random() * 6 });
   }
