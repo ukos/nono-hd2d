@@ -2152,6 +2152,8 @@ const ENEMY_KINDS = {
 const KIND_ALIAS = { spider: 'kumo', yeti: 'yukio' };
 // 中ボス・ボスの右斜めリアル絵の縦横比（フィールド表示にも同じ絵を使う）
 const DIAG_ASPECT = { kishin: 0.5, nue: 1.67, bear: 1.54, gaikotsu: 0.58, hitotsume: 0.51, hyouga: 0.95, iwaryu: 1.54, kgolem: 0.54, koorioni: 0.97, kyojin: 0.95, nurikabe: 0.67, oni: 0.52, oogumo: 1.47, oowani: 2.8, oowashi: 1.87, pontanuki: 0.64, robo: 0.75, tonosama: 0.56, wani: 2.19, yukio: 0.96, oozaru: 0.62, golem: 0.69 };
+// ライバルの右斜めリアル絵の縦横比（フィールド・バトル共用）
+const RIVAL_DIAG_ASPECT = { akane: 0.68, gou: 0.69, hayate: 0.7, homura: 0.71, iwao: 0.7, kogane: 0.79, kotetsu: 0.82, kurogane: 0.71, mei: 0.7, mizuchi: 0.69, nibulus: 0.72, sasuke: 0.75, shiro: 0.64, tanurio: 0.74, yoru: 0.72 };
 const PARTY = {
   nono: { name: 'nono', sheet: 'assets/nono_sheet8c.png', hp: 62, maxhp: 62, mp: 18, maxmp: 18, atk: 14, def: 6, spd: 8 },
   yui:  { name: 'ユイ', sheet: 'assets/yui_sheet8.png',   hp: 48, maxhp: 48, mp: 14, maxmp: 14, atk: 11, def: 4, spd: 11 },
@@ -2270,9 +2272,16 @@ function buildRegion(id, def) {
   }
   const npcs = [];
   for (const n of def.npcs || []) {
-    const mesh = makeChar(n.sheet, n.h, 3, group);
-    mesh.position.set(n.x, 0, n.z);
-    setFrameC(mesh, 0, 1);
+    const rid = n.sheet.replace('assets/', '').replace('_sheet.png', '');
+    let mesh;
+    if (RIVAL_DIAG_ASPECT[rid]) {
+      mesh = billboard(group, loadTex(`assets/rival_${rid}_diag.png`), n.h * 1.1 * RIVAL_DIAG_ASPECT[rid], n.h * 1.1, n.x, n.z, {});
+      blobShadow(group, n.h * 0.95, n.x, n.z, 0.3);
+    } else {
+      mesh = makeChar(n.sheet, n.h, 3, group);
+      mesh.position.set(n.x, 0, n.z);
+      setFrameC(mesh, 0, 1);
+    }
     npcs.push({ mesh, name: n.name, lines: n.lines, t: Math.random() * 4 });
   }
   const enemies = [];
@@ -3524,9 +3533,30 @@ async function startRivalBattle(name) {
   const sh3 = document.createElement('div'); sh3.className = 'bshadow'; d.appendChild(sh3);
   const ch = document.createElement('div');
   ch.className = 'bchar';
-  ch.style.backgroundImage = `url(${rv.sheet})`;
-  setCharFrame(ch, 1, 1, (Math.min(170, window.innerHeight * 0.24) * 0.8), 3);
-  ch.style.transform = 'scaleX(-1)'; // 歩行シートの横向きは左向き原画なので、nono の方（右）へ向ける
+  const rid = rv.sheet.replace('assets/', '').replace('_sheet.png', '');
+  const hPx = Math.min(170, window.innerHeight * 0.24) * 0.8;
+  if (RIVAL_DIAG_ASPECT[rid]) {
+    const dimg = new Image();
+    dimg.className = 'diag';
+    dimg.style.height = hPx + 'px';
+    dimg.style.display = 'block';
+    dimg.onload = () => {
+      const w = dimg.naturalWidth / dimg.naturalHeight * hPx;
+      if (w > window.innerWidth * 0.58) dimg.style.height = (hPx * window.innerWidth * 0.58 / w) + 'px';
+    };
+    dimg.onerror = () => {
+      dimg.remove();
+      ch.style.backgroundImage = `url(${rv.sheet})`;
+      setCharFrame(ch, 1, 1, hPx, 3);
+      ch.style.transform = 'scaleX(-1)';
+    };
+    dimg.src = `assets/rival_${rid}_diag.png`;
+    ch.appendChild(dimg);
+  } else {
+    ch.style.backgroundImage = `url(${rv.sheet})`;
+    setCharFrame(ch, 1, 1, hPx, 3);
+    ch.style.transform = 'scaleX(-1)'; // 歩行シートの横向きは左向き原画なので、nono の方（右）へ向ける
+  }
   d.appendChild(ch);
   const nm = document.createElement('div'); nm.className = 'bname'; nm.textContent = name;
   const bar = document.createElement('div'); bar.className = 'bbar'; bar.innerHTML = '<i></i>';
@@ -3642,6 +3672,12 @@ function animate() {
   const near = nearestNPC();
   talkBtn.style.display = (!dialog.open && near) ? 'block' : 'none';
   for (const npc of activeNPCs) {
+    if (!npc.mesh.userData.tex) {
+      // 斜め絵のNPCはシートアニメーションの代わりに小さく上下動する（ビルボードなので常にこちらを向く）
+      npc.t += dt;
+      npc.mesh.position.y = Math.abs(Math.sin(npc.t * 1.6)) * 0.03;
+      continue;
+    }
     const isTarget = dialog.open ? dialog.npc === npc : near === npc;
     if (isTarget) {
       const kdz = player.position.z - npc.mesh.position.z;
