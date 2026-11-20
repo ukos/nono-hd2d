@@ -3367,12 +3367,19 @@ let SAVE = { beaten: [] };
 try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && Array.isArray(s.beaten)) SAVE = s; } catch (e) {}
 function persistSave() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {} }
 function attachHeldSword(unitEl, hPx) { attachHeldWeapon(unitEl, 'nono', hPx); }
+// nono の持ち剣は段階ごとに柄の位置が違うので、段階別の [幅係数, left, bottom]（単位はキャラ高さ）
+const NONO_HELD_POS = [
+  [0.68, -0.40, 0.30], [0.68, -0.35, 0.22], [0.68, -0.40, 0.32], [0.68, -0.48, 0.34],
+  [0.68, -0.39, 0.33], [0.68, -0.26, 0.25], [0.68, -0.15, 0.26], [0.68, -0.41, 0.31],
+  [0.68, -0.40, 0.32], [0.68, -0.26, 0.30], [0.68, -0.39, 0.34], [0.68, -0.47, 0.35],
+  [0.68, -0.43, 0.33], [0.68, -0.39, 0.34], [0.68, -0.17, 0.33], [0.68, -0.40, 0.34]
+];
 function attachHeldWeapon(unitEl, id, hPx) {
   const img = document.createElement('img');
   img.className = 'bheld'; img.alt = '';
   img.src = id === 'nono' ? 'assets/held_' + swordStage() + '.png' : 'assets/held_' + id + '.png';
   img.onerror = () => img.remove();
-  const pos = { nono: [0.68, -0.40, 0.30], rei: [0.68, -0.36, 0.28], yui: [0.68, -0.38, 0.04] }[id] || [0.68, -0.22, 0.16];
+  const pos = id === 'nono' ? NONO_HELD_POS[swordStage()] : ({ rei: [0.68, -0.36, 0.28], yui: [0.68, -0.38, 0.04] }[id] || [0.68, -0.22, 0.16]);
   img.style.width = (hPx * pos[0]) + 'px';
   img.style.left = (pos[1] * hPx) + 'px';
   img.style.bottom = (pos[2] * hPx) + 'px';
