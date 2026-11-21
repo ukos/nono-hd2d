@@ -135,6 +135,8 @@
   .swStages span { font-size:11px; padding:3px 7px; border-radius:20px; background:rgba(255,255,255,.08); color:#99a; }
   .swStages span.done { background:rgba(120,200,120,.25); color:#cfc; }
   .swStages span.cur { background:#e8b030; color:#221; font-weight:bold; }
+  .swStages span.tap { cursor:pointer; }
+  .swStages span.viewing { outline:2px solid #ffd94d; outline-offset:1px; }
   .swRemain { margin-top:8px; font-size:12px; color:#bbc; line-height:1.6; }
   #mapCanvas, #pvCanvas { width:100%; border-radius:10px; background:#0a0c1c; display:block; }
   #mapNote { font-size:12px; color:#bbc; margin-top:4px; }
@@ -3924,18 +3926,25 @@ try { const c = JSON.parse(localStorage.getItem('nono-hd2d-cam')); if (c && isFi
 let settingsOpen = false;
 let pvRenderer = null, pvCam = null;
 function saveCam() { try { localStorage.setItem('nono-hd2d-cam', JSON.stringify(CAMSET)); } catch (e) {} }
+let swordViewStage = -1; // 設定画面で説明表示中の剣（-1 = 現在の剣）
 function buildSwordBox() {
-  const st = swordStage(), sw = SWORDS[st];
+  const st = swordStage();
+  const view = (swordViewStage >= 0 && swordViewStage <= st) ? swordViewStage : st;
+  const sw = SWORDS[view];
   const remain = RIVAL_ORDER.filter((n) => !SAVE.beaten.includes(n));
-  const chips = SWORDS.map((s, i) => '<span class="' + (i < st ? 'done' : i === st ? 'cur' : '') + '">' + (i + 1) + '. ' + s[0] + '</span>').join('');
+  const chips = SWORDS.map((s, i) => '<span data-st="' + i + '" class="' + (i < st ? 'done' : i === st ? 'cur' : '') + (i <= st ? ' tap' : '') + (view !== st && i === view ? ' viewing' : '') + '">' + (i + 1) + '. ' + s[0] + '</span>').join('');
   document.getElementById('swordBox').innerHTML =
-    '<div class="swTop"><img src="assets/sword_' + st + '.png" alt="">' +
-    '<div><div class="swName">第' + (st + 1) + '段階：' + sw[0] + '</div>' +
+    '<div class="swTop"><img src="assets/sword_' + view + '.png" alt="">' +
+    '<div><div class="swName">第' + (view + 1) + '段階：' + sw[0] + (view === st ? '（現在の剣）' : '') + '</div>' +
     '<div class="swTokugi">とくぎ：' + sw[2] + '</div>' +
     '<div class="swDesc">' + sw[3] + '</div>' +
     '<div class="swDesc">ライバル撃破 ' + SAVE.beaten.length + ' / 15 人' + (st >= 15 ? '（最終形態に到達）' : '（あと ' + (15 - st) + ' 人で最終形態）') + '</div></div></div>' +
     '<div class="swStages">' + chips + '</div>' +
+    '<div class="swDesc">到達済みの剣はタップすると説明を見られます</div>' +
     (remain.length ? '<div class="swRemain">まだ勝っていないライバル：' + remain.join('、') + '</div>' : '<div class="swRemain">全ライバルに勝利済み</div>');
+  document.querySelectorAll('#swordBox .swStages span.tap').forEach((el) => {
+    el.addEventListener('click', () => { swordViewStage = +el.dataset.st; buildSwordBox(); });
+  });
 }
 function buildTreasureBox() {
   const hasS = !!(SAVE.treasures && SAVE.treasures.seiken), hasStar = !!(SAVE.treasures && SAVE.treasures.star);
@@ -3985,6 +3994,7 @@ function syncCamUI() {
 }
 function openSettings() {
   settingsOpen = true;
+  swordViewStage = -1;
   buildSwordBox(); buildTreasureBox(); drawMap(); syncCamUI();
   document.getElementById('settings').classList.add('open');
   if (!pvRenderer) {
