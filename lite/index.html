@@ -2247,10 +2247,10 @@ const KIND_ALIAS = { spider: 'kumo', yeti: 'yukio' };
 // 中ボス・ボスの右斜めリアル絵の縦横比（フィールド表示にも同じ絵を使う）
 const DIAG_ASPECT = { kishin: 0.5, nue: 1.67, bear: 1.54, gaikotsu: 0.945, hitotsume: 0.412, hyouga: 0.95, iwaryu: 1.54, kgolem: 0.54, koorioni: 0.97, kyojin: 0.95, nurikabe: 0.67, oni: 0.52, oogumo: 1.47, oowani: 2.8, oowashi: 1.87, pontanuki: 0.64, robo: 0.75, tonosama: 0.494, wani: 2.19, yukio: 0.96, oozaru: 0.62, golem: 0.69, shiyuu: 1.108, shiyuu2: 1.204 };
 // ライバルの右斜めリアル絵の縦横比（フィールド・バトル共用）
-const REAL_ASPECT = { akuryou: 0.81, bandit: 0.5, chouchin: 0.54, dokuhebi: 1.63, drone: 1.57, dwolf: 0.939, eagle: 1.109, fox: 1.25, gama: 1.414, griffon: 1.0, hawk: 0.86, hibat: 0.84, iwagani: 0.65, kaeru: 1.065, kaizoku: 0.6, kamome: 0.75, kani: 1.133, karakasa: 0.81, karasu: 0.58, karyu: 0.78, kinokoob: 0.66, kitsune: 1.52, komori: 0.92, kumo: 0.984, kurage: 0.804, leever: 0.6, marten: 3.034, mogura: 0.9, mukade: 1.29, mummy: 0.49, ninja: 0.52, onibi: 0.87, oumu: 1.444, raichou: 0.911, same: 1.605, scorpion: 1.39, shinigami: 0.78, shirofukuro: 0.973, squirrel: 1.016, tako: 0.57, tanuki: 0.89, tengu: 0.79, utsubo: 1.384, vulture: 0.78, wolf: 1.67, x_acorn: 0.62, x_bluejelly: 1.08, x_boar: 1.6, x_cactus: 0.79, x_darkocto: 1.29, x_kappa: 1.36, x_mushcat: 0.82, x_owl: 0.696, x_purpmush: 0.76, x_rabbit: 0.8, x_whiterabbit: 0.79, yadokari: 1.03, yamiinu: 0.9, yougan: 0.862, yukiookami: 1.639, ankou: 0.945, cobra: 0.635, deer: 0.718, foxsq: 0.918, gorori: 1.335, hachi: 0.641, hirari: 1.505, koorislime: 1.112, morikuma: 0.483, puru: 1.946, tobiuo: 1.085, washi: 0.933, yagi: 0.726, kingcrab: 1.969 };
+const REAL_ASPECT = { akuryou: 0.81, bandit: 0.5, chouchin: 0.54, dokuhebi: 1.63, drone: 1.57, dwolf: 0.939, eagle: 1.109, fox: 1.25, gama: 1.414, griffon: 1.0, hawk: 0.86, hibat: 0.84, iwagani: 0.65, kaeru: 1.065, kaizoku: 0.6, kamome: 0.75, kani: 1.133, karakasa: 0.81, karasu: 0.58, karyu: 0.78, kinokoob: 0.66, kitsune: 1.52, komori: 0.92, kumo: 0.984, kurage: 0.804, leever: 0.6, marten: 3.034, mogura: 0.9, mukade: 1.29, mummy: 0.49, ninja: 0.52, onibi: 0.87, oumu: 1.444, raichou: 0.911, same: 1.605, scorpion: 1.39, shinigami: 0.78, shirofukuro: 0.973, squirrel: 1.016, tako: 0.57, tanuki: 0.89, tengu: 0.79, utsubo: 1.384, vulture: 0.78, wolf: 1.67, x_acorn: 0.62, x_bluejelly: 1.08, x_boar: 1.6, x_cactus: 0.79, x_darkocto: 1.29, x_kappa: 1.36, x_mushcat: 0.82, x_owl: 0.696, x_purpmush: 0.76, x_rabbit: 0.8, x_whiterabbit: 0.79, yadokari: 1.03, yamiinu: 0.9, yougan: 0.862, yukiookami: 1.639, ankou: 0.945, cobra: 0.635, deer: 0.718, foxsq: 0.918, gorori: 1.335, hachi: 0.641, hirari: 1.505, koorislime: 1.112, morikuma: 0.583, puru: 1.946, tobiuo: 1.085, washi: 0.933, yagi: 0.726, kingcrab: 1.969 };
 const REAL_FLIP = { fox: 1, yukiookami: 1, tanuki: 1, x_rabbit: 1, x_boar: 1, utsubo: 1, scorpion: 1, dwolf: 1, griffon: 1, vulture: 1, leever: 1, mukade: 1, x_owl: 1, kinokoob: 1, komori: 1, x_mushcat: 1, x_whiterabbit: 1, kaeru: 1, ninja: 1, x_acorn: 1, x_cactus: 1 };
 // 中ボス・ボスの斜め絵のうち左向きのもの（フィールド移動とバトルの反転に使う）
-const DIAG_FLIP = { hitotsume: 1, oowani: 1, pontanuki: 1, tonosama: 1 }; // 骸骨の戦士（gaikotsu）の原画は右向きなので反転しない（2026-11-21 実機指摘で修正）
+const DIAG_FLIP = { oowani: 1, pontanuki: 1 }; // 骸骨の戦士（gaikotsu）・朧丸（tonosama）・一つ目入道（hitotsume）の原画は右向きなので反転しない（2026-11-21 実機指摘で修正）
 // ライバル斜め絵のうち左向きのもの（バトルで反転して nono の方へ向ける）
 const RIVAL_FLIP = {}; // 反転が要るライバルはいない（diag原画は全員右向き。コガネも右向き原画と実ファイルで確認済み 2026-11-21）
 const RIVAL_DIAG_ASPECT = { akane: 0.68, gou: 0.69, hayate: 0.7, homura: 0.71, iwao: 0.7, kogane: 0.79, kotetsu: 0.82, kurogane: 0.71, mei: 0.7, mizuchi: 0.69, nibulus: 0.72, sasuke: 0.75, shiro: 0.64, tanurio: 0.74, yoru: 0.72 };
@@ -2268,7 +2268,7 @@ const SPELLS = [
   { id: 'heal',    name: 'いやし',   mp: 4, kind: 'heal',    fx: 'heal',    pow: 26 },
 ];
 const SKILL_NONO = { name: '回転切り', kind: 'dmgAll', pow: -2, uses: 3 }; // とくぎは1戦闘3回まで
-let inBattle = false, noEncounterUntil = 0;
+let inBattle = false, noEncounterUntil = 0, battleHpMul = 1;
 let activeEnemies = [];
 const bEl = (id) => document.getElementById(id);
 const bSleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -2433,7 +2433,7 @@ REGIONS.labyrinth = {
   fog: { color: 0x0a0a14, near: 9, far: 42 },
   bg: 0x05050a,
   sun: { i: 0.5, pos: [2045, 11, -4.5], tgt: [2031, 0, 0] },
-  sub: '大迷宮 ／ 入るたびに姿を変える迷宮。入口の階段から戻れます',
+  sub: '大迷宮 ／ 入るたびに姿を変える迷宮（地下11〜20階）。入口の階段から戻れます',
   wadeZ: null,
   spawn: { x: 2001, z: 0, row: 2 },
   grounds: [], props: [], npcs: [], exits: [],
@@ -2503,7 +2503,40 @@ function generateLabyrinth(seed, opts = {}) {
       if (dd > gd) { gd = dd; start = { x: c.x, y: c.y }; goal = { x: o.x, y: o.y }; }
     }
   }
-  return { w, h, tiles, start, goal, rooms, pathLen: gd };
+  // 部屋の種別と罠（本編 BotD の大迷宮と同じ仕様: A.51）
+  const floorN = opts.floor || 1, band = opts.band || 'low', deepest = !!opts.deepest;
+  const roomOf = (tx, ty) => rooms.find(r => tx >= r.x && tx < r.x + r.w && ty >= r.y && ty < r.y + r.h);
+  const startRoom = roomOf(start.x, start.y), goalRoom = roomOf(goal.x, goal.y);
+  const types = new Map();
+  types.set(startRoom, 'start');
+  if (goalRoom && goalRoom !== startRoom) types.set(goalRoom, deepest ? 'treasure' : 'stairs');
+  const restRooms = rooms.filter(r => !types.has(r));
+  if (floorN % 5 === 0 && !deepest && restRooms.length) {
+    const small = restRooms.filter(r => r.w * r.h <= 2);
+    const cand = small.length ? small : restRooms;
+    types.set(cand[Math.floor(rng() * cand.length)], 'spring');
+  }
+  let houses = 0;
+  for (const r of restRooms) {
+    if (types.has(r)) continue;
+    const x = rng();
+    types.set(r, x < 0.28 ? 'empty' : x < 0.64 ? 'monster' : x < 0.86 ? 'trap' : (floorN >= 2 && houses < (band === 'deep' ? 3 : 2) ? (houses++, 'house') : 'monster'));
+  }
+  const traps = [];
+  for (const r of rooms) {
+    if (types.get(r) !== 'trap') continue;
+    const n = Math.round((3 + rng() * 3) * (band === 'deep' ? 1.5 : 1));
+    const kinds = ['spike', 'spike', 'arrow', 'arrow', 'pit', 'warp'];
+    let placed = 0, guard = 0;
+    while (placed < n && guard++ < 60) {
+      const tx = r.x + Math.floor(rng() * r.w), ty = r.y + Math.floor(rng() * r.h);
+      if (tx === r.cx && ty === r.cy) continue;
+      if (traps.some(t => t.tx === tx && t.ty === ty)) continue;
+      traps.push({ tx, ty, kind: kinds[Math.floor(rng() * kinds.length)], shown: false });
+      placed++;
+    }
+  }
+  return { w, h, tiles, start, goal, rooms, pathLen: gd, types, traps, band, floor: floorN, deepest };
 }
 
 let labWallMesh = null, labGhostMesh = null, labWallPos = [];
@@ -2558,8 +2591,17 @@ function buildLabyrinth(data) {
     const wx = LAB_OX + (x + 0.5) * LAB_TILE, wz = oz + (y + 0.5) * LAB_TILE;
     dummy.position.set(wx, 1.3, wz); dummy.updateMatrix();
     walls.setMatrixAt(i, dummy.matrix);
-    colliders.push({ x: wx, z: wz, r: 1.32 });
+    colliders.push({ x: wx, z: wz, r: 1.5 });
   });
+  // 床に接していない壁タイルにも判定を付け、壁の海への抜け道を塞ぐ（2026-11-21 実機報告: 壁の中に入り込むとマップが更新されない）
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (tiles[y * w + x] !== 1) continue;
+    const adj2 = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+      const nx = x + dx, ny = y + dy;
+      return nx >= 0 && ny >= 0 && nx < w && ny < h && tiles[ny * w + nx] === 0;
+    });
+    if (!adj2) colliders.push({ x: LAB_OX + (x + 0.5) * LAB_TILE, z: oz + (y + 0.5) * LAB_TILE, r: 1.5 });
+  }
   walls.castShadow = true; walls.receiveShadow = true;
   group.add(walls);
   // 手前の壁のスケルトン表示（透過）用メッシュと壁位置の保持（A.50）
@@ -2579,8 +2621,10 @@ function buildLabyrinth(data) {
   const exitGlow = new THREE.Mesh(new THREE.CircleGeometry(0.85, 24), new THREE.MeshBasicMaterial({ color: 0xffb36b, transparent: true, opacity: 0.3 }));
   exitGlow.rotation.x = -Math.PI / 2; exitGlow.position.set(sw.x, 0.03, sw.z);
   group.add(exitGlow);
-  // ゴールの宝珠
+  // ゴールの宝珠（最奥の階のみ。ほかの階の最遠の部屋は下り階段）
   const gw = labWorldOf(data.goal.x, data.goal.y, data);
+  let stairsDown = null;
+  if (data.deepest) {
   labGoalMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.42), new THREE.MeshStandardMaterial({ color: 0x1d4d43, emissive: 0x2fe8c0, emissiveIntensity: 1.6, roughness: 0.3 }));
   labGoalMesh.position.set(gw.x, 1.25, gw.z);
   group.add(labGoalMesh);
@@ -2590,8 +2634,22 @@ function buildLabyrinth(data) {
   const ring = new THREE.Mesh(new THREE.RingGeometry(0.7, 0.95, 28), new THREE.MeshBasicMaterial({ color: 0x2fe8c0, transparent: true, opacity: 0.4, side: THREE.DoubleSide }));
   ring.rotation.x = -Math.PI / 2; ring.position.set(gw.x, 0.03, gw.z);
   group.add(ring);
+  } else {
+    labGoalMesh = null; labGoalLight = null;
+    const hole = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.8), new THREE.MeshBasicMaterial({ color: 0x030308 }));
+    hole.rotation.x = -Math.PI / 2; hole.position.set(gw.x, 0.02, gw.z); group.add(hole);
+    const sMat = new THREE.MeshStandardMaterial({ color: 0x4a505e, roughness: 1 });
+    for (let i = 0; i < 3; i++) {
+      const st = new THREE.Mesh(new THREE.BoxGeometry(1.5 - i * 0.25, 0.14, 0.45), sMat);
+      st.position.set(gw.x, 0.05 - i * 0.09, gw.z + 0.75 - i * 0.42); group.add(st);
+    }
+    const sGlow = new THREE.Mesh(new THREE.RingGeometry(0.85, 1.1, 28), new THREE.MeshBasicMaterial({ color: 0x9fc8ff, transparent: true, opacity: 0.45, side: THREE.DoubleSide }));
+    sGlow.rotation.x = -Math.PI / 2; sGlow.position.set(gw.x, 0.03, gw.z); group.add(sGlow);
+    stairsDown = { x: gw.x, z: gw.z };
+  }
   // 最奥のお宝（2D版と同じく聖剣と星座のオブジェ）: ゴール周辺の床タイルに配置。入手済みなら出さない
   const treasures = [];
+  if (data.deepest) {
   const spots = [];
   for (let r = 1; r <= 3 && spots.length < 2; r++)
     for (let dy = -r; dy <= r && spots.length < 2; dy++)
@@ -2646,40 +2704,92 @@ function buildLabyrinth(data) {
     group.add(grp);
     treasures.push({ id, tx, ty, x: wp.x, z: wp.z, group: grp });
   });
-  // 迷宮の敵（A.50で追加）: スタート部屋以外の各部屋に1体、部屋の中だけを徘徊する
+  }
+  // 部屋の種別に応じた敵配置（本編の大迷宮と同じ帯別プール。深さでHPが増える）
   const enemies = [];
-  {
-    const dist = bfsDist(tiles, w, h, data.start);
-    const inRoom = (tx, ty, r) => tx >= r.x && tx < r.x + r.w && ty >= r.y && ty < r.y + r.h;
-    const startRoom = data.rooms.find(r => inRoom(data.start.x, data.start.y, r));
-    const goalRoom = data.rooms.find(r => inRoom(data.goal.x, data.goal.y, r));
-    const zakoPool = ['onibi', 'chouchin', 'karakasa', 'mummy'];
-    const deepPool = ['gaikotsu', 'hitotsume', 'mummy', 'karakasa'];
-    for (const r of data.rooms) {
-      if (r === startRoom) continue;
-      let tx = r.cx, ty = r.cy;
-      if (tx === data.goal.x && ty === data.goal.y) tx += 1; // 宝珠のタイルには置かない
-      if (tiles[ty * w + tx] !== 0) continue;
-      const wp = labWorldOf(tx, ty, data);
-      const deep = (dist[ty * w + tx] || 0) > 9 || r === goalRoom;
-      const pool = deep ? deepPool : zakoPool;
-      const kindKey = pool[Math.floor(Math.random() * pool.length)];
-      const kind = ENEMY_KINDS[kindKey];
-      const tscale = (kind.tier === 'boss' || kind.tier === 'mid') ? 1.3 : 0.8;
-      const useDiag = tscale > 1 && DIAG_ASPECT[kindKey];
-      const useReal = !useDiag && REAL_ASPECT[kindKey];
-      const baseAspect = useDiag ? DIAG_ASPECT[kindKey] : useReal ? REAL_ASPECT[kindKey] : kind.aspect;
-      const fh = kind.h * tscale * (kind.fscale || 1);
-      const mesh = billboard(group, loadTex(useDiag ? `assets/enemy_${kindKey}_diag.png` : useReal ? `assets/enemy_${kindKey}_real.png` : kind.img), fh * baseAspect, fh, wp.x, wp.z, {});
-      const shadow = blobShadow(group, fh * 0.95, wp.x, wp.z, 0.3);
-      const actAspect = useDiag ? DIAG_ACT_ASPECT[kindKey] : useReal ? REAL_ACT_ASPECT[kindKey] : null;
-      const texB = actAspect ? loadTex(useDiag ? `assets/enemy_${kindKey}_diag_act.png` : `assets/enemy_${kindKey}_real_act.png`) : null;
-      const faceSign = useDiag ? (DIAG_FLIP[kindKey] ? 1 : -1) : useReal ? (REAL_FLIP[kindKey] ? 1 : -1) : 1;
-      const roam = { minX: LAB_OX + r.x * LAB_TILE + 0.4, maxX: LAB_OX + (r.x + r.w) * LAB_TILE - 0.4, minZ: oz + r.y * LAB_TILE + 0.4, maxZ: oz + (r.y + r.h) * LAB_TILE - 0.4 };
-      enemies.push({ mesh, shadow, kindKey, home: { x: wp.x, z: wp.z }, tx: wp.x, tz: wp.z, wait: Math.random() * 2, alive: true, respawnAt: 0, phase: Math.random() * 6, texA: mesh.material.map, texB, ratioB: actAspect ? actAspect / baseAspect : 1, onB: false, faceSign, roam });
+  const bandPools = {
+    low: ['wolf', 'kumo', 'onibi', 'kaeru', 'hirari', 'koorislime', 'kinokoob', 'puru', 'gorori', 'cobra', 'marten', 'fox', 'karasu', 'hachi', 'komori', 'mogura'],
+    mid: ['mummy', 'bandit', 'scorpion', 'ninja', 'tengu', 'kitsune', 'mukade', 'gama', 'gaikotsu', 'yamiinu', 'akuryou', 'chouchin', 'karakasa', 'iwagani', 'dokuhebi', 'yukiookami', 'drone'],
+    deep: ['oni', 'bear', 'robo', 'hitotsume', 'koorioni', 'oozaru', 'shinigami', 'yukio', 'mummy', 'gaikotsu', 'yamiinu'],
+  };
+  const pool = bandPools[data.band] || bandPools.low;
+  const pickKind = () => pool[Math.floor(Math.random() * pool.length)];
+  const mkLabEnemy = (kindKey, tx, ty, r) => {
+    if (tiles[ty * w + tx] !== 0) return;
+    const wp = labWorldOf(tx, ty, data);
+    const kind = ENEMY_KINDS[kindKey];
+    const tscale = (kind.tier === 'boss' || kind.tier === 'mid') ? 1.3 : 0.8;
+    const useDiag = tscale > 1 && DIAG_ASPECT[kindKey];
+    const useReal = !useDiag && REAL_ASPECT[kindKey];
+    const baseAspect = useDiag ? DIAG_ASPECT[kindKey] : useReal ? REAL_ASPECT[kindKey] : kind.aspect;
+    const fh = kind.h * tscale * (kind.fscale || 1);
+    const mesh = billboard(group, loadTex(useDiag ? `assets/enemy_${kindKey}_diag.png` : useReal ? `assets/enemy_${kindKey}_real.png` : kind.img), fh * baseAspect, fh, wp.x, wp.z, {});
+    const shadow = blobShadow(group, fh * 0.95, wp.x, wp.z, 0.3);
+    const actAspect = useDiag ? DIAG_ACT_ASPECT[kindKey] : useReal ? REAL_ACT_ASPECT[kindKey] : null;
+    const texB = actAspect ? loadTex(useDiag ? `assets/enemy_${kindKey}_diag_act.png` : `assets/enemy_${kindKey}_real_act.png`) : null;
+    const faceSign = useDiag ? (DIAG_FLIP[kindKey] ? 1 : -1) : useReal ? (REAL_FLIP[kindKey] ? 1 : -1) : 1;
+    const roam = { minX: LAB_OX + r.x * LAB_TILE + 0.4, maxX: LAB_OX + (r.x + r.w) * LAB_TILE - 0.4, minZ: oz + r.y * LAB_TILE + 0.4, maxZ: oz + (r.y + r.h) * LAB_TILE - 0.4 };
+    enemies.push({ mesh, shadow, kindKey, home: { x: wp.x, z: wp.z }, tx: wp.x, tz: wp.z, wait: Math.random() * 2, alive: true, respawnAt: 0, phase: Math.random() * 6, texA: mesh.material.map, texB, ratioB: actAspect ? actAspect / baseAspect : 1, onB: false, faceSign, roam, hpMul: 1 + (data.floor - 1) * 0.08 });
+  };
+  for (const r of data.rooms) {
+    const type = data.types.get(r);
+    if (type === 'monster') {
+      mkLabEnemy(pickKind(), r.cx, r.cy, r);
+      if (data.band === 'deep' && Math.random() < 0.5) mkLabEnemy(pickKind(), Math.min(r.cx + 1, r.x + r.w - 1), r.cy, r);
+    } else if (type === 'house') {
+      const used = new Set(); let n = 0, guard = 0;
+      while (n < 4 && guard++ < 40) {
+        const tx = r.x + Math.floor(Math.random() * r.w), ty = r.y + Math.floor(Math.random() * r.h), k = tx + ',' + ty;
+        if (used.has(k)) continue;
+        used.add(k); mkLabEnemy(pickKind(), tx, ty, r); n++;
+      }
     }
   }
-  return { group, colliders, treasures, enemies };
+  // 温泉の部屋（5階ごと）: 入ると全回復
+  let spring = null;
+  for (const r of data.rooms) if (data.types.get(r) === 'spring') {
+    const wp = labWorldOf(r.cx, r.cy, data);
+    const pond = new THREE.Mesh(new THREE.CircleGeometry(1.05, 24), new THREE.MeshStandardMaterial({ color: 0x86c5d8, emissive: 0x2a4a5a, roughness: 0.25, transparent: true, opacity: 0.92 }));
+    pond.rotation.x = -Math.PI / 2; pond.position.set(wp.x, 0.025, wp.z); group.add(pond);
+    const pl = new THREE.PointLight(0xaad4e8, 5, 7); pl.position.set(wp.x, 1.6, wp.z); group.add(pl);
+    spring = { x: wp.x, z: wp.z };
+  }
+  // 罠の目印（踏むまで隠れている。本編と同じ4種: トゲ・矢・落とし穴・ワープ）
+  const trapList = [];
+  for (const tr of data.traps) {
+    const wp = labWorldOf(tr.tx, tr.ty, data);
+    const g2 = new THREE.Group();
+    if (tr.kind === 'spike') {
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.06, 1.5), new THREE.MeshStandardMaterial({ color: 0x3a3a44, roughness: 1 }));
+      plate.position.y = 0.03; g2.add(plate);
+      const coneG = new THREE.ConeGeometry(0.09, 0.3, 5), coneM = new THREE.MeshStandardMaterial({ color: 0xd8d8e4, roughness: 0.4 });
+      for (const [ox, oz2] of [[-0.4, -0.4], [0.4, -0.4], [0, 0], [-0.4, 0.4], [0.4, 0.4]]) { const c = new THREE.Mesh(coneG, coneM); c.position.set(ox, 0.18, oz2); g2.add(c); }
+    } else if (tr.kind === 'pit') {
+      const hole = new THREE.Mesh(new THREE.CircleGeometry(0.78, 20), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+      hole.rotation.x = -Math.PI / 2; hole.position.y = 0.021; g2.add(hole);
+    } else if (tr.kind === 'warp') {
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.78, 24), new THREE.MeshBasicMaterial({ color: 0x2fe8c0, transparent: true, opacity: 0.75, side: THREE.DoubleSide }));
+      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.021; g2.add(ring);
+    } else {
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.05, 1.2), new THREE.MeshStandardMaterial({ color: 0x44402e, roughness: 1 }));
+      plate.position.y = 0.025; g2.add(plate);
+    }
+    g2.position.set(wp.x, 0, wp.z); g2.visible = false; group.add(g2);
+    trapList.push({ ...tr, x: wp.x, z: wp.z, mesh: g2 });
+  }
+  // 上り階段の目印（2階以降のスタート部屋。1階のスタートは従来どおり出口）
+  let upStairs = null;
+  if (data.floor > 1) {
+    const sMat2 = new THREE.MeshStandardMaterial({ color: 0x4a505e, roughness: 1 });
+    for (let i = 0; i < 3; i++) {
+      const st = new THREE.Mesh(new THREE.BoxGeometry(1.5 - i * 0.25, 0.14, 0.45), sMat2);
+      st.position.set(sw.x, 0.07 + i * 0.13, sw.z - 0.75 + i * 0.42); group.add(st);
+    }
+    const door = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.0), new THREE.MeshBasicMaterial({ color: 0xffb36b, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
+    door.position.set(sw.x, 1.15, sw.z - 1.05); group.add(door);
+    upStairs = { x: sw.x, z: sw.z };
+  }
+  return { group, colliders, treasures, enemies, stairsDown, spring, traps: trapList, upStairs };
 }
 
 function disposeLabGroup(g) {
@@ -2688,25 +2798,72 @@ function disposeLabGroup(g) {
     if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.dispose();
   });
 }
+let labRun = null; // { seed, B } 1回の潜行の最奥は地下11〜20階（本編と同じ）
+const labBandOf = (f) => (f <= 5 ? 'low' : f <= 10 ? 'mid' : 'deep');
+const LAB_BAND_NAME = { low: '低層', mid: '中層', deep: '深層' };
+const LAB_SIZES = { low: { w: 25, h: 19, rooms: 9 }, mid: { w: 31, h: 23, rooms: 12 } };
+const LAB_DEEP_SIZES = [{ w: 19, h: 15, rooms: 7 }, { w: 23, h: 15, rooms: 7 }, { w: 23, h: 19, rooms: 8 }];
+function updateLabHud() {
+  if (!lab || !labRun) return;
+  document.getElementById('hudSub').textContent = `大迷宮 地下${lab.floor}階（${LAB_BAND_NAME[labBandOf(lab.floor)]}）／ 最奥は地下${labRun.B}階 ／ ${lab.floor === 1 ? '入口の階段から戻れます' : 'スタート部屋の階段で 上の階へ戻れます'}`;
+}
+let labToastTimer = 0;
+function labToast(msg) {
+  document.getElementById('hudSub').textContent = msg;
+  clearTimeout(labToastTimer);
+  labToastTimer = setTimeout(() => { if (area === 'labyrinth') updateLabHud(); }, 3200);
+}
+function buildLabFloor(f, where) {
+  const band = labBandOf(f);
+  const seedF = (labRun.seed * 31 + f * 977) >>> 0;
+  let size = LAB_SIZES[band];
+  if (band === 'deep') size = LAB_DEEP_SIZES[Math.floor(mulberry32(seedF)() * 3)];
+  const data = generateLabyrinth(seedF, { ...size, floor: f, band, deepest: f === labRun.B });
+  const rt = REGION_RT.labyrinth;
+  for (const c of [...rt.group.children]) { rt.group.remove(c); disposeLabGroup(c); }
+  const built = buildLabyrinth(data);
+  rt.group.add(built.group);
+  rt.colliders = built.colliders;
+  rt.enemies = built.enemies || [];
+  activeEnemies = rt.enemies;
+  walkBounds = { minX: LAB_OX + 0.4, maxX: LAB_OX + data.w * LAB_TILE - 0.4, minZ: -(data.h * LAB_TILE) / 2 + 0.4, maxZ: (data.h * LAB_TILE) / 2 - 0.4 };
+  let sx, sz;
+  if (where === 'random') {
+    const cand = data.rooms.filter(r => !['stairs', 'treasure', 'start'].includes(data.types.get(r)));
+    const r = cand.length ? cand[Math.floor(Math.random() * cand.length)] : data.rooms[0];
+    const wp = labWorldOf(r.cx, r.cy, data); sx = wp.x; sz = wp.z;
+  } else {
+    const sw = labWorldOf(data.start.x, data.start.y, data); sx = sw.x; sz = sw.z;
+  }
+  lab = { data, floor: f, visited: new Uint8Array(data.w * data.h), exitArmed: false, cleared: false, lastTx: -1, lastTy: -1, ghostTx: -1, ghostTy: -1, treasures: built.treasures || [], stairsDown: built.stairsDown, spring: built.spring, springUsed: false, traps: built.traps || [], upStairs: built.upStairs, lastTrapKey: '', arrows: [], houseSeen: new Set(), lastT: 0 };
+  window.__lab = lab;
+  teleportTo(sx, sz, 4, [0, 1], LAB_OX + (data.w * LAB_TILE) / 2);
+  updateLabHud();
+}
+function gotoLabFloor(f, where) {
+  if (transitioning) return;
+  transitioning = true;
+  const fade = document.getElementById('fade');
+  fade.style.opacity = '1';
+  setTimeout(() => {
+    buildLabFloor(f, where);
+    labMarkVisited();
+    labToast(`地下${f}階（${LAB_BAND_NAME[labBandOf(f)]}）` + (f === labRun.B ? '　ここが最奥だ' : f % 5 === 0 ? '　どこかに温泉の部屋がある' : ''));
+    fade.style.opacity = '0';
+    setTimeout(() => { transitioning = false; }, 600);
+  }, 420);
+}
 function enterLabyrinth(seed) {
   if (transitioning) return;
   transitioning = true;
   const fade = document.getElementById('fade');
   fade.style.opacity = '1';
   setTimeout(() => {
-    const data = generateLabyrinth(seed !== undefined ? seed : (Math.random() * 2147483647) | 0);
-    const rt = REGION_RT.labyrinth;
-    for (const c of [...rt.group.children]) { rt.group.remove(c); disposeLabGroup(c); }
-    const built = buildLabyrinth(data);
-    rt.group.add(built.group);
-    rt.colliders = built.colliders;
-    rt.enemies = built.enemies || [];
-    lab = { data, visited: new Uint8Array(data.w * data.h), exitArmed: false, cleared: false, lastTx: -1, lastTy: -1, ghostTx: -1, ghostTy: -1, treasures: built.treasures || [] };
-    window.__lab = lab;
-    const sw = labWorldOf(data.start.x, data.start.y, data);
-    teleportTo(sw.x, sw.z, 4, [0, 1], REGIONS.labyrinth.centerX);
+    labRun = { seed: seed !== undefined ? seed : (Math.random() * 2147483647) | 0, B: 11 + Math.floor(Math.random() * 10) };
     setRegion('labyrinth');
+    buildLabFloor(1, 'start');
     labMarkVisited();
+    labToast(`大迷宮に入った。今回の最奥は地下${labRun.B}階…`);
     fade.style.opacity = '0';
     setTimeout(() => { transitioning = false; }, 600);
   }, 420);
@@ -2764,18 +2921,103 @@ function obtainTreasure(tr) {
   if (tr.id === 'seiken') openDialog({ name: '大迷宮', lines: ['岩に刺さった 聖剣「天羽々斬」を 抜いた！', '設定画面の「お宝」から装備できる。装備すると nono の こうげき・とくぎ が 中ボス・ボスに 2倍になる。'] });
   else openDialog({ name: '大迷宮', lines: ['星座のオブジェ「オリオン座」を 手に入れた！', '星の光が そっと瞬いている。'] });
 }
+function labDamageParty(n, msg) {
+  for (const m of Object.values(PARTY)) m.hp = Math.max(0, m.hp - n);
+  if (msg) labToast(msg);
+  if (PARTY.nono.hp <= 0) {
+    openDialog({ name: '大迷宮', lines: ['罠にかかって 力尽きた…', '迷宮の入口に 運び出された。'], onClose: () => { for (const m of Object.values(PARTY)) { m.hp = m.maxhp; m.mp = m.maxmp; } exitLabyrinth(); } });
+  }
+}
+function triggerLabTrap(tr) {
+  if (!tr.shown) { tr.shown = true; if (tr.mesh) tr.mesh.visible = true; }
+  const name = { spike: 'トゲの床', arrow: '矢の仕掛け', pit: '落とし穴', warp: 'ワープの床' }[tr.kind];
+  if (tr.kind === 'spike') labDamageParty(5, `${name}だ！ パーティに 5 のダメージ`);
+  else if (tr.kind === 'arrow') {
+    labToast(`${name}だ！`);
+    const room = lab.data.rooms.find(r => tr.tx >= r.x && tr.tx < r.x + r.w && tr.ty >= r.y && tr.ty < r.y + r.h);
+    const fromL = Math.random() < 0.5;
+    const x0 = room ? LAB_OX + (fromL ? room.x : room.x + room.w) * LAB_TILE + (fromL ? 0.3 : -0.3) : player.position.x - 8;
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.85, 6), new THREE.MeshBasicMaterial({ color: 0xd8cfb8 }));
+    mesh.rotation.z = Math.PI / 2;
+    mesh.position.set(x0, 0.95, player.position.z);
+    REGION_RT.labyrinth.group.add(mesh);
+    lab.arrows.push({ mesh, vx: fromL ? 7.5 : -7.5, wait: 0.35, x: x0, z: player.position.z });
+  } else if (tr.kind === 'pit') {
+    const dd = Math.min(labRun.B, lab.floor + 1 + Math.floor(Math.random() * 5)) - lab.floor;
+    if (dd <= 0) labDamageParty(5, `${name}だ！ パーティに 5 のダメージ`);
+    else {
+      labDamageParty(5 * dd, `${name}だ！ ${dd}階 落ちて 地下${lab.floor + dd}階へ（${5 * dd} のダメージ）`);
+      if (PARTY.nono.hp > 0) setTimeout(() => { if (area === 'labyrinth' && !transitioning) gotoLabFloor(lab.floor + dd, 'random'); }, 400);
+    }
+  } else if (tr.kind === 'warp') {
+    let nf = lab.floor;
+    while (nf === lab.floor) nf = 1 + Math.floor(Math.random() * labRun.B);
+    labToast(`${name}だ！ 地下${nf}階へ 飛ばされた`);
+    setTimeout(() => { if (area === 'labyrinth' && !transitioning) gotoLabFloor(nf, 'random'); }, 400);
+  }
+}
 function labTick(t) {
   if (labGoalMesh) { labGoalMesh.rotation.y = t * 1.4; labGoalMesh.position.y = 1.25 + Math.sin(t * 2) * 0.12; if (labGoalLight) labGoalLight.intensity = 6 + Math.sin(t * 2) * 1.5; }
   if (lab && lab.treasures) for (const tr of lab.treasures) { if (tr.group.userData.stars) tr.group.userData.stars.rotation.y = t * 0.5; }
   if (area !== 'labyrinth' || !lab || transitioning || dialog.open) return;
   const d = lab.data;
   const pt = labTileOf(player.position.x, player.position.z, d);
+  if (pt.x < 0 || pt.y < 0 || pt.x >= d.w || pt.y >= d.h || d.tiles[pt.y * d.w + pt.x] !== 0) {
+    // 壁タイルの中に入り込んでいたら最寄りの床へ戻す（斜めの抜け道対策の保険）
+    let spot = null;
+    for (let r = 1; r <= 10 && !spot; r++) for (let dy = -r; dy <= r && !spot; dy++) for (let dx = -r; dx <= r && !spot; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+      const nx = pt.x + dx, ny = pt.y + dy;
+      if (nx >= 0 && ny >= 0 && nx < d.w && ny < d.h && d.tiles[ny * d.w + nx] === 0) spot = { x: nx, y: ny };
+    }
+    if (spot) { const wpt = labWorldOf(spot.x, spot.y, d); player.position.set(wpt.x, 0, wpt.z); }
+    return;
+  }
   if (pt.x !== lab.lastTx || pt.y !== lab.lastTy) { lab.lastTx = pt.x; lab.lastTy = pt.y; labMarkVisited(); }
   if (pt.x !== lab.ghostTx || pt.y !== lab.ghostTy) { lab.ghostTx = pt.x; lab.ghostTy = pt.y; updateLabWalls(); }
   const sw = labWorldOf(d.start.x, d.start.y, d);
   const dStart = Math.hypot(player.position.x - sw.x, player.position.z - sw.z);
   if (!lab.exitArmed && dStart > 3) lab.exitArmed = true;
-  if (lab.exitArmed && dStart < 0.9) { exitLabyrinth(); return; }
+  if (lab.exitArmed && dStart < 0.9) {
+    if (lab.floor === 1) { exitLabyrinth(); return; }
+    gotoLabFloor(lab.floor - 1, 'start'); return;
+  }
+  if (lab.stairsDown && Math.hypot(player.position.x - lab.stairsDown.x, player.position.z - lab.stairsDown.z) < 0.9) { gotoLabFloor(lab.floor + 1, 'start'); return; }
+  if (lab.spring && !lab.springUsed && Math.hypot(player.position.x - lab.spring.x, player.position.z - lab.spring.z) < 1.3) {
+    lab.springUsed = true;
+    for (const m of Object.values(PARTY)) { m.hp = m.maxhp; m.mp = m.maxmp; }
+    if (BGM.sfx && BGM.sfx.heal) BGM.sfx.heal();
+    openDialog({ name: '大迷宮', lines: ['温泉だ！', 'パーティ全員の HP・MP が 全回復した。'] });
+    return;
+  }
+  {
+    const roomHere = d.rooms.find(r => pt.x >= r.x && pt.x < r.x + r.w && pt.y >= r.y && pt.y < r.y + r.h);
+    if (roomHere && d.types.get(roomHere) === 'house') {
+      const ri2 = d.rooms.indexOf(roomHere);
+      if (!lab.houseSeen.has(ri2)) { lab.houseSeen.add(ri2); labToast('モンスターハウスだ！'); }
+    }
+  }
+  {
+    const trapKey = pt.x + ',' + pt.y;
+    if (trapKey !== lab.lastTrapKey) {
+      lab.lastTrapKey = trapKey;
+      const tr = (lab.traps || []).find(o => o.tx === pt.x && o.ty === pt.y);
+      if (tr) { triggerLabTrap(tr); if (dialog.open) return; }
+    }
+  }
+  {
+    const dtA = Math.min(0.05, Math.max(0, t - (lab.lastT || t))); lab.lastT = t;
+    if (lab.arrows && lab.arrows.length) {
+      lab.arrows = lab.arrows.filter(a => {
+        if (a.wait > 0) { a.wait -= dtA; return true; }
+        a.x += a.vx * dtA; a.mesh.position.x = a.x;
+        const at = labTileOf(a.x, a.z, d);
+        if (at.x < 0 || at.y < 0 || at.x >= d.w || at.y >= d.h || d.tiles[at.y * d.w + at.x] === 1) { REGION_RT.labyrinth.group.remove(a.mesh); return false; }
+        if (Math.hypot(player.position.x - a.x, player.position.z - a.z) < 0.55) { REGION_RT.labyrinth.group.remove(a.mesh); labDamageParty(5, '矢が当たった！ パーティに 5 のダメージ'); return false; }
+        return true;
+      });
+    }
+  }
   for (const tr of lab.treasures || []) {
     if (Math.hypot(player.position.x - tr.x, player.position.z - tr.z) < 1.35) { obtainTreasure(tr); return; }
   }
@@ -3703,7 +3945,8 @@ function buildBattleDOM(kindKey, count) {
   const be = bEl('benemies'); be.innerHTML = '';
   const spots = count === 1 ? [[21, 30]] : count === 2 ? [[13, 32], [32, 26]] : [[9, 33], [23, 25], [37, 32]];
   for (let i = 0; i < count; i++) {
-    const f = { kind, name: kind.name, hp: kind.hp, maxhp: kind.hp, atk: kind.atk, def: kind.def, spd: kind.spd, dead: false };
+    const fhp = Math.max(1, Math.round(kind.hp * battleHpMul));
+    const f = { kind, name: kind.name, hp: fhp, maxhp: fhp, atk: kind.atk, def: kind.def, spd: kind.spd, dead: false };
     battle.foes.push(f);
     const d = document.createElement('div');
     d.className = 'bunit benemy';
@@ -3804,9 +4047,7 @@ function layoutBattle() {
     const ch = d.querySelector('.bchar'); if (ch) setCharFrame(ch, 6, 1, mbase);
     const dg = d.querySelector('.bdiag'); if (dg) dg.style.height = mbase + 'px';
     const hw = d.querySelector('.bheld');
-    if (hw) { const pos = id === 'nono' ? NONO_HELD_POS[swordStage()] : ({ rei: [0.68, -0.36, 0.28], yui: [0.68, -0.38, 0.04] }[id] || [0.68, -0.22, 0.16]); hw.style.width = (mbase * pos[0]) + 'px'; hw.style.left = (pos[1] * mbase) + 'px'; hw.style.bottom = (pos[2] * mbase) + 'px'; }
-    const hh = d.querySelector('.bholy');
-    if (hh) { hh.style.width = (mbase * HOLY_POS[0]) + 'px'; hh.style.left = (HOLY_POS[1] * mbase) + 'px'; hh.style.bottom = (HOLY_POS[2] * mbase) + 'px'; }
+    if (hw) { const pos = id === 'nono' ? (hw.classList.contains('bholy') ? HOLY_POS : NONO_HELD_POS[swordStage()]) : ({ rei: [0.68, -0.36, 0.28], yui: [0.68, -0.38, 0.04] }[id] || [0.68, -0.22, 0.16]); hw.style.width = (mbase * pos[0]) + 'px'; hw.style.left = (pos[1] * mbase) + 'px'; hw.style.bottom = (pos[2] * mbase) + 'px'; }
   }
   if (battle.helpers) {
     const hspots = land ? [[57, 32], [65, 13]] : [[56, 35], [67, 15]];
@@ -3869,6 +4110,7 @@ async function startBattle(fieldEnemy) {
   const g0 = (R.grounds && R.grounds[0] && GROUND_TEX[R.grounds[0].tex]) || GROUND_TEX.grass;
   bEl('bfloor').style.backgroundImage = `url(${mirroredFloor(g0.img)})`;
   bEl('bfloor').style.backgroundSize = '190px';
+  battleHpMul = (fieldEnemy && fieldEnemy.hpMul) || 1;
   const kt = ENEMY_KINDS[fieldEnemy.kindKey].tier;
   const roll = Math.random();
   const count = kt === 'boss' ? 1 : kt === 'mid' ? (roll < 0.6 ? 1 : 2) : (roll < 0.5 ? 1 : roll < 0.85 ? 2 : 3);
@@ -4052,28 +4294,20 @@ const NONO_HELD_POS = [
   [0.68, -0.44, 0.30], [0.68, -0.39, 0.22], [0.68, -0.44, 0.32], [0.68, -0.47, 0.30],
   [0.68, -0.43, 0.29], [0.95, -0.55, 0.13], [0.68, -0.14, 0.26], [0.68, -0.45, 0.31],
   [0.68, -0.44, 0.32], [0.95, -0.48, 0.19], [0.68, -0.43, 0.21], [0.95, -0.78, 0.26],
-  [0.68, -0.47, 0.33], [0.68, -0.43, 0.34], [0.68, -0.21, 0.33], [0.68, -0.44, 0.34]
+  [0.68, -0.47, 0.33], [0.68, -0.43, 0.34], [0.68, -0.26, 0.30], [0.68, -0.44, 0.34]
 ];
-const HOLY_POS = [0.62, -0.06, 0.07]; // 聖剣（左手・刃先左下）: [幅係数, left, bottom]（単位はキャラ高さ）
+const HOLY_POS = [0.68, -0.49, 0.33]; // 聖剣（装備時は通常の剣と持ち替え・刃先左上）: [幅係数, left, bottom]（単位はキャラ高さ）
 function attachHeldWeapon(unitEl, id, hPx) {
+  const holyOn = id === 'nono' && SAVE.treasures && SAVE.treasures.seiken && SAVE.holyEquip;
   const img = document.createElement('img');
-  img.className = 'bheld'; img.alt = '';
-  img.src = id === 'nono' ? 'assets/held_' + swordStage() + '.png' : 'assets/held_' + id + '.png';
+  img.className = holyOn ? 'bheld bholy' : 'bheld'; img.alt = '';
+  img.src = id === 'nono' ? (holyOn ? 'assets/held_holy.png' : 'assets/held_' + swordStage() + '.png') : 'assets/held_' + id + '.png';
   img.onerror = () => img.remove();
-  const pos = id === 'nono' ? NONO_HELD_POS[swordStage()] : ({ rei: [0.68, -0.36, 0.28], yui: [0.68, -0.38, 0.04] }[id] || [0.68, -0.22, 0.16]);
+  const pos = id === 'nono' ? (holyOn ? HOLY_POS : NONO_HELD_POS[swordStage()]) : ({ rei: [0.68, -0.36, 0.28], yui: [0.68, -0.38, 0.04] }[id] || [0.68, -0.22, 0.16]);
   img.style.width = (hPx * pos[0]) + 'px';
   img.style.left = (pos[1] * hPx) + 'px';
   img.style.bottom = (pos[2] * hPx) + 'px';
   unitEl.appendChild(img);
-  if (id === 'nono' && SAVE.treasures && SAVE.treasures.seiken && SAVE.holyEquip) {
-    const him = document.createElement('img');
-    him.className = 'bheld bholy'; him.alt = ''; him.src = 'assets/held_holy.png';
-    him.onerror = () => him.remove();
-    him.style.width = (hPx * HOLY_POS[0]) + 'px';
-    him.style.left = (HOLY_POS[1] * hPx) + 'px';
-    him.style.bottom = (HOLY_POS[2] * hPx) + 'px';
-    unitEl.appendChild(him);
-  }
 }
 function swordStage() { return Math.min(15, SAVE.beaten.length); }
 // ---------- 設定画面（剣の進化状態／全体マップ／カメラ・視点） ----------
