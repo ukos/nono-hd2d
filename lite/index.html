@@ -71,8 +71,6 @@
   .bhelper .bname { color:#ffe9a8; }
   .bunit .bbar { width:74px; height:6px; margin:3px auto 0; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.5); border-radius:3px; overflow:hidden; }
   .bunit .bbar i { display:block; height:100%; background:#7dd069; transition:width .35s; }
-  .bunit.shiyuu1 .bname { position:absolute; left:50%; transform:translateX(-50%); bottom:134px; margin:0; white-space:nowrap; }
-  .bunit.shiyuu1 .bbar { position:absolute; left:50%; transform:translateX(-50%); bottom:121px; margin:0; }
   .bunit.dead { opacity:0; transform:translateX(-50%) translateY(14px); transition:opacity .5s, transform .5s; }
   .bunit.hurt img { animation:bshake .3s; filter:drop-shadow(0 6px 6px rgba(0,0,0,.45)) brightness(1.7) sepia(.6) hue-rotate(-40deg); }
   @keyframes bshake { 0%,100%{ margin-left:0 } 25%{ margin-left:-7px } 75%{ margin-left:7px } }
@@ -2163,12 +2161,12 @@ const ENEMY_KINDS = {
 };
 const KIND_ALIAS = { spider: 'kumo', yeti: 'yukio' };
 // 中ボス・ボスの右斜めリアル絵の縦横比（フィールド表示にも同じ絵を使う）
-const DIAG_ASPECT = { kishin: 0.5, nue: 1.67, bear: 1.54, gaikotsu: 0.58, hitotsume: 0.51, hyouga: 0.95, iwaryu: 1.54, kgolem: 0.54, koorioni: 0.97, kyojin: 0.95, nurikabe: 0.67, oni: 0.52, oogumo: 1.47, oowani: 2.8, oowashi: 1.87, pontanuki: 0.64, robo: 0.75, tonosama: 0.494, wani: 2.19, yukio: 0.96, oozaru: 0.62, golem: 0.69, shiyuu: 1.534, shiyuu2: 1.204 };
+const DIAG_ASPECT = { kishin: 0.5, nue: 1.67, bear: 1.54, gaikotsu: 0.58, hitotsume: 0.51, hyouga: 0.95, iwaryu: 1.54, kgolem: 0.54, koorioni: 0.97, kyojin: 0.95, nurikabe: 0.67, oni: 0.52, oogumo: 1.47, oowani: 2.8, oowashi: 1.87, pontanuki: 0.64, robo: 0.75, tonosama: 0.494, wani: 2.19, yukio: 0.96, oozaru: 0.62, golem: 0.69, shiyuu: 1.108, shiyuu2: 1.204 };
 // ライバルの右斜めリアル絵の縦横比（フィールド・バトル共用）
 const REAL_ASPECT = { akuryou: 0.81, bandit: 0.5, chouchin: 0.54, dokuhebi: 1.63, drone: 1.57, dwolf: 0.939, eagle: 1.109, fox: 1.25, gama: 1.414, griffon: 1.0, hawk: 0.86, hibat: 0.84, iwagani: 0.65, kaeru: 1.065, kaizoku: 0.6, kamome: 0.75, kani: 1.133, karakasa: 0.81, karasu: 0.58, karyu: 0.78, kinokoob: 0.66, kitsune: 1.52, komori: 0.92, kumo: 0.984, kurage: 0.804, leever: 0.6, marten: 3.034, mogura: 0.9, mukade: 1.29, mummy: 0.49, ninja: 0.52, onibi: 0.87, oumu: 1.444, raichou: 0.911, same: 1.605, scorpion: 1.39, shinigami: 0.78, shirofukuro: 0.973, squirrel: 1.016, tako: 0.57, tanuki: 0.89, tengu: 0.79, utsubo: 1.384, vulture: 0.78, wolf: 1.67, x_acorn: 0.62, x_bluejelly: 1.08, x_boar: 1.6, x_cactus: 0.79, x_darkocto: 1.29, x_kappa: 1.36, x_mushcat: 0.82, x_owl: 0.696, x_purpmush: 0.76, x_rabbit: 0.8, x_whiterabbit: 0.79, yadokari: 1.03, yamiinu: 0.9, yougan: 0.862, yukiookami: 1.639, ankou: 0.945, cobra: 0.635, deer: 0.718, foxsq: 0.918, gorori: 1.335, hachi: 0.641, hirari: 1.505, koorislime: 1.112, morikuma: 0.483, puru: 1.946, tobiuo: 1.085, washi: 0.933, yagi: 0.726, kingcrab: 1.969 };
 const REAL_FLIP = { fox: 1, yukiookami: 1, tanuki: 1, x_rabbit: 1, x_boar: 1, utsubo: 1, scorpion: 1, dwolf: 1, griffon: 1, vulture: 1, leever: 1, mukade: 1, x_owl: 1, kinokoob: 1, komori: 1, x_mushcat: 1, x_whiterabbit: 1, kaeru: 1, mummy: 1, ninja: 1, x_acorn: 1, x_cactus: 1 };
 // 中ボス・ボスの斜め絵のうち左向きのもの（フィールド移動とバトルの反転に使う）
-const DIAG_FLIP = { gaikotsu: 1, hitotsume: 1, oowani: 1, pontanuki: 1, tonosama: 1 };
+const DIAG_FLIP = { hitotsume: 1, oowani: 1, pontanuki: 1, tonosama: 1 }; // 骸骨の戦士（gaikotsu）の原画は右向きなので反転しない（2026-11-21 実機指摘で修正）
 // ライバル斜め絵のうち左向きのもの（バトルで反転して nono の方へ向ける）
 const RIVAL_FLIP = {}; // 反転が要るライバルはいない（diag原画は全員右向き。コガネも右向き原画と実ファイルで確認済み 2026-11-21）
 const RIVAL_DIAG_ASPECT = { akane: 0.68, gou: 0.69, hayate: 0.7, homura: 0.71, iwao: 0.7, kogane: 0.79, kotetsu: 0.82, kurogane: 0.71, mei: 0.7, mizuchi: 0.69, nibulus: 0.72, sasuke: 0.75, shiro: 0.64, tanurio: 0.74, yoru: 0.72 };
@@ -2960,6 +2958,7 @@ const BGM = (() => {
   function stepsToNext(arr, i) { for (let k = 1; k <= 8; k++) if (arr[(i + k) % 64]) return k; return 8; }
   function schedule() {
     const S = SONGS[cur], stepDur = 60 / S.bpm / 2;
+    if (nextT < ctx.currentTime - 0.25) nextT = ctx.currentTime + 0.06; // バックグラウンド復帰時の遅延を切り捨て（音符の洪水防止）
     while (nextT < ctx.currentTime + 0.16) {
       const bar = Math.floor(step / 8), s = step % 8;
       const m = S.mel[step];
@@ -2977,7 +2976,9 @@ const BGM = (() => {
   function init() {
     if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
     try {
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {} // iOSの消音スイッチONでも鳴らす
       ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
       if (!inBattle) { const fk = fieldSong(); if (SONGS[fk]) cur = fk; } // 開始地方の曲で始める
       master = ctx.createGain(); master.gain.value = muted ? 0 : 0.9; master.connect(ctx.destination);
       const dly = ctx.createDelay(1.0); dly.delayTime.value = 0.23;
@@ -2990,6 +2991,7 @@ const BGM = (() => {
     } catch (e) { /* 音が出ない環境では無音で続行 */ }
   }
   window.addEventListener('pointerdown', init);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) init(); });
   return {
     fanfare() {
       if (!ctx) return;
@@ -2998,7 +3000,7 @@ const BGM = (() => {
     },
     has(name) { return !!SONGS[name]; },
     set(name) { if (SONGS[name]) { cur = name; if (echoWet && ctx) echoWet.gain.setTargetAtTime(SONGS[name].echo || 0, ctx.currentTime, 0.1); } },
-    toggle() { muted = !muted; if (master) master.gain.value = muted ? 0 : 0.9; return muted; },
+    toggle() { muted = !muted; if (ctx && ctx.state === 'suspended') ctx.resume(); if (master) master.gain.value = muted ? 0 : 0.9; return muted; },
   };
 })();
 document.getElementById('bgmBtn').addEventListener('click', (e) => {
@@ -3404,14 +3406,14 @@ function buildBattleDOM(kindKey, count) {
     battle.foes.push(f);
     const d = document.createElement('div');
     d.className = 'bunit benemy';
+    d.dataset.kindKey = kindKey; d.dataset.count = count;
     d.style.left = spots[i][0] + '%'; d.style.bottom = spots[i][1] + '%';
     let hPx = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (kind.h / 1.18) * (count === 3 ? 0.82 : count === 2 ? 0.92 : 1) * ((kind.tier === 'boss' || kind.tier === 'mid') ? 1.3 : 1);
-    if (kindKey === 'shiyuu') { battle.shiyuuStdH = hPx; hPx = window.innerHeight * 0.85; d.classList.add('shiyuu1'); d.style.bottom = '0px'; } // 蚩尤・第1形態は画面の8〜9割の大さ
     const useDiag = (kind.tier === 'boss' || kind.tier === 'mid');
     const useReal = !useDiag && REAL_ASPECT[kindKey];
     const dsrc = useDiag ? kind.img.replace('.png', '_diag.png') : useReal ? `assets/enemy_${kindKey}_real.png` : kind.img;
     const flip = useDiag ? !!DIAG_FLIP[kindKey] : useReal ? !!REAL_FLIP[kindKey] : true;
-    d.innerHTML = `<div class="bshadow"></div><img ${(useDiag || useReal) ? 'class="diag" ' : ''}${kindKey === 'shiyuu' ? `data-capw="${window.innerWidth <= window.innerHeight ? 2.0 : 0.94}" ` : ''}src="${dsrc}" style="height:${hPx}px${flip ? '; transform:scaleX(-1)' : ''}" onerror="this.onerror=null;this.src='${kind.img}';this.style.transform='scaleX(-1)';this.classList.remove('diag')" ${(useDiag || useReal) ? `onload="const a=this.naturalWidth/this.naturalHeight,mw=innerWidth*(this.dataset.capw?parseFloat(this.dataset.capw):0.58),c=parseFloat(this.style.height);if(c*a>mw)this.style.height=(mw/a)+'px'"` : ''} alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
+    d.innerHTML = `<div class="bshadow"></div><img ${(useDiag || useReal) ? 'class="diag" ' : ''}src="${dsrc}" style="height:${hPx}px${flip ? '; transform:scaleX(-1)' : ''}" onerror="this.onerror=null;this.src='${kind.img}';this.style.transform='scaleX(-1)';this.classList.remove('diag')" ${(useDiag || useReal) ? `onload="const a=this.naturalWidth/this.naturalHeight,mw=innerWidth*(this.dataset.capw?parseFloat(this.dataset.capw):0.58),c=parseFloat(this.style.height);if(c*a>mw)this.style.height=(mw/a)+'px'"` : ''} alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
     be.appendChild(d); battle.foeEls.push(d);
   }
   const bp = bEl('bparty'); bp.innerHTML = '';
@@ -3450,6 +3452,50 @@ function buildBattleDOM(kindKey, count) {
   }
   refreshBattleUI();
 }
+// バトル中の画面回転・リサイズに、JSで決めている大きさと配置を追随させる
+function capFoeImg(img) {
+  if (!img || !img.naturalWidth) return;
+  const a = img.naturalWidth / img.naturalHeight, mw = window.innerWidth * (img.dataset.capw ? parseFloat(img.dataset.capw) : 0.58), c = parseFloat(img.style.height);
+  if (c * a > mw) img.style.height = (mw / a) + 'px';
+}
+function layoutBattle() {
+  if (!inBattle) return;
+  const land = window.innerWidth > window.innerHeight;
+  const espots = (n) => n === 1 ? [[21, 30]] : n === 2 ? [[13, 32], [32, 26]] : [[9, 33], [23, 25], [37, 32]];
+  (battle.foeEls || []).forEach((d, i) => {
+    const img = d.querySelector('img');
+    if (d.dataset.rival) {
+      const hPx = Math.min(170, window.innerHeight * 0.24) * 0.8;
+      if (img) { img.style.height = hPx + 'px'; const w = img.naturalWidth ? img.naturalWidth / img.naturalHeight * hPx : 0; if (w > window.innerWidth * 0.58) img.style.height = (hPx * window.innerWidth * 0.58 / w) + 'px'; }
+      else { const ch = d.querySelector('.bchar'); if (ch) setCharFrame(ch, 1, 1, hPx, 3); }
+      return;
+    }
+    const kind = ENEMY_KINDS[d.dataset.kindKey]; if (!kind) return;
+    const count = +d.dataset.count || 1, sp = espots(count)[i]; if (!sp) return;
+    d.style.left = sp[0] + '%'; d.style.bottom = sp[1] + '%';
+    const hPx = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (kind.h / 1.18) * (count === 3 ? 0.82 : count === 2 ? 0.92 : 1) * ((kind.tier === 'boss' || kind.tier === 'mid') ? 1.3 : 1);
+    if (img) { img.style.height = hPx + 'px'; capFoeImg(img); }
+  });
+  const pspots = land ? { nono: [83, 35], yui: [86.5, 20], rei: [89.5, 5] } : { nono: [83, 41], yui: [86.5, 26.5], rei: [89.5, 12] };
+  for (const [id, d] of Object.entries(battle.memberEls || {})) {
+    if (pspots[id]) { d.style.left = pspots[id][0] + '%'; d.style.bottom = pspots[id][1] + '%'; }
+    const mbase = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (id === 'yui' ? 1 : 0.9);
+    const ch = d.querySelector('.bchar'); if (ch) setCharFrame(ch, 6, 1, mbase);
+    const dg = d.querySelector('.bdiag'); if (dg) dg.style.height = mbase + 'px';
+    const hw = d.querySelector('.bheld');
+    if (hw) { const pos = id === 'nono' ? NONO_HELD_POS[swordStage()] : ({ rei: [0.68, -0.36, 0.28], yui: [0.68, -0.38, 0.04] }[id] || [0.68, -0.22, 0.16]); hw.style.width = (mbase * pos[0]) + 'px'; hw.style.left = (pos[1] * mbase) + 'px'; hw.style.bottom = (pos[2] * mbase) + 'px'; }
+  }
+  if (battle.helpers) {
+    const hspots = land ? [[57, 32], [65, 13]] : [[56, 35], [67, 15]];
+    battle.helpers.active.forEach((h, i) => {
+      if (!h.el) return;
+      const sp = hspots[i]; if (sp) { h.el.style.left = sp[0] + '%'; h.el.style.bottom = sp[1] + '%'; }
+      const img = h.el.querySelector('img'); if (img) img.style.height = (Math.min(170, window.innerHeight * 0.24) * 0.8) + 'px';
+    });
+  }
+}
+let layoutTimer = null;
+window.addEventListener('resize', () => { if (!inBattle) return; clearTimeout(layoutTimer); layoutTimer = setTimeout(layoutBattle, 120); });
 // バトル床: 地面テクスチャの左上1/4を切り出し、半分ずらした自身とクロスフェードして
 // 継ぎ目（線）のないタイルを作る。端同士が必ず一致するので、繰り返しても線が出ない
 const floorMirrorCache = {};
@@ -3821,7 +3867,7 @@ async function startRivalBattle(name) {
   const be = bEl('benemies'); be.innerHTML = '';
   const d = document.createElement('div');
   d.className = 'bunit benemy';
-  d.style.left = '21%'; d.style.bottom = '29%';
+  d.style.left = '21%'; d.style.bottom = '29%'; d.dataset.rival = '1';
   const sh3 = document.createElement('div'); sh3.className = 'bshadow'; d.appendChild(sh3);
   const ch = document.createElement('div');
   ch.className = 'bchar';
