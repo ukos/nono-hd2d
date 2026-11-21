@@ -61,7 +61,7 @@
   /* ---------- バトル ---------- */
   #battle { position:fixed; inset:0; z-index:13; overflow:hidden; background:#101018;
     font-family:inherit; opacity:1; transition:opacity .45s; }
-  #bbg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 20%; }
+  #bbg { position:absolute; inset:0; width:100%; height:52%; object-fit:cover; object-position:center 20%; } /* 地面(#bfloor 54%)に隠れる下半分は描画範囲から外し、縦画面での拡大率を下げる */
   #bfloor { position:absolute; left:0; right:0; bottom:0; height:54%; background-repeat:repeat;
     -webkit-mask-image:linear-gradient(to bottom, transparent, black 22%);
     mask-image:linear-gradient(to bottom, transparent, black 22%); }
@@ -73,6 +73,8 @@
   .bunit .bbar { width:74px; height:6px; margin:3px auto 0; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.5); border-radius:3px; overflow:hidden; }
   .bunit .bbar i { display:block; height:100%; background:#7dd069; transition:width .35s; }
   .bunit.dead { opacity:0; transform:translateX(-50%) translateY(14px); transition:opacity .5s, transform .5s; }
+  .bunit.fleeing .bdiag { animation:fleebob .22s ease-in-out infinite alternate; }
+  @keyframes fleebob { from { transform:translateX(-50%) translateY(0); } to { transform:translateX(-50%) translateY(-7px); } }
   .bunit.hurt img { animation:bshake .3s; filter:drop-shadow(0 6px 6px rgba(0,0,0,.45)) brightness(1.7) sepia(.6) hue-rotate(-40deg); }
   @keyframes bshake { 0%,100%{ margin-left:0 } 25%{ margin-left:-7px } 75%{ margin-left:7px } }
   .bchar { margin:0 auto; background-repeat:no-repeat; image-rendering:pixelated;
@@ -3835,20 +3837,13 @@ async function nonoTurn() {
 async function runAwayAnim() {
   // 右を向いて全員で走って逃げる
   const units = ['nono', 'yui', 'rei'].map((id) => memberEl(id));
-  units.forEach((u) => { const dg = u.querySelector('.bdiag'); if (dg) dg.style.display = 'none'; const ch = u.querySelector('.bchar'); if (ch) ch.style.visibility = ''; });
-  let col = 0;
-  const iv = setInterval(() => {
-    col = (col + 1) % 4;
-    const c = [0, 1, 2, 1][col];
-    units.forEach((u, i) => { const ch = u.querySelector('.bchar'); setCharFrame(ch, 2, c, parseFloat(ch.style.height)); });
-  }, 115);
+  units.forEach((u) => u.classList.add('fleeing'));
   units.forEach((u, i) => {
     u.style.transition = 'transform 0.95s linear';
     u.style.transform = `translateX(calc(-50% + ${62 + i * 4}vw))`;
   });
   await bSleep(1020);
-  clearInterval(iv);
-  units.forEach((u) => { u.style.transition = ''; u.style.transform = 'translateX(-50%)'; });
+  units.forEach((u) => { u.classList.remove('fleeing'); u.style.transition = ''; u.style.transform = 'translateX(-50%)'; });
 }
 async function npcTurn(id) {
   const m = PARTY[id];
@@ -3972,20 +3967,12 @@ function buildBattleDOM(kindKey, count) {
     d.className = 'bunit bmember';
     d.style.left = pspots[id][0] + '%'; d.style.bottom = pspots[id][1] + '%';
     const sh2 = document.createElement('div'); sh2.className = 'bshadow'; d.appendChild(sh2);
-    const ch = document.createElement('div');
-    ch.className = 'bchar';
-    ch.style.backgroundImage = `url(${m.sheet})`;
     const mbase = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (id === 'yui' ? 1 : 0.9);
-    setCharFrame(ch, 6, 1, mbase);
-    d.appendChild(ch);
-    ch.style.visibility = 'hidden'; // バトル絵が届くまで歩行スプライトを出さない（突入時の一瞬の映り込み防止）
     const dg = document.createElement('img');
     dg.className = 'bdiag'; dg.alt = '';
     dg.style.height = mbase + 'px';
-    dg.onload = () => { if (dg.naturalWidth > 0) ch.style.visibility = 'hidden'; else { dg.remove(); ch.style.visibility = ''; } };
-    dg.onerror = () => { if (!dg.dataset.fb) { dg.dataset.fb = '1'; dg.src = 'assets/battle_' + id + '.png'; } else { dg.remove(); ch.style.visibility = ''; } };
+    dg.onerror = () => { if (!dg.dataset.fb) { dg.dataset.fb = '1'; dg.src = 'assets/battle_' + id + '.png'; } else dg.remove(); };
     dg.src = 'assets/battle_' + id + '.webp';
-    setTimeout(() => { if (dg.isConnected && !dg.complete) ch.style.visibility = ''; }, 2500); // 読み込みが長引いた場合だけスプライトを出す保険
     d.appendChild(dg);
     attachHeldWeapon(d, id, mbase);
     bp.appendChild(d);
@@ -4299,9 +4286,9 @@ const NONO_HELD_POS = [
   [0.68, -0.44, 0.30], [0.68, -0.39, 0.22], [0.68, -0.44, 0.32], [0.68, -0.47, 0.30],
   [0.68, -0.43, 0.29], [0.95, -0.55, 0.13], [0.68, -0.14, 0.26], [0.68, -0.45, 0.31],
   [0.68, -0.44, 0.32], [0.95, -0.48, 0.19], [0.68, -0.43, 0.21], [0.95, -0.78, 0.26],
-  [0.68, -0.47, 0.33], [0.68, -0.43, 0.34], [0.68, -0.26, 0.30], [0.68, -0.44, 0.34]
+  [0.68, -0.47, 0.33], [0.68, -0.43, 0.34], [0.68, -0.75, 0.21], [0.68, -0.44, 0.34]
 ];
-const HOLY_POS = [0.68, -0.49, 0.33]; // 聖剣（装備時は通常の剣と持ち替え・刃先左上）: [幅係数, left, bottom]（単位はキャラ高さ）
+const HOLY_POS = [0.68, -0.45, 0.29]; // 聖剣（装備時は通常の剣と持ち替え・刃先左上）: [幅係数, left, bottom]（単位はキャラ高さ）
 function attachHeldWeapon(unitEl, id, hPx) {
   const holyOn = id === 'nono' && SAVE.treasures && SAVE.treasures.seiken && SAVE.holyEquip;
   const img = document.createElement('img');
@@ -4495,20 +4482,12 @@ function buildPartyDOM() {
     d.className = 'bunit bmember';
     d.style.left = pspots[id][0] + '%'; d.style.bottom = pspots[id][1] + '%';
     const sh2 = document.createElement('div'); sh2.className = 'bshadow'; d.appendChild(sh2);
-    const ch = document.createElement('div');
-    ch.className = 'bchar';
-    ch.style.backgroundImage = `url(${m.sheet})`;
     const mbase = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (id === 'yui' ? 1 : 0.9);
-    setCharFrame(ch, 6, 1, mbase);
-    d.appendChild(ch);
-    ch.style.visibility = 'hidden'; // バトル絵が届くまで歩行スプライトを出さない（突入時の一瞬の映り込み防止）
     const dg = document.createElement('img');
     dg.className = 'bdiag'; dg.alt = '';
     dg.style.height = mbase + 'px';
-    dg.onload = () => { if (dg.naturalWidth > 0) ch.style.visibility = 'hidden'; else { dg.remove(); ch.style.visibility = ''; } };
-    dg.onerror = () => { if (!dg.dataset.fb) { dg.dataset.fb = '1'; dg.src = 'assets/battle_' + id + '.png'; } else { dg.remove(); ch.style.visibility = ''; } };
+    dg.onerror = () => { if (!dg.dataset.fb) { dg.dataset.fb = '1'; dg.src = 'assets/battle_' + id + '.png'; } else dg.remove(); };
     dg.src = 'assets/battle_' + id + '.webp';
-    setTimeout(() => { if (dg.isConnected && !dg.complete) ch.style.visibility = ''; }, 2500); // 読み込みが長引いた場合だけスプライトを出す保険
     d.appendChild(dg);
     attachHeldWeapon(d, id, mbase);
     bp.appendChild(d);
