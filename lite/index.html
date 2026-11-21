@@ -123,6 +123,12 @@
   #swordBox .swTop { display:flex; gap:12px; align-items:center; }
   #swordBox img { width:104px; height:104px; object-fit:contain; background:rgba(255,255,255,.06); border-radius:10px; }
   #swordBox .swName { font-size:16px; font-weight:bold; }
+  .trRow { display:flex; gap:10px; align-items:center; background:rgba(255,255,255,.05); border-radius:10px; padding:8px 10px; margin-bottom:8px; }
+  .trIco { width:52px; height:52px; object-fit:contain; }
+  .trIcoStar { width:52px; text-align:center; font-size:30px; color:#a8d4ff; flex:none; }
+  .trMain { flex:1; }
+  .trName { font-weight:bold; }
+  .trBtn { background:#2a2f52; color:#fff; border:1px solid rgba(255,255,255,.4); border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer; white-space:nowrap; }
   #swordBox .swTokugi { color:#ffd97a; margin-top:2px; }
   #swordBox .swDesc { color:#bbc; font-size:12px; margin-top:2px; }
   .swStages { display:flex; flex-wrap:wrap; gap:4px; margin-top:10px; }
@@ -222,6 +228,8 @@
   <div class="setHead"><span>設定</span><button id="setClose">✕ 閉じる</button></div>
   <h3>剣の進化状態</h3>
   <div id="swordBox"></div>
+  <h3>お宝</h3>
+  <div id="treasureBox"></div>
   <h3>全体マップ</h3>
   <canvas id="mapCanvas" width="640" height="300"></canvas>
   <div id="mapNote"></div>
@@ -2521,7 +2529,63 @@ function buildLabyrinth(data) {
   const ring = new THREE.Mesh(new THREE.RingGeometry(0.7, 0.95, 28), new THREE.MeshBasicMaterial({ color: 0x2fe8c0, transparent: true, opacity: 0.4, side: THREE.DoubleSide }));
   ring.rotation.x = -Math.PI / 2; ring.position.set(gw.x, 0.03, gw.z);
   group.add(ring);
-  return { group, colliders };
+  // 最奥のお宝（2D版と同じく聖剣と星座のオブジェ）: ゴール周辺の床タイルに配置。入手済みなら出さない
+  const treasures = [];
+  const spots = [];
+  for (let r = 1; r <= 3 && spots.length < 2; r++)
+    for (let dy = -r; dy <= r && spots.length < 2; dy++)
+      for (let dx = -r; dx <= r && spots.length < 2; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const tx = data.goal.x + dx, ty = data.goal.y + dy;
+        if (tx < 0 || ty < 0 || tx >= w || ty >= h || tiles[ty * w + tx] !== 0) continue;
+        spots.push([tx, ty]);
+      }
+  const mkSeiken = (x, z) => {
+    const g = new THREE.Group();
+    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.55, 0), new THREE.MeshStandardMaterial({ color: 0x6a707c, roughness: 1, flatShading: true }));
+    rock.scale.set(1.15, 0.75, 1.15); rock.position.y = 0.3; rock.castShadow = true; g.add(rock);
+    const sword = new THREE.Group();
+    const blade = new THREE.Mesh(new THREE.OctahedronGeometry(0.09), new THREE.MeshStandardMaterial({ color: 0xe8f2ff, emissive: 0x9fc8ff, emissiveIntensity: 0.7, roughness: 0.25, metalness: 0.4 }));
+    blade.scale.set(0.55, 5.2, 0.16); blade.position.y = 0.62; sword.add(blade);
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.05, 0.1), new THREE.MeshStandardMaterial({ color: 0x8a8f9a, roughness: 0.4, metalness: 0.7 }));
+    guard.position.y = 1.12; sword.add(guard);
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.24, 8), new THREE.MeshStandardMaterial({ color: 0xe8e2d2, roughness: 0.9 }));
+    grip.position.y = 1.26; sword.add(grip);
+    const pommel = new THREE.Mesh(new THREE.OctahedronGeometry(0.055), new THREE.MeshStandardMaterial({ color: 0x7ab8ff, emissive: 0x3a7aff, emissiveIntensity: 0.9, roughness: 0.3 }));
+    pommel.position.y = 1.42; sword.add(pommel);
+    sword.position.set(0, 0.42, 0); sword.rotation.z = 0.38; sword.rotation.x = -0.12;
+    g.add(sword);
+    const light = new THREE.PointLight(0xbfd9ff, 5, 7); light.position.set(0, 1.5, 0); g.add(light);
+    g.position.set(x, 0, z);
+    return g;
+  };
+  const mkStar = (x, z) => {
+    const g = new THREE.Group();
+    const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.44, 0.8, 8), new THREE.MeshStandardMaterial({ color: 0x565d6a, roughness: 1, flatShading: true }));
+    ped.position.y = 0.4; ped.castShadow = true; g.add(ped);
+    const stars = new THREE.Group();
+    const pts = [[0.18, 0.86], [0.82, 0.88], [0.5, 0.99], [0.40, 0.52], [0.50, 0.55], [0.60, 0.58], [0.36, 0.10], [0.66, 0.06]];
+    const sm = new THREE.MeshStandardMaterial({ color: 0xdcefff, emissive: 0xa8d4ff, emissiveIntensity: 2.2, roughness: 0.4 });
+    const v = [];
+    for (const [px, py] of pts) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10), sm); s.position.set((px - 0.5) * 1.7, py * 1.7, 0); stars.add(s); v.push(new THREE.Vector3((px - 0.5) * 1.7, py * 1.7, 0)); }
+    const links = [[0, 2], [2, 1], [0, 3], [1, 5], [3, 4], [4, 5], [3, 6], [5, 7], [6, 7], [0, 1]];
+    const lg = new THREE.BufferGeometry().setFromPoints(links.flatMap(([a, b]) => [v[a], v[b]]));
+    stars.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x8fc4ff, transparent: true, opacity: 0.65 })));
+    stars.position.y = 1.05; g.add(stars);
+    const light = new THREE.PointLight(0x9fc8ff, 5, 7); light.position.set(0, 1.8, 0); g.add(light);
+    g.position.set(x, 0, z);
+    g.userData.stars = stars;
+    return g;
+  };
+  [['seiken', mkSeiken], ['star', mkStar]].forEach(([id, mk], i) => {
+    if (SAVE.treasures[id] || !spots[i]) return;
+    const [tx, ty] = spots[i];
+    const wp = labWorldOf(tx, ty, data);
+    const grp = mk(wp.x, wp.z);
+    group.add(grp);
+    treasures.push({ id, tx, ty, x: wp.x, z: wp.z, group: grp });
+  });
+  return { group, colliders, treasures };
 }
 
 function disposeLabGroup(g) {
@@ -2542,7 +2606,7 @@ function enterLabyrinth(seed) {
     const built = buildLabyrinth(data);
     rt.group.add(built.group);
     rt.colliders = built.colliders;
-    lab = { data, visited: new Uint8Array(data.w * data.h), exitArmed: false, cleared: false, lastTx: -1, lastTy: -1 };
+    lab = { data, visited: new Uint8Array(data.w * data.h), exitArmed: false, cleared: false, lastTx: -1, lastTy: -1, treasures: built.treasures || [] };
     window.__lab = lab;
     const sw = labWorldOf(data.start.x, data.start.y, data);
     teleportTo(sw.x, sw.z, 4, [0, 1], REGIONS.labyrinth.centerX);
@@ -2587,13 +2651,27 @@ function drawMinimap() {
     const gx = d.goal.x * cell + 3, gy = d.goal.y * cell + 3;
     ctx.beginPath(); ctx.moveTo(gx, gy - 2.6); ctx.lineTo(gx + 2.6, gy); ctx.lineTo(gx, gy + 2.6); ctx.lineTo(gx - 2.6, gy); ctx.fill();
   }
+  for (const tr of lab.treasures || []) {
+    if (!lab.visited[tr.ty * w + tr.tx]) continue;
+    ctx.fillStyle = '#ffd94d';
+    ctx.beginPath(); ctx.arc(tr.tx * cell + 3, tr.ty * cell + 3, 2.2, 0, Math.PI * 2); ctx.fill();
+  }
   if (lab.visited[d.start.y * w + d.start.x]) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.2; ctx.strokeRect(d.start.x * cell + 1, d.start.y * cell + 1, cell - 2, cell - 2); }
   const pt = labTileOf(player.position.x, player.position.z, d);
   ctx.fillStyle = '#ffd75e'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.arc(pt.x * cell + 3, pt.y * cell + 3, 2.6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 }
+function obtainTreasure(tr) {
+  SAVE.treasures[tr.id] = true; persistSave();
+  if (lab) lab.treasures = (lab.treasures || []).filter((o) => o !== tr);
+  if (tr.group.parent) { tr.group.parent.remove(tr.group); disposeLabGroup(tr.group); }
+  if (BGM.fanfare) BGM.fanfare();
+  if (tr.id === 'seiken') openDialog({ name: '大迷宮', lines: ['岩に刺さった 聖剣「天羽々斬」を 抜いた！', '設定画面の「お宝」から装備できる。装備すると nono の こうげき・とくぎ が 中ボス・ボスに 2倍になる。'] });
+  else openDialog({ name: '大迷宮', lines: ['星座のオブジェ「オリオン座」を 手に入れた！', '星の光が そっと瞬いている。'] });
+}
 function labTick(t) {
   if (labGoalMesh) { labGoalMesh.rotation.y = t * 1.4; labGoalMesh.position.y = 1.25 + Math.sin(t * 2) * 0.12; if (labGoalLight) labGoalLight.intensity = 6 + Math.sin(t * 2) * 1.5; }
+  if (lab && lab.treasures) for (const tr of lab.treasures) { if (tr.group.userData.stars) tr.group.userData.stars.rotation.y = t * 0.5; }
   if (area !== 'labyrinth' || !lab || transitioning || dialog.open) return;
   const d = lab.data;
   const pt = labTileOf(player.position.x, player.position.z, d);
@@ -2602,6 +2680,9 @@ function labTick(t) {
   const dStart = Math.hypot(player.position.x - sw.x, player.position.z - sw.z);
   if (!lab.exitArmed && dStart > 3) lab.exitArmed = true;
   if (lab.exitArmed && dStart < 0.9) { exitLabyrinth(); return; }
+  for (const tr of lab.treasures || []) {
+    if (Math.hypot(player.position.x - tr.x, player.position.z - tr.z) < 1.35) { obtainTreasure(tr); return; }
+  }
   if (!lab.cleared && pt.x === d.goal.x && pt.y === d.goal.y) {
     lab.cleared = true;
     openDialog({ name: '大迷宮', lines: ['最深部の宝珠に触れた！', '大迷宮を踏破した。入口へ戻ります…'], onClose: () => exitLabyrinth() });
@@ -3117,6 +3198,11 @@ function lunge(unitEl, dir) {
   unitEl.style.transform = `translateX(calc(-50% + ${dir * 56}px))`;
   setTimeout(() => { unitEl.style.transform = 'translateX(-50%)'; }, 210);
 }
+function holyMult(f) { // 聖剣「天羽々斬」装備中は nono の剣攻撃が中ボス・ボスに2倍（2D版の効果）
+  if (!SAVE.holyEquip || !SAVE.treasures || !SAVE.treasures.seiken) return 1;
+  const tier = f.tier || (f.kindKey && ENEMY_KINDS[f.kindKey] ? ENEMY_KINDS[f.kindKey].tier : null) || (f.kind ? f.kind.tier : null);
+  return (tier === 'boss' || tier === 'mid') ? 2 : 1;
+}
 function physDamage(att, def, mult = 1) {
   const effDef = def.defDown ? Math.floor(def.def / 2) : def.def;
   return Math.max(1, Math.round((att.atk + Math.random() * 4 - effDef) * mult));
@@ -3290,7 +3376,7 @@ async function nonoTurn() {
       const foes = aliveFoes();
       const t = foes.length === 1 ? foes[0] : await pickTarget(foes, foes.map((f) => foeEl(f)));
       bMsg('nono の こうげき！');
-      await hitFoe({ el: memberEl('nono'), side: -1 }, t, physDamage(m, t));
+      await hitFoe({ el: memberEl('nono'), side: -1 }, t, physDamage(m, t, holyMult(t)));
       break;
     }
     if (cmd === 'skill') {
@@ -3300,17 +3386,17 @@ async function nonoTurn() {
       if (beh.type === 'all') {
         lunge(memberEl('nono'), -1);
         const hits = beh.hits || 1;
-        for (let h = 0; h < hits; h++) for (const f of aliveFoes()) await hitFoe({ el: null }, f, physDamage(m, f, beh.mult), { lunge: false, fx: beh.fx });
+        for (let h = 0; h < hits; h++) for (const f of aliveFoes()) await hitFoe({ el: null }, f, physDamage(m, f, beh.mult * holyMult(f)), { lunge: false, fx: beh.fx });
       } else if (beh.type === 'one') {
         const foes = aliveFoes();
         const t = foes.length === 1 ? foes[0] : await pickTarget(foes, foes.map((f) => foeEl(f)));
         const hits = beh.hits || 1;
-        for (let i = 0; i < hits && !t.dead; i++) await hitFoe({ el: memberEl('nono'), side: -1 }, t, physDamage(m, t, beh.mult), { fx: i === 0 ? beh.fx : null, lunge: i === 0 });
+        for (let i = 0; i < hits && !t.dead; i++) await hitFoe({ el: memberEl('nono'), side: -1 }, t, physDamage(m, t, beh.mult * holyMult(t)), { fx: i === 0 ? beh.fx : null, lunge: i === 0 });
       } else if (beh.type === 'multi') {
         for (let i = 0; i < beh.hits; i++) {
           const foes = aliveFoes(); if (!foes.length) break;
           const t = foes[Math.floor(Math.random() * foes.length)];
-          await hitFoe({ el: null }, t, physDamage(m, t, beh.mult), { lunge: false, fx: i === 0 ? beh.fx : null });
+          await hitFoe({ el: null }, t, physDamage(m, t, beh.mult * holyMult(t)), { lunge: false, fx: i === 0 ? beh.fx : null });
         }
       }
       if (beh.debuff) for (const f of aliveFoes()) { f.defDown = true; }
@@ -3565,6 +3651,8 @@ function layoutBattle() {
     const dg = d.querySelector('.bdiag'); if (dg) dg.style.height = mbase + 'px';
     const hw = d.querySelector('.bheld');
     if (hw) { const pos = id === 'nono' ? NONO_HELD_POS[swordStage()] : ({ rei: [0.68, -0.36, 0.28], yui: [0.68, -0.38, 0.04] }[id] || [0.68, -0.22, 0.16]); hw.style.width = (mbase * pos[0]) + 'px'; hw.style.left = (pos[1] * mbase) + 'px'; hw.style.bottom = (pos[2] * mbase) + 'px'; }
+    const hh = d.querySelector('.bholy');
+    if (hh) { hh.style.width = (mbase * HOLY_POS[0]) + 'px'; hh.style.left = (HOLY_POS[1] * mbase) + 'px'; hh.style.bottom = (HOLY_POS[2] * mbase) + 'px'; }
   }
   if (battle.helpers) {
     const hspots = land ? [[57, 32], [65, 13]] : [[56, 35], [67, 15]];
@@ -3795,8 +3883,9 @@ const RIVALS = {
 };
 const RIVAL_ORDER = ['メイ', 'コガネ', 'クロガネ', 'ゴウ', 'シロ', 'ヨル', 'タヌリオ', 'アカネ', 'ミズチ', 'ハヤテ', 'ニブルス', 'サスケ', '虎鉄', 'ホムラ', 'イワオ'];
 const SAVE_KEY = 'nono-hd2d-save-v1';
-let SAVE = { beaten: [] };
+let SAVE = { beaten: [], treasures: {}, holyEquip: false };
 try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && Array.isArray(s.beaten)) SAVE = s; } catch (e) {}
+SAVE.treasures = SAVE.treasures || {}; SAVE.holyEquip = !!SAVE.holyEquip;
 function persistSave() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {} }
 function attachHeldSword(unitEl, hPx) { attachHeldWeapon(unitEl, 'nono', hPx); }
 // nono の持ち剣は段階ごとに柄の位置が違うので、段階別の [幅係数, left, bottom]（単位はキャラ高さ）
@@ -3806,6 +3895,7 @@ const NONO_HELD_POS = [
   [0.68, -0.44, 0.32], [0.95, -0.48, 0.19], [0.68, -0.43, 0.21], [0.95, -0.78, 0.26],
   [0.68, -0.47, 0.33], [0.68, -0.43, 0.34], [0.68, -0.21, 0.33], [0.68, -0.44, 0.34]
 ];
+const HOLY_POS = [0.62, -0.06, 0.07]; // 聖剣（左手・刃先左下）: [幅係数, left, bottom]（単位はキャラ高さ）
 function attachHeldWeapon(unitEl, id, hPx) {
   const img = document.createElement('img');
   img.className = 'bheld'; img.alt = '';
@@ -3816,6 +3906,15 @@ function attachHeldWeapon(unitEl, id, hPx) {
   img.style.left = (pos[1] * hPx) + 'px';
   img.style.bottom = (pos[2] * hPx) + 'px';
   unitEl.appendChild(img);
+  if (id === 'nono' && SAVE.treasures && SAVE.treasures.seiken && SAVE.holyEquip) {
+    const him = document.createElement('img');
+    him.className = 'bheld bholy'; him.alt = ''; him.src = 'assets/held_holy.png';
+    him.onerror = () => him.remove();
+    him.style.width = (hPx * HOLY_POS[0]) + 'px';
+    him.style.left = (HOLY_POS[1] * hPx) + 'px';
+    him.style.bottom = (HOLY_POS[2] * hPx) + 'px';
+    unitEl.appendChild(him);
+  }
 }
 function swordStage() { return Math.min(15, SAVE.beaten.length); }
 // ---------- 設定画面（剣の進化状態／全体マップ／カメラ・視点） ----------
@@ -3837,6 +3936,21 @@ function buildSwordBox() {
     '<div class="swDesc">ライバル撃破 ' + SAVE.beaten.length + ' / 15 人' + (st >= 15 ? '（最終形態に到達）' : '（あと ' + (15 - st) + ' 人で最終形態）') + '</div></div></div>' +
     '<div class="swStages">' + chips + '</div>' +
     (remain.length ? '<div class="swRemain">まだ勝っていないライバル：' + remain.join('、') + '</div>' : '<div class="swRemain">全ライバルに勝利済み</div>');
+}
+function buildTreasureBox() {
+  const hasS = !!(SAVE.treasures && SAVE.treasures.seiken), hasStar = !!(SAVE.treasures && SAVE.treasures.star);
+  document.getElementById('treasureBox').innerHTML =
+    '<div class="trRow"><img src="assets/held_holy.png" alt="" class="trIco">' +
+    '<div class="trMain"><div class="trName">聖剣「天羽々斬」</div>' +
+    '<div class="swDesc">装備すると nono の こうげき・とくぎ が 中ボス・ボスに 2倍。左手に持ち、刃先は左下向き。</div>' +
+    '<div class="swDesc">' + (hasS ? '入手済み' : '未入手（大迷宮の最奥に眠る）') + '</div></div>' +
+    (hasS ? '<button class="trBtn" id="holyToggle">' + (SAVE.holyEquip ? '外す' : '装備する') + '</button>' : '') + '</div>' +
+    '<div class="trRow"><div class="trIcoStar">✦</div>' +
+    '<div class="trMain"><div class="trName">星座のオブジェ「オリオン座」</div>' +
+    '<div class="swDesc">星の光を集めた置物。集めるお宝。</div>' +
+    '<div class="swDesc">' + (hasStar ? '入手済み' : '未入手（大迷宮の最奥に眠る）') + '</div></div></div>';
+  const btn = document.getElementById('holyToggle');
+  if (btn) btn.addEventListener('click', () => { SAVE.holyEquip = !SAVE.holyEquip; persistSave(); buildTreasureBox(); });
 }
 function drawMap() {
   const cv = document.getElementById('mapCanvas'), g = cv.getContext('2d');
@@ -3871,7 +3985,7 @@ function syncCamUI() {
 }
 function openSettings() {
   settingsOpen = true;
-  buildSwordBox(); drawMap(); syncCamUI();
+  buildSwordBox(); buildTreasureBox(); drawMap(); syncCamUI();
   document.getElementById('settings').classList.add('open');
   if (!pvRenderer) {
     try {
