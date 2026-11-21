@@ -3968,6 +3968,7 @@ function buildBattleDOM(kindKey, count) {
     d.style.left = pspots[id][0] + '%'; d.style.bottom = pspots[id][1] + '%';
     const sh2 = document.createElement('div'); sh2.className = 'bshadow'; d.appendChild(sh2);
     const mbase = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (id === 'yui' ? 1 : 0.9);
+    d.style.width = (mbase * 352 / 448) + 'px'; d.style.height = mbase + 'px'; // 武器位置の基準箱（旧 .bchar の寸法）を維持する（A.62）
     const dg = document.createElement('img');
     dg.className = 'bdiag'; dg.alt = '';
     dg.style.height = mbase + 'px';
@@ -4036,6 +4037,7 @@ function layoutBattle() {
   for (const [id, d] of Object.entries(battle.memberEls || {})) {
     if (pspots[id]) { d.style.left = pspots[id][0] + '%'; d.style.bottom = pspots[id][1] + '%'; }
     const mbase = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (id === 'yui' ? 1 : 0.9);
+    d.style.width = (mbase * 352 / 448) + 'px'; d.style.height = mbase + 'px'; // 基準箱もリサイズに追随（A.62）
     const ch = d.querySelector('.bchar'); if (ch) setCharFrame(ch, 6, 1, mbase);
     const dg = d.querySelector('.bdiag'); if (dg) dg.style.height = mbase + 'px';
     const hw = d.querySelector('.bheld');
@@ -4286,7 +4288,7 @@ const NONO_HELD_POS = [
   [0.68, -0.44, 0.30], [0.68, -0.39, 0.22], [0.68, -0.44, 0.32], [0.68, -0.47, 0.30],
   [0.68, -0.43, 0.29], [0.95, -0.55, 0.13], [0.68, -0.14, 0.26], [0.68, -0.45, 0.31],
   [0.68, -0.44, 0.32], [0.95, -0.48, 0.19], [0.68, -0.43, 0.21], [0.95, -0.78, 0.26],
-  [0.68, -0.47, 0.33], [0.68, -0.43, 0.34], [0.68, -0.75, 0.21], [0.68, -0.44, 0.34]
+  [0.68, -0.47, 0.33], [0.68, -0.43, 0.34], [0.68, -0.35, 0.21], [0.68, -0.44, 0.34]
 ];
 const HOLY_POS = [0.68, -0.45, 0.29]; // 聖剣（装備時は通常の剣と持ち替え・刃先左上）: [幅係数, left, bottom]（単位はキャラ高さ）
 function attachHeldWeapon(unitEl, id, hPx) {
@@ -4483,6 +4485,7 @@ function buildPartyDOM() {
     d.style.left = pspots[id][0] + '%'; d.style.bottom = pspots[id][1] + '%';
     const sh2 = document.createElement('div'); sh2.className = 'bshadow'; d.appendChild(sh2);
     const mbase = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (id === 'yui' ? 1 : 0.9);
+    d.style.width = (mbase * 352 / 448) + 'px'; d.style.height = mbase + 'px'; // 武器位置の基準箱（旧 .bchar の寸法）を維持する（A.62）
     const dg = document.createElement('img');
     dg.className = 'bdiag'; dg.alt = '';
     dg.style.height = mbase + 'px';
