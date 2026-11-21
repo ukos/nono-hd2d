@@ -428,7 +428,10 @@ function stripAlphaTexture() {
   for (let py = 0; py < 256; py++) {
     for (let px = 0; px < 256; px++) {
       const dEdge = Math.min(py, 255 - py); // 縁からの距離
-      const a = Math.max(0, Math.min(1, (dEdge + 26) / 52)); // 52pxかけて縁をぼかす
+      const side = Math.max(0, Math.min(1, (dEdge + 26) / 52)); // 52pxかけて縁をぼかす
+      const dEnd = Math.min(px, 255 - px); // 行き止まり（帯の両端）からの距離
+      const e0 = Math.max(0, Math.min(1, dEnd / 15)); // 両端は約6%かけて消す
+      const a = side * (e0 * e0 * (3 - 2 * e0));
       const v = Math.round(a * 255), o = (py * 256 + px) * 4;
       img.data[o] = img.data[o + 1] = img.data[o + 2] = v; img.data[o + 3] = 255;
     }
@@ -2288,7 +2291,7 @@ function buildRegion(id, def) {
       const at = (g.strip ? _stripAlpha : _softAlpha).clone();
       at.wrapS = at.wrapT = THREE.RepeatWrapping;
       if (g.soft) at.repeat.set(1, 1); // 池状の面は1枚全体で1つの縁ぼかし（繰り返すと円盤の並びになる）
-      else at.repeat.set(g.repeat ? g.repeat[0] * gm : 1, 1); // 帯の縁ぼかしは深さ方向に繰り返さない
+      else at.repeat.set(1, 1); // 帯のアルファは繰り返さない（両端のフェードアウトを帯全体のUVで効かせるため）
       at.needsUpdate = true;
       mat.transparent = true;
       mat.alphaMap = at;
