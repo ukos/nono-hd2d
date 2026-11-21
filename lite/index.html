@@ -2973,8 +2973,20 @@ const BGM = (() => {
       step = (step + 1) % 64; nextT += stepDur;
     }
   }
+  let badTaps = 0, watchdog = null;
   function init() {
-    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+    if (ctx) {
+      if (ctx.state === 'running') return;
+      ctx.resume(); // suspended だけでなく iOS の interrupted でも復帰を試みる
+      badTaps++;
+      if (badTaps < 4) return;
+      // 何度試しても復帰しない場合は AudioContext ごと作り直す
+      badTaps = 0;
+      const old = ctx;
+      ctx = null; master = null; echoWet = null;
+      if (timer) { clearInterval(timer); timer = null; }
+      old.close().catch(() => {});
+    }
     try {
       try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {} // iOSの消音スイッチONでも鳴らす
       ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2988,6 +3000,8 @@ const BGM = (() => {
       master.connect(dly); dly.connect(flt); flt.connect(fb); fb.connect(dly); flt.connect(echoWet); echoWet.connect(ctx.destination);
       step = 0; nextT = ctx.currentTime + 0.06;
       timer = setInterval(schedule, 42);
+      ctx.onstatechange = () => { if (ctx && ctx.state !== 'running' && !document.hidden) ctx.resume(); };
+      if (!watchdog) watchdog = setInterval(() => { if (ctx && !document.hidden && ctx.state !== 'running') ctx.resume(); }, 1500); // 定期的に復帰を試みる
     } catch (e) { /* 音が出ない環境では無音で続行 */ }
   }
   window.addEventListener('pointerdown', init);
@@ -3000,7 +3014,7 @@ const BGM = (() => {
     },
     has(name) { return !!SONGS[name]; },
     set(name) { if (SONGS[name]) { cur = name; if (echoWet && ctx) echoWet.gain.setTargetAtTime(SONGS[name].echo || 0, ctx.currentTime, 0.1); } },
-    toggle() { muted = !muted; if (ctx && ctx.state === 'suspended') ctx.resume(); if (master) master.gain.value = muted ? 0 : 0.9; return muted; },
+    toggle() { muted = !muted; if (ctx && ctx.state !== 'running') ctx.resume(); if (master) master.gain.value = muted ? 0 : 0.9; return muted; },
   };
 })();
 document.getElementById('bgmBtn').addEventListener('click', (e) => {
