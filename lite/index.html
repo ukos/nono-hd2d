@@ -2853,7 +2853,10 @@ const BGM = (() => {
       bassRoot: [45,45,41,43,45,45,50,52], bassPat: [1,1,3,1,1,1,3,1] },
     rival: { bpm: 152,
       mel: bars([[74,0,74,0,77,0,74,0],[72,0,74,0,76,0,74,0],[74,0,74,0,77,0,81,0],[79,0,77,76,77,0,0,0],[74,0,74,0,77,0,74,0],[72,0,74,0,76,0,79,0],[81,0,79,0,77,0,76,0],[74,0,72,0,74,0,0,0]]),
-      bassRoot: [50,50,46,48,50,50,43,45], bassPat: [1,0,3,0,1,0,3,0] },
+      mel2: bars([[70,0,0,0,74,0,0,0],[69,0,0,0,72,0,0,0],[70,0,0,0,74,0,77,0],[76,0,0,0,74,0,0,0],[70,0,0,0,74,0,0,0],[69,0,0,0,72,0,76,0],[77,0,76,0,74,0,72,0],[70,0,69,0,70,0,0,0]]),
+      bassRoot: [50,50,46,48,50,50,43,45], bassPat: [1,0,3,0,1,0,3,0],
+      pad: [[62,65,69],[62,65,69],[58,62,65],[60,64,67],[62,65,69],[62,65,69],[58,62,67],[57,64,69]],
+      drmK: [1,0,0,0,1,0,0,0], drmS: [0,0,1,0,0,0,1,0], drmH: [0,1,0,1,0,1,0,1] },
   };
   function freq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
   function tone(m, t, dur, type, vol) {
@@ -2865,6 +2868,26 @@ const BGM = (() => {
     o.connect(g); g.connect(master);
     o.start(t); o.stop(t + dur + 0.05);
   }
+  let noiseBuf = null;
+  function kick(t) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(120, t);
+    o.frequency.exponentialRampToValueAtTime(42, t + 0.1);
+    g.gain.setValueAtTime(0.16, t);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + 0.14);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + 0.16);
+  }
+  function noiseHit(t, dur, vol) {
+    if (!noiseBuf) { noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    const srcN = ctx.createBufferSource(); srcN.buffer = noiseBuf;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    srcN.connect(g); g.connect(master);
+    srcN.start(t); srcN.stop(t + dur + 0.02);
+  }
   function schedule() {
     const S = SONGS[cur], stepDur = 60 / S.bpm / 2;
     while (nextT < ctx.currentTime + 0.16) {
@@ -2873,6 +2896,11 @@ const BGM = (() => {
       if (m) tone(m, nextT, stepDur * 1.7, 'square', 0.042);
       const bp = S.bassPat[s];
       if (bp) tone(S.bassRoot[bar] + (bp === 2 ? 7 : bp === 3 ? 12 : 0), nextT, stepDur * 1.4, 'triangle', 0.075);
+      if (S.mel2) { const m2 = S.mel2[step]; if (m2) tone(m2, nextT, stepDur * 1.7, 'square', 0.024); }
+      if (S.pad && (s === 0 || s === 4)) for (const pn of S.pad[bar]) tone(pn, nextT, stepDur * 3.8, 'triangle', 0.015);
+      if (S.drmK && S.drmK[s]) kick(nextT);
+      if (S.drmS && S.drmS[s]) noiseHit(nextT, 0.09, 0.05);
+      if (S.drmH && S.drmH[s]) noiseHit(nextT, 0.03, 0.026);
       step = (step + 1) % 64; nextT += stepDur;
     }
   }
