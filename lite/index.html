@@ -2168,7 +2168,7 @@ const REAL_FLIP = { fox: 1, yukiookami: 1, tanuki: 1, x_rabbit: 1, x_boar: 1, ut
 // 中ボス・ボスの斜め絵のうち左向きのもの（フィールド移動とバトルの反転に使う）
 const DIAG_FLIP = { gaikotsu: 1, hitotsume: 1, oowani: 1, pontanuki: 1, tonosama: 1 };
 // ライバル斜め絵のうち左向きのもの（バトルで反転して nono の方へ向ける）
-const RIVAL_FLIP = { kogane: 1 };
+const RIVAL_FLIP = {}; // 反転が要るライバルはいない（diag原画は全員右向き。コガネも右向き原画と実ファイルで確認済み 2026-11-21）
 const RIVAL_DIAG_ASPECT = { akane: 0.68, gou: 0.69, hayate: 0.7, homura: 0.71, iwao: 0.7, kogane: 0.79, kotetsu: 0.82, kurogane: 0.71, mei: 0.7, mizuchi: 0.69, nibulus: 0.72, sasuke: 0.75, shiro: 0.64, tanurio: 0.74, yoru: 0.72 };
 // フィールド移動アニメ用: 2コマ目の縦横比（実測）。移動中だけテクスチャを切り替える
 const REAL_ACT_ASPECT = { akuryou: 0.811, bandit: 0.482, chouchin: 0.566, dokuhebi: 1.15, drone: 2.227, dwolf: 0.63, eagle: 0.883, fox: 1.417, gama: 1.411, griffon: 1.193, hawk: 0.86, hibat: 0.795, iwagani: 0.879, kaeru: 0.852, kaizoku: 0.601, kamome: 1.355, kani: 1.006, karakasa: 0.793, karasu: 0.506, karyu: 0.834, kinokoob: 0.605, kitsune: 1.474, komori: 0.406, kumo: 0.952, kurage: 0.722, leever: 0.637, marten: 3.324, mogura: 0.81, mukade: 1.286, mummy: 0.483, ninja: 0.558, onibi: 0.747, oumu: 0.789, raichou: 0.781, same: 1.494, scorpion: 1.815, shinigami: 0.754, shirofukuro: 1.007, squirrel: 0.881, tako: 0.768, tanuki: 1.011, tengu: 0.779, utsubo: 1.957, vulture: 0.874, wolf: 1.671, x_acorn: 0.623, x_bluejelly: 0.967, x_boar: 1.449, x_cactus: 0.82, x_darkocto: 1.301, x_kappa: 1.322, x_mushcat: 0.744, x_owl: 1.876, x_purpmush: 0.893, x_rabbit: 0.833, x_whiterabbit: 1.124, yadokari: 1.271, yamiinu: 0.95, yougan: 1.037, yukiookami: 2.741, ankou: 0.922, cobra: 0.726, deer: 0.698, foxsq: 0.884, gorori: 1.335, hachi: 0.641, hirari: 1.505, koorislime: 1.278, morikuma: 0.619, puru: 1.946, tobiuo: 1.339, washi: 1.184, yagi: 0.726, kingcrab: 1.78 };
@@ -3012,7 +3012,7 @@ function spawnHelperPair(names) {
     d.className = 'bunit bhelper';
     d.style.left = spots[i][0] + '%'; d.style.bottom = spots[i][1] + '%';
     const hPx = Math.min(170, window.innerHeight * 0.24) * 0.8;
-    const flipCss = RIVAL_FLIP[rid] ? '' : ';transform:scaleX(-1)'; // diag原画は右向き→反転してボス（左）を向く。コガネだけ原画が左向き
+    const flipCss = RIVAL_FLIP[rid] ? '' : ';transform:scaleX(-1)'; // diag原画は全員右向き→反転してボス（左）を向く
     d.innerHTML = `<div class="bshadow"></div><img class="diag" src="assets/rival_${rid}_diag.png" style="height:${hPx}px${flipCss}" alt=""><div class="bname">${name}（助っ人）</div><div class="bbar"><i></i></div>`;
     bp.appendChild(d);
     h.el = d;
@@ -3566,7 +3566,7 @@ function attachHeldSword(unitEl, hPx) { attachHeldWeapon(unitEl, 'nono', hPx); }
 const NONO_HELD_POS = [
   [0.68, -0.44, 0.30], [0.68, -0.39, 0.22], [0.68, -0.44, 0.32], [0.68, -0.47, 0.30],
   [0.68, -0.43, 0.29], [0.95, -0.55, 0.13], [0.68, -0.14, 0.26], [0.68, -0.45, 0.31],
-  [0.68, -0.44, 0.32], [0.95, -0.48, 0.19], [0.68, -0.43, 0.34], [0.95, -0.78, 0.26],
+  [0.68, -0.44, 0.32], [0.95, -0.48, 0.19], [0.68, -0.43, 0.21], [0.95, -0.78, 0.26],
   [0.68, -0.47, 0.33], [0.68, -0.43, 0.34], [0.68, -0.21, 0.33], [0.68, -0.44, 0.34]
 ];
 function attachHeldWeapon(unitEl, id, hPx) {
