@@ -107,6 +107,35 @@
   #bgmBtn { position:fixed; top:10px; right:10px; z-index:16; background:rgba(12,12,28,.66); color:#fff;
     border:1px solid rgba(255,255,255,.35); border-radius:8px; padding:5px 10px; font-size:12px; cursor:pointer;
     transition:top .3s, right .3s; }
+  #setBtn { position:fixed; top:10px; right:86px; z-index:16; background:rgba(12,12,28,.66); color:#fff;
+    border:1px solid rgba(255,255,255,.35); border-radius:8px; padding:5px 10px; font-size:12px; cursor:pointer; }
+  body.inbattle #setBtn { display:none; }
+  #settings { position:fixed; inset:0; z-index:40; background:rgba(6,8,18,.72); display:none;
+    align-items:flex-start; justify-content:center; overflow-y:auto; padding:14px 8px; box-sizing:border-box; }
+  #settings.open { display:flex; }
+  .setCard { width:min(94vw, 560px); background:rgba(14,16,34,.97); color:#eef; border:1px solid rgba(255,255,255,.35);
+    border-radius:14px; padding:14px 16px 18px; box-sizing:border-box; font-size:14px; }
+  .setCard h3 { margin:16px 0 8px; font-size:15px; border-bottom:1px solid rgba(255,255,255,.25); padding-bottom:4px; }
+  .setCard h3:first-of-type { margin-top:6px; }
+  .setHead { display:flex; justify-content:space-between; align-items:center; font-size:17px; font-weight:bold; }
+  .setHead button, #camReset { background:#2a2f52; color:#fff; border:1px solid rgba(255,255,255,.4);
+    border-radius:8px; padding:6px 12px; font-size:13px; cursor:pointer; }
+  #swordBox .swTop { display:flex; gap:12px; align-items:center; }
+  #swordBox img { width:104px; height:104px; object-fit:contain; background:rgba(255,255,255,.06); border-radius:10px; }
+  #swordBox .swName { font-size:16px; font-weight:bold; }
+  #swordBox .swTokugi { color:#ffd97a; margin-top:2px; }
+  #swordBox .swDesc { color:#bbc; font-size:12px; margin-top:2px; }
+  .swStages { display:flex; flex-wrap:wrap; gap:4px; margin-top:10px; }
+  .swStages span { font-size:11px; padding:3px 7px; border-radius:20px; background:rgba(255,255,255,.08); color:#99a; }
+  .swStages span.done { background:rgba(120,200,120,.25); color:#cfc; }
+  .swStages span.cur { background:#e8b030; color:#221; font-weight:bold; }
+  .swRemain { margin-top:8px; font-size:12px; color:#bbc; line-height:1.6; }
+  #mapCanvas, #pvCanvas { width:100%; border-radius:10px; background:#0a0c1c; display:block; }
+  #mapNote { font-size:12px; color:#bbc; margin-top:4px; }
+  .sliderRow { display:flex; align-items:center; gap:10px; margin:9px 0; }
+  .sliderRow label { width:86px; font-size:13px; }
+  .sliderRow input { flex:1; accent-color:#e8b030; height:28px; }
+  .sliderRow span { width:36px; text-align:right; font-variant-numeric:tabular-nums; }
   /* バトルUI 向き別配置: 縦=プレート最上段/♪はその下/メッセージ2段下げ、横=プレート一段上（メッセージ不変） */
   @media (orientation: portrait) {
     #bstatus { top:10px; }
@@ -188,6 +217,21 @@
   <div id="bcmd"></div>
 </div>
 <button id="bgmBtn">♪ ON</button>
+<button id="setBtn">⚙ 設定</button>
+<div id="settings"><div class="setCard">
+  <div class="setHead"><span>設定</span><button id="setClose">✕ 閉じる</button></div>
+  <h3>剣の進化状態</h3>
+  <div id="swordBox"></div>
+  <h3>全体マップ</h3>
+  <canvas id="mapCanvas" width="640" height="300"></canvas>
+  <div id="mapNote"></div>
+  <h3>カメラ・視点</h3>
+  <canvas id="pvCanvas" width="600" height="380"></canvas>
+  <div class="sliderRow"><label>距離</label><input type="range" id="camDist" min="5" max="14" step="0.1"><span id="camDistV"></span></div>
+  <div class="sliderRow"><label>高さ</label><input type="range" id="camHeight" min="3" max="12" step="0.1"><span id="camHeightV"></span></div>
+  <div class="sliderRow"><label>角度（注視点）</label><input type="range" id="camLook" min="0" max="4" step="0.05"><span id="camLookV"></span></div>
+  <button id="camReset">カメラを初期値に戻す</button>
+</div></div>
 <div id="challenge"><div id="challengeText"></div><div class="crow"><button id="challengeYes">勝負する</button><button id="challengeNo" class="no">やめる</button></div></div>
 <div id="evolve"><canvas id="evoCanvas" width="8" height="16"></canvas><img id="evoImg" alt="" style="display:none; width:250px; height:250px; object-fit:contain"><div id="evoSide"><div id="evoTitle"></div><div id="evoText"></div><button id="evoOk">わかった</button></div></div>
 <div id="loading">読み込み中…</div>
@@ -3774,6 +3818,78 @@ function attachHeldWeapon(unitEl, id, hPx) {
   unitEl.appendChild(img);
 }
 function swordStage() { return Math.min(15, SAVE.beaten.length); }
+// ---------- 設定画面（剣の進化状態／全体マップ／カメラ・視点） ----------
+const CAM_DEFAULTS = { dist: 8.4, height: 6.7, look: 2.0 };
+let CAMSET = { ...CAM_DEFAULTS };
+try { const c = JSON.parse(localStorage.getItem('nono-hd2d-cam')); if (c && isFinite(c.dist) && isFinite(c.height) && isFinite(c.look)) CAMSET = { dist: c.dist, height: c.height, look: c.look }; } catch (e) {}
+let settingsOpen = false;
+let pvRenderer = null, pvCam = null;
+function saveCam() { try { localStorage.setItem('nono-hd2d-cam', JSON.stringify(CAMSET)); } catch (e) {} }
+function buildSwordBox() {
+  const st = swordStage(), sw = SWORDS[st];
+  const remain = RIVAL_ORDER.filter((n) => !SAVE.beaten.includes(n));
+  const chips = SWORDS.map((s, i) => '<span class="' + (i < st ? 'done' : i === st ? 'cur' : '') + '">' + (i + 1) + '. ' + s[0] + '</span>').join('');
+  document.getElementById('swordBox').innerHTML =
+    '<div class="swTop"><img src="assets/sword_' + st + '.png" alt="">' +
+    '<div><div class="swName">第' + (st + 1) + '段階：' + sw[0] + '</div>' +
+    '<div class="swTokugi">とくぎ：' + sw[2] + '</div>' +
+    '<div class="swDesc">' + sw[3] + '</div>' +
+    '<div class="swDesc">ライバル撃破 ' + SAVE.beaten.length + ' / 15 人' + (st >= 15 ? '（最終形態に到達）' : '（あと ' + (15 - st) + ' 人で最終形態）') + '</div></div></div>' +
+    '<div class="swStages">' + chips + '</div>' +
+    (remain.length ? '<div class="swRemain">まだ勝っていないライバル：' + remain.join('、') + '</div>' : '<div class="swRemain">全ライバルに勝利済み</div>');
+}
+function drawMap() {
+  const cv = document.getElementById('mapCanvas'), g = cv.getContext('2d');
+  g.clearRect(0, 0, 640, 300);
+  const list = Object.entries(REGIONS).sort((a, b) => a[1].centerX - b[1].centerX);
+  const tw = 76, th = 128, gap = 4, x0 = 2, y0 = 8;
+  list.forEach(([id, r], i) => {
+    const x = x0 + (i % 8) * (tw + gap), y = y0 + Math.floor(i / 8) * (th + 18);
+    g.fillStyle = '#' + (r.bg >>> 0).toString(16).padStart(6, '0');
+    g.fillRect(x, y, tw, th);
+    g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 1; g.strokeRect(x + .5, y + .5, tw - 1, th - 1);
+    g.fillStyle = '#fff'; g.font = '11px sans-serif'; g.textAlign = 'center';
+    const label = r.label;
+    if (label.length > 5) { g.fillText(label.slice(0, Math.ceil(label.length / 2)), x + tw / 2, y + 18); g.fillText(label.slice(Math.ceil(label.length / 2)), x + tw / 2, y + 32); }
+    else g.fillText(label, x + tw / 2, y + 22);
+    if (id === area || (area === 'labyrinth' && id === 'tasogare')) {
+      g.strokeStyle = '#ffd94d'; g.lineWidth = 3; g.strokeRect(x + 1, y + 1, tw - 2, th - 2);
+      g.fillStyle = '#ffd94d'; g.font = 'bold 11px sans-serif';
+      g.fillText(area === 'labyrinth' ? '大迷宮の中' : '現在地', x + tw / 2, y + th - 22);
+      const b = r.bounds, px = x + (player.position.x - b.minX) / (b.maxX - b.minX) * tw, py = y + (player.position.z - b.minZ) / (b.maxZ - b.minZ) * th;
+      g.fillStyle = '#ff5e5e'; g.beginPath(); g.arc(Math.max(x + 4, Math.min(x + tw - 4, px)), Math.max(y + 4, Math.min(y + th - 4, py)), 4.5, 0, 7); g.fill();
+      g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.stroke();
+    }
+  });
+  g.fillStyle = '#bbc'; g.font = '11px sans-serif'; g.textAlign = 'left';
+  g.fillText('北', 6, 296);
+  document.getElementById('mapNote').textContent = '地方は西から東へ一列に並び、端同士もつながっています。赤い点が今いる場所です。';
+}
+function syncCamUI() {
+  const set = (id, v, vid) => { document.getElementById(id).value = v; document.getElementById(vid).textContent = (+v).toFixed(1); };
+  set('camDist', CAMSET.dist, 'camDistV'); set('camHeight', CAMSET.height, 'camHeightV'); set('camLook', CAMSET.look, 'camLookV');
+}
+function openSettings() {
+  settingsOpen = true;
+  buildSwordBox(); drawMap(); syncCamUI();
+  document.getElementById('settings').classList.add('open');
+  if (!pvRenderer) {
+    try {
+      pvRenderer = new THREE.WebGLRenderer({ canvas: document.getElementById('pvCanvas'), antialias: true });
+      pvRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      pvRenderer.setSize(600, 380, false);
+      pvCam = new THREE.PerspectiveCamera(36, 600 / 380, 0.1, 200);
+    } catch (e) { pvRenderer = null; }
+  }
+}
+function closeSettings() { settingsOpen = false; document.getElementById('settings').classList.remove('open'); }
+document.getElementById('setBtn').addEventListener('click', openSettings);
+document.getElementById('setClose').addEventListener('click', closeSettings);
+document.getElementById('settings').addEventListener('click', (e) => { if (e.target.id === 'settings') closeSettings(); });
+for (const [id, key] of [['camDist', 'dist'], ['camHeight', 'height'], ['camLook', 'look']]) {
+  document.getElementById(id).addEventListener('input', (e) => { CAMSET[key] = parseFloat(e.target.value); saveCam(); syncCamUI(); });
+}
+document.getElementById('camReset').addEventListener('click', () => { CAMSET = { ...CAM_DEFAULTS }; saveCam(); syncCamUI(); });
 function applySwordAtk() { PARTY.nono.atk = 11 + SWORDS[swordStage()][1]; }
 applySwordAtk();
 // 本編 swordIcon の描画ロジックを Canvas に移植（8x16 ドットで剣を描く）
@@ -3968,7 +4084,7 @@ function animate() {
 
   // 移動（目標速度へなめらかに追随させ、歩幅は実際に進んだ距離で進める）
   const pPrevX = player.position.x, pPrevZ = player.position.z;
-  const iv = (dialog.open || inBattle) ? { x: 0, z: 0, mag: 0 } : inputVector();
+  const iv = (dialog.open || inBattle || settingsOpen) ? { x: 0, z: 0, mag: 0 } : inputVector();
   const MAX_SPEED = 2.5; // 移動速度[m/s]（2026-11-18 実機感想で 3.1 → 2.5 に）
   const accel = 1 - Math.pow(0.0025, dt); // 立ち上がり・停止をなめらかに
   vel.x += (iv.x * MAX_SPEED - vel.x) * accel;
@@ -4084,10 +4200,10 @@ function animate() {
   // カメラ追従（地方の中心を基準に緩やかにパンする）
   const ccx = R.centerX;
   camTarget.lerp(new THREE.Vector3(player.position.x, 0, player.position.z), 1 - Math.pow(0.002, dt));
-  const wantPos = new THREE.Vector3(camTarget.x, 6.7 + camTarget.z * 0.18, camTarget.z + 8.4); // 2026-11-19 カメラの俯瞰角を約10°上げた（高さ4.6→6.7、注視点は不変）
+  const wantPos = new THREE.Vector3(camTarget.x, CAMSET.height + camTarget.z * 0.18, camTarget.z + CAMSET.dist); // 既定: 高さ6.7・距離8.4（設定画面で変更可）
   camPos.lerp(wantPos, 1 - Math.pow(0.002, dt));
   camera.position.copy(camPos);
-  camera.lookAt(camTarget.x, 2.0, camTarget.z - 1.6);
+  camera.lookAt(camTarget.x, CAMSET.look, camTarget.z - 1.6);
 
   // 背景ボードと夕日の位置（カメラに追随。湖畔エリアのみ）
   if (area === 'hajimari' && lakeRefs.mountains) {
@@ -4111,6 +4227,11 @@ function animate() {
   }
 
   composer.render();
+  if (settingsOpen && pvRenderer && pvCam) { // 設定画面のミニビューワー（スライダー値で即時描画）
+    pvCam.position.set(camTarget.x, CAMSET.height + camTarget.z * 0.18, camTarget.z + CAMSET.dist);
+    pvCam.lookAt(camTarget.x, CAMSET.look, camTarget.z - 1.6);
+    pvRenderer.render(scene, pvCam);
+  }
 }
 applyResponsiveCamera();
 try {
