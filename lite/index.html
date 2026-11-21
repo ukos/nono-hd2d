@@ -2228,7 +2228,7 @@ const KIND_ALIAS = { spider: 'kumo', yeti: 'yukio' };
 const DIAG_ASPECT = { kishin: 0.5, nue: 1.67, bear: 1.54, gaikotsu: 0.945, hitotsume: 0.51, hyouga: 0.95, iwaryu: 1.54, kgolem: 0.54, koorioni: 0.97, kyojin: 0.95, nurikabe: 0.67, oni: 0.52, oogumo: 1.47, oowani: 2.8, oowashi: 1.87, pontanuki: 0.64, robo: 0.75, tonosama: 0.494, wani: 2.19, yukio: 0.96, oozaru: 0.62, golem: 0.69, shiyuu: 1.108, shiyuu2: 1.204 };
 // ライバルの右斜めリアル絵の縦横比（フィールド・バトル共用）
 const REAL_ASPECT = { akuryou: 0.81, bandit: 0.5, chouchin: 0.54, dokuhebi: 1.63, drone: 1.57, dwolf: 0.939, eagle: 1.109, fox: 1.25, gama: 1.414, griffon: 1.0, hawk: 0.86, hibat: 0.84, iwagani: 0.65, kaeru: 1.065, kaizoku: 0.6, kamome: 0.75, kani: 1.133, karakasa: 0.81, karasu: 0.58, karyu: 0.78, kinokoob: 0.66, kitsune: 1.52, komori: 0.92, kumo: 0.984, kurage: 0.804, leever: 0.6, marten: 3.034, mogura: 0.9, mukade: 1.29, mummy: 0.49, ninja: 0.52, onibi: 0.87, oumu: 1.444, raichou: 0.911, same: 1.605, scorpion: 1.39, shinigami: 0.78, shirofukuro: 0.973, squirrel: 1.016, tako: 0.57, tanuki: 0.89, tengu: 0.79, utsubo: 1.384, vulture: 0.78, wolf: 1.67, x_acorn: 0.62, x_bluejelly: 1.08, x_boar: 1.6, x_cactus: 0.79, x_darkocto: 1.29, x_kappa: 1.36, x_mushcat: 0.82, x_owl: 0.696, x_purpmush: 0.76, x_rabbit: 0.8, x_whiterabbit: 0.79, yadokari: 1.03, yamiinu: 0.9, yougan: 0.862, yukiookami: 1.639, ankou: 0.945, cobra: 0.635, deer: 0.718, foxsq: 0.918, gorori: 1.335, hachi: 0.641, hirari: 1.505, koorislime: 1.112, morikuma: 0.483, puru: 1.946, tobiuo: 1.085, washi: 0.933, yagi: 0.726, kingcrab: 1.969 };
-const REAL_FLIP = { fox: 1, yukiookami: 1, tanuki: 1, x_rabbit: 1, x_boar: 1, utsubo: 1, scorpion: 1, dwolf: 1, griffon: 1, vulture: 1, leever: 1, mukade: 1, x_owl: 1, kinokoob: 1, komori: 1, x_mushcat: 1, x_whiterabbit: 1, kaeru: 1, mummy: 1, ninja: 1, x_acorn: 1, x_cactus: 1 };
+const REAL_FLIP = { fox: 1, yukiookami: 1, tanuki: 1, x_rabbit: 1, x_boar: 1, utsubo: 1, scorpion: 1, dwolf: 1, griffon: 1, vulture: 1, leever: 1, mukade: 1, x_owl: 1, kinokoob: 1, komori: 1, x_mushcat: 1, x_whiterabbit: 1, kaeru: 1, ninja: 1, x_acorn: 1, x_cactus: 1 };
 // 中ボス・ボスの斜め絵のうち左向きのもの（フィールド移動とバトルの反転に使う）
 const DIAG_FLIP = { hitotsume: 1, oowani: 1, pontanuki: 1, tonosama: 1 }; // 骸骨の戦士（gaikotsu）の原画は右向きなので反転しない（2026-11-21 実機指摘で修正）
 // ライバル斜め絵のうち左向きのもの（バトルで反転して nono の方へ向ける）
@@ -3092,6 +3092,29 @@ const BGM = (() => {
     srcN.connect(g); g.connect(master);
     srcN.start(t); srcN.stop(t + dur + 0.02);
   }
+  function bpNoise(t, dur, vol, f0, f1) { // 帯域ノイズ（斬撃・衝撃の音）
+    if (!noiseBuf) { noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    const s = ctx.createBufferSource(); s.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
+    bp.frequency.setValueAtTime(f0, t);
+    bp.frequency.exponentialRampToValueAtTime(Math.max(40, f1), t + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    s.connect(bp); bp.connect(g); g.connect(master);
+    s.start(t); s.stop(t + dur + 0.02);
+  }
+  function sweep(f0, f1, t, dur, type, vol) { // 周波数スイープ（溜め・斬撃の芯）
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(40, f1), t + dur);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + dur + 0.05);
+  }
   function stepsToNext(arr, i) { for (let k = 1; k <= 8; k++) if (arr[(i + k) % 64]) return k; return 8; }
   function schedule() {
     const S = SONGS[cur], stepDur = 60 / S.bpm / 2;
@@ -3148,6 +3171,31 @@ const BGM = (() => {
       if (!ctx) return;
       const t0 = ctx.currentTime + 0.03;
       [72, 76, 79, 84, 79, 84, 88].forEach((n, i) => tone(n, t0 + i * 0.11, 0.34, 'square', 0.05));
+    },
+    sfx: { // バトルの効果音（BGMと同じマスター経由なので ♪ OFF で一緒に消える）
+      attack() { // こうげき：斬撃＋打撃
+        if (!ctx) return; const t = ctx.currentTime + 0.01;
+        bpNoise(t, 0.1, 0.18, 2800, 500);
+        sweep(300, 60, t, 0.1, 'square', 0.07);
+        kick(t);
+      },
+      magic() { // まほう：きらめく詠唱音
+        if (!ctx) return; const t = ctx.currentTime + 0.01;
+        [88, 93, 97, 100].forEach((n, i) => tone(n, t + i * 0.045, 0.24, 'sine', 0.05));
+        tone(105, t + 0.19, 0.3, 'triangle', 0.028);
+      },
+      heal() { // いやし：柔らかい回復音
+        if (!ctx) return; const t = ctx.currentTime + 0.01;
+        [76, 81, 88].forEach((n, i) => tone(n, t + i * 0.07, 0.38, 'sine', 0.042));
+        tone(93, t + 0.22, 0.34, 'triangle', 0.022);
+      },
+      skill() { // とくぎ：溜め→一閃
+        if (!ctx) return; const t = ctx.currentTime + 0.01;
+        sweep(160, 1400, t, 0.17, 'sawtooth', 0.04);
+        bpNoise(t + 0.17, 0.22, 0.17, 3500, 300);
+        kick(t + 0.17);
+        [72, 76, 79].forEach((n, i) => tone(n, t + 0.17 + i * 0.02, 0.16, 'square', 0.045));
+      },
     },
     has(name) { return !!SONGS[name]; },
     set(name) { if (SONGS[name]) { cur = name; if (echoWet && ctx) echoWet.gain.setTargetAtTime(SONGS[name].echo || 0, ctx.currentTime, 0.1); } },
@@ -3224,6 +3272,7 @@ async function hitFoe(att, f, dmg, opt = {}) {
   if (opt.fx) showFx(el, opt.fx);
   if (opt.lunge !== false && att.el) lunge(att.el, att.side);
   await bSleep(opt.fx ? 340 : 190);
+  if (opt.sfx && BGM.sfx) BGM.sfx[opt.sfx]();
   f.hp -= dmg;
   hurtFx(el); dmgNumber(el, dmg, opt.crit ? 'crit' : '');
   refreshBattleUI();
@@ -3260,6 +3309,7 @@ async function healMember(att, id, val, opt = {}) {
   const m = PARTY[id], el = memberEl(id);
   showFx(el, 'heal');
   await bSleep(340);
+  if (opt.sfx && BGM.sfx) BGM.sfx[opt.sfx]();
   const real = Math.min(val, m.maxhp - m.hp);
   m.hp += real; if (m.hp > 0) m.down = false;
   dmgNumber(el, real, 'heal');
@@ -3329,7 +3379,7 @@ async function helperTurn(h) {
     h.fresh = false;
     if (mv.type === 'heal') {
       const cands = [
-        ...Object.keys(PARTY).filter((id) => PARTY[id].hp > 0).map((id) => ({ ratio: PARTY[id].hp / PARTY[id].maxhp, heal: () => healMember({ el: h.el }, id, mv.val) })),
+        ...Object.keys(PARTY).filter((id) => PARTY[id].hp > 0).map((id) => ({ ratio: PARTY[id].hp / PARTY[id].maxhp, heal: () => healMember({ el: h.el }, id, mv.val, { sfx: 'heal' }) })),
         ...aliveHelpers().filter((x) => x !== h).map((x) => ({ ratio: x.hp / x.maxhp, heal: () => healHelper({ el: h.el }, x, mv.val) })),
       ].sort((a, b) => a.ratio - b.ratio);
       if (cands.length && cands[0].ratio < 1) { bMsg(h.name + ' の とくぎ！ ' + mv.name + '！'); await cands[0].heal(); return; }
@@ -3337,6 +3387,7 @@ async function helperTurn(h) {
       const foes = aliveFoes(); if (!foes.length) return;
       const t = foes[0];
       bMsg(h.name + ' の とくぎ！ ' + mv.name + '！');
+      BGM.sfx.skill();
       const hits = mv.type === 'hit2' ? 2 : 1;
       for (let i = 0; i < hits && !t.dead; i++) await hitFoe({ el: h.el, side: -1 }, t, physDamage(h, t, mv.mult), { fx: i === 0 ? mv.fx : null, lunge: i === 0 });
       return;
@@ -3345,7 +3396,7 @@ async function helperTurn(h) {
   const foes = aliveFoes(); if (!foes.length) return;
   const t = foes[Math.floor(Math.random() * foes.length)];
   bMsg(h.name + ' の こうげき！');
-  await hitFoe({ el: h.el, side: -1 }, t, physDamage(h, t));
+  await hitFoe({ el: h.el, side: -1 }, t, physDamage(h, t), { sfx: 'attack' });
 }
 function checkEnd() {
   if (aliveFoes().length === 0) { battle.over = 'win'; return true; }
@@ -3388,13 +3439,14 @@ async function nonoTurn() {
       const foes = aliveFoes();
       const t = foes.length === 1 ? foes[0] : await pickTarget(foes, foes.map((f) => foeEl(f)));
       bMsg('nono の こうげき！');
-      await hitFoe({ el: memberEl('nono'), side: -1 }, t, physDamage(m, t, holyMult(t)));
+      await hitFoe({ el: memberEl('nono'), side: -1 }, t, physDamage(m, t, holyMult(t)), { sfx: 'attack' });
       break;
     }
     if (cmd === 'skill') {
       battle.skillLeft--;
       const st = swordStage(), beh = SWORD_BEHAVIOR[st];
       bMsg('nono の 必殺技！ ' + SWORDS[st][2] + '！');
+      BGM.sfx.skill();
       if (beh.type === 'all') {
         lunge(memberEl('nono'), -1);
         const hits = beh.hits || 1;
@@ -3426,15 +3478,17 @@ async function nonoTurn() {
         const foes = aliveFoes();
         const t = foes.length === 1 ? foes[0] : await pickTarget(foes, foes.map((f) => foeEl(f)));
         bMsg('nono は ' + spell.name + ' を となえた！');
+        BGM.sfx.magic();
         await hitFoe({ el: memberEl('nono'), side: -1 }, t, Math.max(1, m.atk + spell.pow + Math.floor(Math.random() * 4) - Math.floor(t.def / 2)), { fx: spell.fx });
       } else if (spell.kind === 'dmgAll') {
         bMsg('nono は ' + spell.name + ' を となえた！');
+        BGM.sfx.magic();
         for (const f of aliveFoes()) await hitFoe({ el: null }, f, Math.max(1, m.atk + Math.floor(Math.random() * 4) - f.def), { fx: spell.fx, lunge: false });
       } else if (spell.kind === 'heal') {
         const ids = Object.keys(PARTY);
         const t = await pickTarget(ids, ids.map((id) => memberEl(id)));
         bMsg('nono は ' + spell.name + ' を となえた！');
-        await healMember({ el: memberEl('nono') }, t, spell.pow);
+        await healMember({ el: memberEl('nono') }, t, spell.pow, { sfx: 'heal' });
       }
       break;
     }
@@ -3476,9 +3530,10 @@ async function npcTurn(id) {
     if (hurt && m.mp >= 4) {
       m.mp -= 4; refreshBattleUI();
       bMsg('ユイ は いやし を となえた！');
-      await healMember({ el: memberEl('yui') }, hurt, 26);
+      await healMember({ el: memberEl('yui') }, hurt, 26, { sfx: 'heal' });
     } else if (Math.random() < 0.35) {
       bMsg('ユイ の とくぎ！ れんしゃ！');
+      BGM.sfx.skill();
       for (let i = 0; i < 2; i++) {
         const foes = aliveFoes(); if (!foes.length) break;
         const t = foes[Math.floor(Math.random() * foes.length)];
@@ -3487,17 +3542,18 @@ async function npcTurn(id) {
     } else {
       const foes = aliveFoes(); const t = foes[Math.floor(Math.random() * foes.length)];
       bMsg('ユイ の こうげき！');
-      await hitFoe({ el: memberEl('yui'), side: -1 }, t, physDamage(m, t));
+      await hitFoe({ el: memberEl('yui'), side: -1 }, t, physDamage(m, t), { sfx: 'attack' });
     }
   } else if (id === 'rei') {
     const foes = aliveFoes(); const t = foes[Math.floor(Math.random() * foes.length)];
     if (Math.random() < 0.25) {
       bMsg('レイ の とくぎ！ かげぬい！');
+      BGM.sfx.skill();
       await hitFoe({ el: memberEl('rei'), side: -1 }, t, physDamage(m, t, 1.6), { crit: true, fx: 'shadow' });
     } else {
       const crit = Math.random() < 0.22;
       bMsg('レイ の こうげき！' + (crit ? ' 会心の一撃！' : ''));
-      await hitFoe({ el: memberEl('rei'), side: -1 }, t, physDamage(m, t, crit ? 1.8 : 1), { crit });
+      await hitFoe({ el: memberEl('rei'), side: -1 }, t, physDamage(m, t, crit ? 1.8 : 1), { crit, sfx: 'attack' });
     }
   }
   battle.plateEls[id].classList.remove('active');
