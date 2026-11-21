@@ -50,9 +50,10 @@
       radial-gradient(130vmin 105vmin at 50% 46%, #282633 0%, #23212c 52%, #1c1a25 100%);
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
     transition:opacity .6s; cursor:pointer; }
-  #splash img { width:min(86vmin, 560px); height:auto;
-    -webkit-mask-image: radial-gradient(132% 132% at 50% 46%, #000 28%, transparent 64%);
-    mask-image: radial-gradient(132% 132% at 50% 46%, #000 28%, transparent 64%); }
+  #splash img { display:block; width:min(82vmin, 540px); height:auto; border:2px solid #2a3242; }
+  /* タイトルロゴのウインドウ枠: 本編タイトル画面の .card と同じ仕様（白枠3px＋外側に bg 色と line 色の二重リング、内側の絵には line 色2pxの縁） */
+  #splash .logoframe { background:#151922; border:3px solid #ece6d6;
+    box-shadow:0 0 0 3px #0c0e13, 0 0 0 6px #2a3242; padding:12px; }
   #splash .hint { color:#ffe9c9; font-size:13px; letter-spacing:.14em;
     font-family:"Yu Gothic", "游ゴシック", YuGothic, "メイリオ", Meiryo, sans-serif;
     animation: splashBlink 1.6s ease-in-out infinite; }
@@ -246,7 +247,7 @@
 <div id="evolve"><canvas id="evoCanvas" width="8" height="16"></canvas><img id="evoImg" alt="" style="display:none; width:250px; height:250px; object-fit:contain"><div id="evoSide"><div id="evoTitle"></div><div id="evoText"></div><button id="evoOk">わかった</button></div></div>
 <div id="loading">読み込み中…</div>
 <div id="splash">
-  <img src="assets/logo.jpg" alt="NONO Blade of the Dawn HD-2D ver.">
+  <div class="logoframe"><img src="assets/logo.jpg" alt="NONO Blade of the Dawn HD-2D ver."></div>
   <div class="hint">タップではじめる</div>
 </div>
 <script>
