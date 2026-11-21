@@ -875,29 +875,48 @@ function placeHouse(parent, colliders, x, z, s = 1, roofKind = 'kawara') {
   return g;
 }
 function placeLabGate(parent, colliders, x, z) {
-  // 大迷宮の入口の石門（中央は通り抜けて入る）
+  // 大迷宮の入口の石門（A.50で大型化・豪華化。中央は通り抜けて入る）
   const g = new THREE.Group();
   const gateMat = new THREE.MeshStandardMaterial({ map: makeGroundTexture('stoneDark'), roughness: 1 });
-  const pilGeo = new THREE.BoxGeometry(0.7, 2.7, 0.7);
+  const trimMat = new THREE.MeshStandardMaterial({ color: 0x8a6f3c, metalness: 0.65, roughness: 0.35 });
+  const pilGeo = new THREE.BoxGeometry(1.05, 4.3, 1.05);
+  const baseGeo = new THREE.BoxGeometry(1.5, 0.5, 1.5);
+  const capGeo = new THREE.BoxGeometry(1.45, 0.45, 1.45);
   for (const sgn of [-1, 1]) {
-    const p = new THREE.Mesh(pilGeo, gateMat);
-    p.position.set(sgn * 0.95, 1.35, 0); p.castShadow = true;
-    g.add(p);
+    const base = new THREE.Mesh(baseGeo, gateMat); base.position.set(sgn * 1.7, 0.25, 0); base.castShadow = true; g.add(base);
+    const p = new THREE.Mesh(pilGeo, gateMat); p.position.set(sgn * 1.7, 2.4, 0); p.castShadow = true; g.add(p);
+    const cap = new THREE.Mesh(capGeo, gateMat); cap.position.set(sgn * 1.7, 4.75, 0); cap.castShadow = true; g.add(cap);
+    const band = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.18, 1.12), trimMat); band.position.set(sgn * 1.7, 3.6, 0); g.add(band);
   }
-  const lintel = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.5, 0.85), gateMat);
-  lintel.position.y = 2.85; lintel.castShadow = true;
-  g.add(lintel);
-  const dark = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 2.3), new THREE.MeshBasicMaterial({ color: 0x020204 }));
-  dark.position.set(0, 1.15, 0.1);
-  g.add(dark);
-  const step = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.14, 0.6), stoneMat);
-  step.position.set(0, 0.07, 0.55);
-  g.add(step);
+  const lintel = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.55, 1.0), gateMat); lintel.position.y = 5.25; lintel.castShadow = true; g.add(lintel);
+  const lintel2 = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.4, 0.9), gateMat); lintel2.position.y = 4.35; lintel2.castShadow = true; g.add(lintel2);
+  const trim = new THREE.Mesh(new THREE.BoxGeometry(5.45, 0.14, 1.05), trimMat); trim.position.y = 4.98; g.add(trim);
+  const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.42), new THREE.MeshStandardMaterial({ color: 0x1d4d43, emissive: 0x2fe8c0, emissiveIntensity: 1.8, roughness: 0.3 }));
+  orb.position.y = 6.0; g.add(orb);
+  const orbLight = new THREE.PointLight(0x2fe8c0, 10, 11); orbLight.position.set(0, 6.0, 0.6); g.add(orbLight);
+  const dark = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 3.9), new THREE.MeshBasicMaterial({ color: 0x020204 }));
+  dark.position.set(0, 1.95, 0.12); g.add(dark);
+  const lampMat = new THREE.MeshStandardMaterial({ color: 0xffc37a, emissive: 0xff9a3c, emissiveIntensity: 2.2 });
+  for (const sgn of [-1, 1]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.34, 1.5, 0.34), gateMat); post.position.set(sgn * 3.1, 0.75, 0.7); post.castShadow = true; g.add(post);
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.5, 0.55), lampMat); lamp.position.set(sgn * 3.1, 1.75, 0.7); g.add(lamp);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.35, 4), gateMat); roof.position.set(sgn * 3.1, 2.15, 0.7); roof.rotation.y = Math.PI / 4; g.add(roof);
+    const li = new THREE.PointLight(0xff9a3c, 7, 8); li.position.set(sgn * 3.1, 1.8, 0.9); g.add(li);
+    colliders.push({ x: x + sgn * 3.1, z: z + 0.7, r: 0.3 });
+  }
+  for (const sgn of [-1, 1]) {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.2, 0.6), gateMat); wing.position.set(sgn * 3.15, 1.1, -0.25); wing.castShadow = true; g.add(wing);
+    colliders.push({ x: x + sgn * 3.15, z: z - 0.25, r: 0.85 });
+  }
+  for (let i = 0; i < 3; i++) {
+    const step = new THREE.Mesh(new THREE.BoxGeometry(3.4 - i * 0.5, 0.13, 0.55), stoneMat);
+    step.position.set(0, 0.065 + i * 0.015, 1.15 - i * 0.42); g.add(step);
+  }
   g.position.set(x, 0, z);
   parent.add(g);
-  blobShadow(parent, 2.6, x, z + 0.3, 0.3);
-  colliders.push({ x: x - 0.95, z, r: 0.42 });
-  colliders.push({ x: x + 0.95, z, r: 0.42 });
+  blobShadow(parent, 5.2, x, z + 0.4, 0.3);
+  colliders.push({ x: x - 1.7, z, r: 0.7 });
+  colliders.push({ x: x + 1.7, z, r: 0.7 });
   return g;
 }
 function placeShrine(parent, colliders, x, z, scale = 1, rotY = 0, snowy = false) {
@@ -2487,6 +2506,29 @@ function generateLabyrinth(seed, opts = {}) {
   return { w, h, tiles, start, goal, rooms, pathLen: gd };
 }
 
+let labWallMesh = null, labGhostMesh = null, labWallPos = [];
+const labDummy = new THREE.Object3D();
+function updateLabWalls() {
+  if (!labWallMesh || !labGhostMesh) return;
+  const px = player.position.x, pz = player.position.z;
+  let n = 0;
+  labWallPos.forEach((wp, i) => {
+    const dz = wp.z - pz, dx = wp.x - px;
+    const fade = dz > 0.6 && dz < 6.4 && Math.abs(dx) < 4.6; // カメラとプレイヤーの間に割り込む手前の壁だけ透かす
+    if (fade) {
+      labDummy.position.set(wp.x, 1.3, wp.z); labDummy.scale.setScalar(0.0001); labDummy.updateMatrix();
+      labWallMesh.setMatrixAt(i, labDummy.matrix);
+      labDummy.scale.setScalar(1); labDummy.updateMatrix();
+      labGhostMesh.setMatrixAt(n++, labDummy.matrix);
+    } else {
+      labDummy.position.set(wp.x, 1.3, wp.z); labDummy.scale.setScalar(1); labDummy.updateMatrix();
+      labWallMesh.setMatrixAt(i, labDummy.matrix);
+    }
+  });
+  labGhostMesh.count = n;
+  labWallMesh.instanceMatrix.needsUpdate = true;
+  labGhostMesh.instanceMatrix.needsUpdate = true;
+}
 function buildLabyrinth(data) {
   const { w, h, tiles } = data;
   const group = new THREE.Group();
@@ -2520,6 +2562,12 @@ function buildLabyrinth(data) {
   });
   walls.castShadow = true; walls.receiveShadow = true;
   group.add(walls);
+  // 手前の壁のスケルトン表示（透過）用メッシュと壁位置の保持（A.50）
+  const wallsGhost = new THREE.InstancedMesh(new THREE.BoxGeometry(LAB_TILE, 2.6, LAB_TILE), new THREE.MeshStandardMaterial({ map: wTex, color: 0xa8b0be, roughness: 1, transparent: true, opacity: 0.22, depthWrite: false }), wallTiles.length);
+  wallsGhost.count = 0;
+  group.add(wallsGhost);
+  labWallMesh = walls; labGhostMesh = wallsGhost;
+  labWallPos = wallTiles.map(([x, y]) => ({ x: LAB_OX + (x + 0.5) * LAB_TILE, z: oz + (y + 0.5) * LAB_TILE }));
   // 入口の階段と戻り口の目印
   const sw = labWorldOf(data.start.x, data.start.y, data);
   const stairMat = new THREE.MeshStandardMaterial({ color: 0x3c414c, roughness: 1 });
@@ -2598,7 +2646,40 @@ function buildLabyrinth(data) {
     group.add(grp);
     treasures.push({ id, tx, ty, x: wp.x, z: wp.z, group: grp });
   });
-  return { group, colliders, treasures };
+  // 迷宮の敵（A.50で追加）: スタート部屋以外の各部屋に1体、部屋の中だけを徘徊する
+  const enemies = [];
+  {
+    const dist = bfsDist(tiles, w, h, data.start);
+    const inRoom = (tx, ty, r) => tx >= r.x && tx < r.x + r.w && ty >= r.y && ty < r.y + r.h;
+    const startRoom = data.rooms.find(r => inRoom(data.start.x, data.start.y, r));
+    const goalRoom = data.rooms.find(r => inRoom(data.goal.x, data.goal.y, r));
+    const zakoPool = ['onibi', 'chouchin', 'karakasa', 'mummy'];
+    const deepPool = ['gaikotsu', 'hitotsume', 'mummy', 'karakasa'];
+    for (const r of data.rooms) {
+      if (r === startRoom) continue;
+      let tx = r.cx, ty = r.cy;
+      if (tx === data.goal.x && ty === data.goal.y) tx += 1; // 宝珠のタイルには置かない
+      if (tiles[ty * w + tx] !== 0) continue;
+      const wp = labWorldOf(tx, ty, data);
+      const deep = (dist[ty * w + tx] || 0) > 9 || r === goalRoom;
+      const pool = deep ? deepPool : zakoPool;
+      const kindKey = pool[Math.floor(Math.random() * pool.length)];
+      const kind = ENEMY_KINDS[kindKey];
+      const tscale = (kind.tier === 'boss' || kind.tier === 'mid') ? 1.3 : 0.8;
+      const useDiag = tscale > 1 && DIAG_ASPECT[kindKey];
+      const useReal = !useDiag && REAL_ASPECT[kindKey];
+      const baseAspect = useDiag ? DIAG_ASPECT[kindKey] : useReal ? REAL_ASPECT[kindKey] : kind.aspect;
+      const fh = kind.h * tscale * (kind.fscale || 1);
+      const mesh = billboard(group, loadTex(useDiag ? `assets/enemy_${kindKey}_diag.png` : useReal ? `assets/enemy_${kindKey}_real.png` : kind.img), fh * baseAspect, fh, wp.x, wp.z, {});
+      const shadow = blobShadow(group, fh * 0.95, wp.x, wp.z, 0.3);
+      const actAspect = useDiag ? DIAG_ACT_ASPECT[kindKey] : useReal ? REAL_ACT_ASPECT[kindKey] : null;
+      const texB = actAspect ? loadTex(useDiag ? `assets/enemy_${kindKey}_diag_act.png` : `assets/enemy_${kindKey}_real_act.png`) : null;
+      const faceSign = useDiag ? (DIAG_FLIP[kindKey] ? 1 : -1) : useReal ? (REAL_FLIP[kindKey] ? 1 : -1) : 1;
+      const roam = { minX: LAB_OX + r.x * LAB_TILE + 0.4, maxX: LAB_OX + (r.x + r.w) * LAB_TILE - 0.4, minZ: oz + r.y * LAB_TILE + 0.4, maxZ: oz + (r.y + r.h) * LAB_TILE - 0.4 };
+      enemies.push({ mesh, shadow, kindKey, home: { x: wp.x, z: wp.z }, tx: wp.x, tz: wp.z, wait: Math.random() * 2, alive: true, respawnAt: 0, phase: Math.random() * 6, texA: mesh.material.map, texB, ratioB: actAspect ? actAspect / baseAspect : 1, onB: false, faceSign, roam });
+    }
+  }
+  return { group, colliders, treasures, enemies };
 }
 
 function disposeLabGroup(g) {
@@ -2619,7 +2700,8 @@ function enterLabyrinth(seed) {
     const built = buildLabyrinth(data);
     rt.group.add(built.group);
     rt.colliders = built.colliders;
-    lab = { data, visited: new Uint8Array(data.w * data.h), exitArmed: false, cleared: false, lastTx: -1, lastTy: -1, treasures: built.treasures || [] };
+    rt.enemies = built.enemies || [];
+    lab = { data, visited: new Uint8Array(data.w * data.h), exitArmed: false, cleared: false, lastTx: -1, lastTy: -1, ghostTx: -1, ghostTy: -1, treasures: built.treasures || [] };
     window.__lab = lab;
     const sw = labWorldOf(data.start.x, data.start.y, data);
     teleportTo(sw.x, sw.z, 4, [0, 1], REGIONS.labyrinth.centerX);
@@ -2689,6 +2771,7 @@ function labTick(t) {
   const d = lab.data;
   const pt = labTileOf(player.position.x, player.position.z, d);
   if (pt.x !== lab.lastTx || pt.y !== lab.lastTy) { lab.lastTx = pt.x; lab.lastTy = pt.y; labMarkVisited(); }
+  if (pt.x !== lab.ghostTx || pt.y !== lab.ghostTy) { lab.ghostTx = pt.x; lab.ghostTy = pt.y; updateLabWalls(); }
   const sw = labWorldOf(d.start.x, d.start.y, d);
   const dStart = Math.hypot(player.position.x - sw.x, player.position.z - sw.z);
   if (!lab.exitArmed && dStart > 3) lab.exitArmed = true;
@@ -3869,9 +3952,14 @@ function updateFieldEnemies(dt, t) {
     if (d < 0.2) {
       e.wait -= dt;
       if (e.wait <= 0) {
-        const R = REGIONS[area];
-        e.tx = THREE.MathUtils.clamp(e.home.x + (Math.random() - 0.5) * 7, R.bounds.minX + 0.6, R.bounds.maxX - 0.6);
-        e.tz = THREE.MathUtils.clamp(e.home.z + (Math.random() - 0.5) * 3.4, R.bounds.minZ + 0.5, R.bounds.maxZ - 0.5);
+        if (e.roam) { // 大迷宮の敵は自分の部屋の中だけを徘徊する
+          e.tx = e.roam.minX + 0.4 + Math.random() * Math.max(0.1, e.roam.maxX - e.roam.minX - 0.8);
+          e.tz = e.roam.minZ + 0.4 + Math.random() * Math.max(0.1, e.roam.maxZ - e.roam.minZ - 0.8);
+        } else {
+          const R = REGIONS[area];
+          e.tx = THREE.MathUtils.clamp(e.home.x + (Math.random() - 0.5) * 7, R.bounds.minX + 0.6, R.bounds.maxX - 0.6);
+          e.tz = THREE.MathUtils.clamp(e.home.z + (Math.random() - 0.5) * 3.4, R.bounds.minZ + 0.5, R.bounds.maxZ - 0.5);
+        }
         e.wait = 1.2 + Math.random() * 2.6;
       }
       p.y = 0;
