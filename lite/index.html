@@ -2842,7 +2842,7 @@ const clock = new THREE.Clock();
 
 // ================= BGM（WebAudioの簡易シーケンサー。フィールドとバトルで曲を切り替える） =================
 const BGM = (() => {
-  let ctx = null, master = null, timer = null, step = 0, nextT = 0, cur = 'field', muted = false;
+  let ctx = null, master = null, timer = null, step = 0, nextT = 0, cur = 'field', muted = false, echoWet = null;
   const bars = (arr) => arr.flat();
   const SONGS = {
     field: { bpm: 92,
@@ -2851,7 +2851,7 @@ const BGM = (() => {
     battle: { bpm: 138,
       mel: bars([[81,0,84,0,83,0,81,0],[81,0,88,0,86,0,84,0],[84,0,81,0,77,0,81,0],[83,0,86,0,83,0,79,0],[81,0,84,0,83,0,81,0],[88,0,86,0,84,0,83,0],[86,0,89,0,88,0,86,0],[83,0,80,0,83,0,0,0]]),
       bassRoot: [45,45,41,43,45,45,50,52], bassPat: [1,1,3,1,1,1,3,1] },
-    rival: { bpm: 152, hold: 1, bsus: 2.2,
+    rival: { bpm: 152, hold: 1, bsus: 2.2, echo: 0.22,
       mel: bars([[74,0,74,0,77,0,74,0],[72,0,74,0,76,0,74,0],[74,0,74,0,77,0,81,0],[79,0,77,76,77,0,0,0],[74,0,74,0,77,0,74,0],[72,0,74,0,76,0,79,0],[81,0,79,0,77,0,76,0],[74,0,72,0,74,0,0,0]]),
       mel2: bars([[70,0,0,0,74,0,0,0],[69,0,0,0,72,0,0,0],[70,0,0,0,74,0,77,0],[76,0,0,0,74,0,0,0],[70,0,0,0,74,0,0,0],[69,0,0,0,72,0,76,0],[77,0,76,0,74,0,72,0],[70,0,69,0,70,0,0,0]]),
       bassRoot: [50,50,46,48,50,50,43,45], bassPat: [1,0,3,0,1,0,3,0],
@@ -2911,6 +2911,11 @@ const BGM = (() => {
     try {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       master = ctx.createGain(); master.gain.value = muted ? 0 : 0.9; master.connect(ctx.destination);
+      const dly = ctx.createDelay(1.0); dly.delayTime.value = 0.23;
+      const fb = ctx.createGain(); fb.gain.value = 0.34;
+      const flt = ctx.createBiquadFilter(); flt.type = 'lowpass'; flt.frequency.value = 1800;
+      echoWet = ctx.createGain(); echoWet.gain.value = (SONGS[cur] && SONGS[cur].echo) || 0;
+      master.connect(dly); dly.connect(flt); flt.connect(fb); fb.connect(dly); flt.connect(echoWet); echoWet.connect(ctx.destination);
       step = 0; nextT = ctx.currentTime + 0.06;
       timer = setInterval(schedule, 42);
     } catch (e) { /* 音が出ない環境では無音で続行 */ }
@@ -2922,7 +2927,7 @@ const BGM = (() => {
       const t0 = ctx.currentTime + 0.03;
       [72, 76, 79, 84, 79, 84, 88].forEach((n, i) => tone(n, t0 + i * 0.11, 0.34, 'square', 0.05));
     },
-    set(name) { if (SONGS[name]) cur = name; },
+    set(name) { if (SONGS[name]) { cur = name; if (echoWet && ctx) echoWet.gain.setTargetAtTime(SONGS[name].echo || 0, ctx.currentTime, 0.1); } },
     toggle() { muted = !muted; if (master) master.gain.value = muted ? 0 : 0.9; return muted; },
   };
 })();
