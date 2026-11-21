@@ -3174,11 +3174,11 @@ const BGM = (() => {
       [72, 76, 79, 84, 79, 84, 88].forEach((n, i) => tone(n, t0 + i * 0.11, 0.34, 'square', 0.05));
     },
     sfx: { // バトルの効果音（BGMと同じマスター経由なので ♪ OFF で一緒に消える）
-      attack() { // こうげき：斬撃＋打撃
+      attack() { // こうげき：ズバッという斬撃（鋭いノイズの切り下げ→断ち切る衝撃）
         if (!ctx) return; const t = ctx.currentTime + 0.01;
-        bpNoise(t, 0.1, 0.18, 2800, 500);
-        sweep(300, 60, t, 0.1, 'square', 0.07);
-        kick(t);
+        bpNoise(t, 0.07, 0.24, 5200, 900);
+        bpNoise(t + 0.05, 0.1, 0.2, 1600, 220);
+        kick(t + 0.05);
       },
       magic() { // まほう：きらめく詠唱音
         if (!ctx) return; const t = ctx.currentTime + 0.01;
