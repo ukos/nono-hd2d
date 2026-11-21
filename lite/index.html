@@ -3961,32 +3961,36 @@ function buildTreasureBox() {
   const btn = document.getElementById('holyToggle');
   if (btn) btn.addEventListener('click', () => { SAVE.holyEquip = !SAVE.holyEquip; persistSave(); buildTreasureBox(); });
 }
+const MAP_GRID = [ // 全体マップの配置は出口（exits）の接続どおり＝2D版と同じ4×4（上が北）
+  ['reihou', 'shumatsu', 'tasogare', 'hyouga'],
+  ['hajimari', 'hakurei', 'daishinrin', 'kikai'],
+  ['shakusa', 'gunjou', 'umisoko', 'daikeikoku'],
+  ['kouren', 'kasumi', 'youkai', 'jungle'],
+];
 function drawMap() {
   const cv = document.getElementById('mapCanvas'), g = cv.getContext('2d');
   g.clearRect(0, 0, 640, 300);
-  const list = Object.entries(REGIONS).sort((a, b) => a[1].centerX - b[1].centerX);
-  const tw = 76, th = 128, gap = 4, x0 = 2, y0 = 8;
-  list.forEach(([id, r], i) => {
-    const x = x0 + (i % 8) * (tw + gap), y = y0 + Math.floor(i / 8) * (th + 18);
+  const tw = 154, th = 63, gap = 5, x0 = 3, y0 = 22;
+  g.fillStyle = '#bbc'; g.font = '11px sans-serif'; g.textAlign = 'left';
+  g.fillText('北 ↑', 6, 14);
+  MAP_GRID.forEach((row, ri) => row.forEach((id, ci) => {
+    const r = REGIONS[id]; if (!r) return;
+    const x = x0 + ci * (tw + gap), y = y0 + ri * (th + gap);
     g.fillStyle = '#' + (r.bg >>> 0).toString(16).padStart(6, '0');
     g.fillRect(x, y, tw, th);
     g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 1; g.strokeRect(x + .5, y + .5, tw - 1, th - 1);
-    g.fillStyle = '#fff'; g.font = '11px sans-serif'; g.textAlign = 'center';
-    const label = r.label;
-    if (label.length > 5) { g.fillText(label.slice(0, Math.ceil(label.length / 2)), x + tw / 2, y + 18); g.fillText(label.slice(Math.ceil(label.length / 2)), x + tw / 2, y + 32); }
-    else g.fillText(label, x + tw / 2, y + 22);
+    g.fillStyle = '#fff'; g.font = '12px sans-serif'; g.textAlign = 'center';
+    g.fillText(r.label, x + tw / 2, y + 17);
     if (id === area || (area === 'labyrinth' && id === 'tasogare')) {
       g.strokeStyle = '#ffd94d'; g.lineWidth = 3; g.strokeRect(x + 1, y + 1, tw - 2, th - 2);
       g.fillStyle = '#ffd94d'; g.font = 'bold 11px sans-serif';
-      g.fillText(area === 'labyrinth' ? '大迷宮の中' : '現在地', x + tw / 2, y + th - 22);
+      g.fillText(area === 'labyrinth' ? '大迷宮の中' : '現在地', x + tw / 2, y + th - 6);
       const b = r.bounds, px = x + (player.position.x - b.minX) / (b.maxX - b.minX) * tw, py = y + (player.position.z - b.minZ) / (b.maxZ - b.minZ) * th;
       g.fillStyle = '#ff5e5e'; g.beginPath(); g.arc(Math.max(x + 4, Math.min(x + tw - 4, px)), Math.max(y + 4, Math.min(y + th - 4, py)), 4.5, 0, 7); g.fill();
       g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.stroke();
     }
-  });
-  g.fillStyle = '#bbc'; g.font = '11px sans-serif'; g.textAlign = 'left';
-  g.fillText('北', 6, 296);
-  document.getElementById('mapNote').textContent = '地方は西から東へ一列に並び、端同士もつながっています。赤い点が今いる場所です。';
+  }));
+  document.getElementById('mapNote').textContent = '2D版と同じ4×4の配置です（上が北）。黄昏の地の北の石門が大迷宮の入口。赤い点が今いる場所です。';
 }
 function syncCamUI() {
   const set = (id, v, vid) => { document.getElementById(id).value = v; document.getElementById(vid).textContent = (+v).toFixed(1); };
