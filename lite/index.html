@@ -366,20 +366,15 @@ function makeGroundTexture(key) {
   return t;
 }
 const ORGANIC_GROUND_KEYS = new Set(['grass', 'sand', 'forestFloor', 'meadow', 'meadowDusk', 'dirtPath', 'wetbank', 'rock', 'snow', 'highland', 'ice', 'lavarock', 'lava', 'marsh']); // 有機質な地面はリピートを細かくして模様を粒状に戻す
-// 帯状の地面（小道・砂浜）の縁を、ギザギザに透かして下の地面へ馴染ませるアルファ
+// 帯状の地面（小道・砂浜）の縁を、滑らかに透かして下の地面へ馴染ませるアルファ
 function stripAlphaTexture() {
   const c = document.createElement('canvas'); c.width = c.height = 256;
   const x = c.getContext('2d');
   const img = x.createImageData(256, 256);
-  const jit = (px) => 16 * Math.sin(px * 0.0737) + 10 * Math.sin(px * 0.172 + 1.7) + 6 * Math.sin(px * 0.319 + 0.6); // x方向に周期的な縁の揺れ
-  let seed = 7;
-  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
   for (let py = 0; py < 256; py++) {
     for (let px = 0; px < 256; px++) {
-      const j = jit(px);
-      const dEdge = Math.min(py, 255 - py) - j; // 縁からの距離（揺れ込み）
-      let a = Math.max(0, Math.min(1, (dEdge + 26) / 52)); // 52pxかけて縁をぼかす
-      if (dEdge < 34 && rnd() < 0.24) a *= rnd() * 0.7; // 縁近くは斑に透かして下の地面を覗かせる
+      const dEdge = Math.min(py, 255 - py); // 縁からの距離
+      const a = Math.max(0, Math.min(1, (dEdge + 26) / 52)); // 52pxかけて縁をぼかす
       const v = Math.round(a * 255), o = (py * 256 + px) * 4;
       img.data[o] = img.data[o + 1] = img.data[o + 2] = v; img.data[o + 3] = 255;
     }
@@ -1463,7 +1458,6 @@ const REGIONS = {
     spawn: { x: 920.2, z: 0.4, row: 2 },
     grounds: [
       { tex: 'slab', repeat: [10, 5], w: 40, d: 18, x: 935, y: 0, z: 0.6 },
-      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 935, y: 0.012, z: 0.4 },
     ],
     scatter: [
       { t: 'rock', n: 10, seed: 233, x: [919, 951], zCenter: 0.6, offMin: 2.2, offMax: 7.8, s: [0.5, 1.0] },
@@ -2041,7 +2035,6 @@ const REGIONS = {
     spawn: { x: 680, z: 3.6, row: 4 },
     grounds: [
       { tex: 'meadow', repeat: [13, 6], w: 40, d: 18, x: 680, y: 0, z: 0.6 },
-      { tex: 'dirtPath', strip: true, repeat: [13, 1], w: 40, d: 3.1, x: 680, y: 0.012, z: 0.4 },
     ],
     scatter: [
       { t: 'flower', n: 380, seed: 157, x: [664, 696], zCenter: 0.6, offMin: 1.8, offMax: 8.4, s: [0.7, 1.3] },
@@ -2113,7 +2106,7 @@ const ENEMY_KINDS = {
   oni: { name: '鬼', img: 'assets/enemy_oni.png', act: 'assets/enemy_oni_act.png', aspect: 0.53, h: 1.35, hp: 34, atk: 14, def: 3, spd: 4, tier: 'mid' },
   onibi: { name: '鬼火', img: 'assets/enemy_onibi.png', act: 'assets/enemy_onibi_act.png', aspect: 1.02, h: 0.8, hp: 14, atk: 12, def: 1, spd: 4, tier: 'zako' },
   oogumo: { name: '森の大蜘蛛', img: 'assets/enemy_oogumo.png', act: 'assets/enemy_oogumo_act.png', aspect: 1.48, h: 1.9, hp: 85, atk: 14, def: 8, spd: 6, tier: 'boss' },
-  oowani: { name: '密林の主 大ワニ', img: 'assets/enemy_oowani.png', act: 'assets/enemy_oowani_act.png', aspect: 2.76, h: 1.9, hp: 104, atk: 17, def: 9, spd: 6, tier: 'boss' },
+  oowani: { name: '密林の主 大ワニ', img: 'assets/enemy_oowani.png', act: 'assets/enemy_oowani_act.png', aspect: 2.76, h: 1.9, fscale: 0.8, hp: 104, atk: 17, def: 9, spd: 6, tier: 'boss' },
   oowashi: { name: '天の大鷲', img: 'assets/enemy_oowashi.png', act: 'assets/enemy_oowashi_act.png', aspect: 1.82, h: 1.9, hp: 78, atk: 14, def: 7, spd: 8, tier: 'boss' },
   oozaru: { name: '大猿', img: 'assets/enemy_oozaru.png', act: 'assets/enemy_oozaru_act.png', aspect: 0.89, h: 0.95, hp: 46, atk: 14, def: 4, spd: 6, tier: 'mid' },
   oumu: { name: 'オウム', img: 'assets/enemy_oumu.png', act: 'assets/enemy_oumu_act.png', aspect: 1.4, h: 0.95, hp: 14, atk: 10, def: 1, spd: 10, tier: 'zako' },
@@ -2170,7 +2163,7 @@ const KIND_ALIAS = { spider: 'kumo', yeti: 'yukio' };
 // 中ボス・ボスの右斜めリアル絵の縦横比（フィールド表示にも同じ絵を使う）
 const DIAG_ASPECT = { kishin: 0.5, nue: 1.67, bear: 1.54, gaikotsu: 0.58, hitotsume: 0.51, hyouga: 0.95, iwaryu: 1.54, kgolem: 0.54, koorioni: 0.97, kyojin: 0.95, nurikabe: 0.67, oni: 0.52, oogumo: 1.47, oowani: 2.8, oowashi: 1.87, pontanuki: 0.64, robo: 0.75, tonosama: 0.56, wani: 2.19, yukio: 0.96, oozaru: 0.62, golem: 0.69, shiyuu: 1.534, shiyuu2: 1.204 };
 // ライバルの右斜めリアル絵の縦横比（フィールド・バトル共用）
-const REAL_ASPECT = { akuryou: 0.81, bandit: 0.5, chouchin: 0.54, dokuhebi: 1.63, drone: 1.57, dwolf: 0.99, eagle: 1.109, fox: 1.25, gama: 1.31, griffon: 1.0, hawk: 0.86, hibat: 0.84, iwagani: 0.65, kaeru: 0.9, kaizoku: 0.6, kamome: 0.75, kani: 1.133, karakasa: 0.81, karasu: 0.58, karyu: 0.78, kinokoob: 0.66, kitsune: 1.52, komori: 0.92, kumo: 0.984, kurage: 0.804, leever: 0.6, marten: 3.034, mogura: 0.9, mukade: 1.29, mummy: 0.49, ninja: 0.52, onibi: 0.87, oumu: 0.96, raichou: 1.022, same: 1.605, scorpion: 1.39, shinigami: 0.78, shirofukuro: 0.973, squirrel: 1.016, tako: 0.57, tanuki: 0.89, tengu: 0.79, utsubo: 1.44, vulture: 0.78, wolf: 1.67, x_acorn: 0.62, x_bluejelly: 1.08, x_boar: 1.6, x_cactus: 0.79, x_darkocto: 1.29, x_kappa: 1.36, x_mushcat: 0.82, x_owl: 0.696, x_purpmush: 0.76, x_rabbit: 0.8, x_whiterabbit: 0.79, yadokari: 1.03, yamiinu: 0.9, yougan: 0.862, yukiookami: 1.639, ankou: 0.945, cobra: 0.635, deer: 0.634, foxsq: 0.7, gorori: 1.335, hachi: 0.641, hirari: 1.505, koorislime: 1.112, morikuma: 0.492, puru: 1.946, tobiuo: 1.085, washi: 0.933, yagi: 0.726, kingcrab: 1.969 };
+const REAL_ASPECT = { akuryou: 0.81, bandit: 0.5, chouchin: 0.54, dokuhebi: 1.63, drone: 1.57, dwolf: 0.99, eagle: 1.109, fox: 1.25, gama: 1.31, griffon: 1.0, hawk: 0.86, hibat: 0.84, iwagani: 0.65, kaeru: 0.9, kaizoku: 0.6, kamome: 0.75, kani: 1.133, karakasa: 0.81, karasu: 0.58, karyu: 0.78, kinokoob: 0.66, kitsune: 1.52, komori: 0.92, kumo: 0.984, kurage: 0.804, leever: 0.6, marten: 3.034, mogura: 0.9, mukade: 1.29, mummy: 0.49, ninja: 0.52, onibi: 0.87, oumu: 1.444, raichou: 1.022, same: 1.605, scorpion: 1.39, shinigami: 0.78, shirofukuro: 0.973, squirrel: 1.016, tako: 0.57, tanuki: 0.89, tengu: 0.79, utsubo: 1.44, vulture: 0.78, wolf: 1.67, x_acorn: 0.62, x_bluejelly: 1.08, x_boar: 1.6, x_cactus: 0.79, x_darkocto: 1.29, x_kappa: 1.36, x_mushcat: 0.82, x_owl: 0.696, x_purpmush: 0.76, x_rabbit: 0.8, x_whiterabbit: 0.79, yadokari: 1.03, yamiinu: 0.9, yougan: 0.862, yukiookami: 1.639, ankou: 0.945, cobra: 0.635, deer: 0.634, foxsq: 0.7, gorori: 1.335, hachi: 0.641, hirari: 1.505, koorislime: 1.112, morikuma: 0.492, puru: 1.946, tobiuo: 1.085, washi: 0.933, yagi: 0.726, kingcrab: 1.969 };
 const REAL_FLIP = { fox: 1, yukiookami: 1, tanuki: 1, x_rabbit: 1, x_boar: 1, utsubo: 1, scorpion: 1, dwolf: 1, griffon: 1, vulture: 1, leever: 1, mukade: 1, x_owl: 1, kinokoob: 1, komori: 1, x_mushcat: 1, x_whiterabbit: 1, kaeru: 1, mummy: 1, ninja: 1, x_acorn: 1, x_cactus: 1 };
 // 中ボス・ボスの斜め絵のうち左向きのもの（フィールド移動とバトルの反転に使う）
 const DIAG_FLIP = { gaikotsu: 1, hitotsume: 1, oowani: 1, pontanuki: 1, tonosama: 1 };
@@ -2318,8 +2311,9 @@ function buildRegion(id, def) {
     const useDiag = tscale > 1 && DIAG_ASPECT[e.kind];
     const useReal = !useDiag && REAL_ASPECT[e.kind];
     const baseAspect = useDiag ? DIAG_ASPECT[e.kind] : useReal ? REAL_ASPECT[e.kind] : kind.aspect;
-    const mesh = billboard(group, loadTex(useDiag ? `assets/enemy_${e.kind}_diag.png` : useReal ? `assets/enemy_${e.kind}_real.png` : kind.img), kind.h * tscale * baseAspect, kind.h * tscale, e.x, e.z, {});
-    const shadow = blobShadow(group, kind.h * tscale * 0.95, e.x, e.z, 0.3);
+    const fh = kind.h * tscale * (kind.fscale || 1);
+    const mesh = billboard(group, loadTex(useDiag ? `assets/enemy_${e.kind}_diag.png` : useReal ? `assets/enemy_${e.kind}_real.png` : kind.img), fh * baseAspect, fh, e.x, e.z, {});
+    const shadow = blobShadow(group, fh * 0.95, e.x, e.z, 0.3);
     const actAspect = useDiag ? DIAG_ACT_ASPECT[e.kind] : useReal ? REAL_ACT_ASPECT[e.kind] : null;
     const texB = actAspect ? loadTex(useDiag ? `assets/enemy_${e.kind}_diag_act.png` : `assets/enemy_${e.kind}_real_act.png`) : null;
     const faceSign = useDiag ? (DIAG_FLIP[e.kind] ? 1 : -1) : useReal ? (REAL_FLIP[e.kind] ? 1 : -1) : 1;
