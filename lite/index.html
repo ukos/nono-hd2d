@@ -2851,7 +2851,7 @@ const BGM = (() => {
     battle: { bpm: 138,
       mel: bars([[81,0,84,0,83,0,81,0],[81,0,88,0,86,0,84,0],[84,0,81,0,77,0,81,0],[83,0,86,0,83,0,79,0],[81,0,84,0,83,0,81,0],[88,0,86,0,84,0,83,0],[86,0,89,0,88,0,86,0],[83,0,80,0,83,0,0,0]]),
       bassRoot: [45,45,41,43,45,45,50,52], bassPat: [1,1,3,1,1,1,3,1] },
-    rival: { bpm: 152, sus: 3.4, bsus: 2.2,
+    rival: { bpm: 152, hold: 1, bsus: 2.2,
       mel: bars([[74,0,74,0,77,0,74,0],[72,0,74,0,76,0,74,0],[74,0,74,0,77,0,81,0],[79,0,77,76,77,0,0,0],[74,0,74,0,77,0,74,0],[72,0,74,0,76,0,79,0],[81,0,79,0,77,0,76,0],[74,0,72,0,74,0,0,0]]),
       mel2: bars([[70,0,0,0,74,0,0,0],[69,0,0,0,72,0,0,0],[70,0,0,0,74,0,77,0],[76,0,0,0,74,0,0,0],[70,0,0,0,74,0,0,0],[69,0,0,0,72,0,76,0],[77,0,76,0,74,0,72,0],[70,0,69,0,70,0,0,0]]),
       bassRoot: [50,50,46,48,50,50,43,45], bassPat: [1,0,3,0,1,0,3,0],
@@ -2859,12 +2859,13 @@ const BGM = (() => {
       drmK: [1,0,0,0,1,0,0,0], drmS: [0,0,1,0,0,0,1,0], drmH: [0,1,0,1,0,1,0,1] },
   };
   function freq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
-  function tone(m, t, dur, type, vol) {
+  function tone(m, t, dur, type, vol, hold) {
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.type = type; o.frequency.value = freq(m);
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(vol, t + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    if (hold) { g.gain.setValueAtTime(vol, t + Math.max(0.012, dur - 0.09)); g.gain.exponentialRampToValueAtTime(0.0008, t + dur); }
+    else g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
     o.connect(g); g.connect(master);
     o.start(t); o.stop(t + dur + 0.05);
   }
@@ -2888,15 +2889,16 @@ const BGM = (() => {
     srcN.connect(g); g.connect(master);
     srcN.start(t); srcN.stop(t + dur + 0.02);
   }
+  function stepsToNext(arr, i) { for (let k = 1; k <= 8; k++) if (arr[(i + k) % 64]) return k; return 8; }
   function schedule() {
     const S = SONGS[cur], stepDur = 60 / S.bpm / 2;
     while (nextT < ctx.currentTime + 0.16) {
       const bar = Math.floor(step / 8), s = step % 8;
       const m = S.mel[step];
-      if (m) tone(m, nextT, stepDur * (S.sus || 1.7), 'square', 0.042);
+      if (m) { if (S.hold) tone(m, nextT, stepDur * stepsToNext(S.mel, step), 'square', 0.042, true); else tone(m, nextT, stepDur * (S.sus || 1.7), 'square', 0.042); }
       const bp = S.bassPat[s];
       if (bp) tone(S.bassRoot[bar] + (bp === 2 ? 7 : bp === 3 ? 12 : 0), nextT, stepDur * (S.bsus || 1.4), 'triangle', 0.075);
-      if (S.mel2) { const m2 = S.mel2[step]; if (m2) tone(m2, nextT, stepDur * (S.sus || 1.7), 'square', 0.024); }
+      if (S.mel2) { const m2 = S.mel2[step]; if (m2) { if (S.hold) tone(m2, nextT, stepDur * stepsToNext(S.mel2, step), 'square', 0.024, true); else tone(m2, nextT, stepDur * (S.sus || 1.7), 'square', 0.024); } }
       if (S.pad && (s === 0 || s === 4)) for (const pn of S.pad[bar]) tone(pn, nextT, stepDur * 3.8, 'triangle', 0.015);
       if (S.drmK && S.drmK[s]) kick(nextT);
       if (S.drmS && S.drmS[s]) noiseHit(nextT, 0.09, 0.05);
