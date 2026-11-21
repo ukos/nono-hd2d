@@ -50,9 +50,9 @@
       radial-gradient(130vmin 105vmin at 50% 46%, #282633 0%, #23212c 52%, #1c1a25 100%);
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
     transition:opacity .6s; cursor:pointer; }
-  #splash img { display:block; width:min(82vmin, 540px); height:auto; border:2px solid #2a3242; }
+  #splash img { display:block; width:min(82vmin, 540px); height:auto; border:2px solid #2a3242; border-radius:8px; }
   /* タイトルロゴのウインドウ枠: 本編タイトル画面の .card と同じ仕様（白枠3px＋外側に bg 色と line 色の二重リング、内側の絵には line 色2pxの縁） */
-  #splash .logoframe { background:#151922; border:3px solid #ece6d6;
+  #splash .logoframe { background:#151922; border:3px solid #ece6d6; border-radius:16px;
     box-shadow:0 0 0 3px #0c0e13, 0 0 0 6px #2a3242; padding:12px; }
   #splash .hint { color:#ffe9c9; font-size:13px; letter-spacing:.14em;
     font-family:"Yu Gothic", "游ゴシック", YuGothic, "メイリオ", Meiryo, sans-serif;
@@ -298,7 +298,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const loadingEl = document.getElementById('loading');
 const manager = new THREE.LoadingManager();
-manager.onLoad = () => { loadingEl.style.opacity = '0'; setTimeout(() => loadingEl.remove(), 700); };
+manager.onLoad = () => { loadingEl.style.opacity = '0'; setTimeout(() => loadingEl.remove(), 700); ['nono', 'yui', 'rei'].forEach((id) => { const pi = new Image(); pi.src = 'assets/battle_' + id + '.webp'; }); };
 manager.onError = (u) => { loadingEl.textContent = '読み込みに失敗しました: ' + u; };
 // 読み込みが止まったまま終わらない場合の保険: 15秒でローディング画面を閉じる（テクスチャは届き次第あとから表示される）
 setTimeout(() => { const el = document.getElementById('loading'); if (el && el.textContent.indexOf('読み込み中') === 0) { el.style.opacity = '0'; setTimeout(() => el.remove(), 700); } }, 15000);
@@ -3978,12 +3978,14 @@ function buildBattleDOM(kindKey, count) {
     const mbase = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (id === 'yui' ? 1 : 0.9);
     setCharFrame(ch, 6, 1, mbase);
     d.appendChild(ch);
+    ch.style.visibility = 'hidden'; // バトル絵が届くまで歩行スプライトを出さない（突入時の一瞬の映り込み防止）
     const dg = document.createElement('img');
     dg.className = 'bdiag'; dg.alt = '';
     dg.style.height = mbase + 'px';
-    dg.onload = () => { if (dg.naturalWidth > 0) ch.style.visibility = 'hidden'; else dg.remove(); };
-    dg.onerror = () => { if (!dg.dataset.fb) { dg.dataset.fb = '1'; dg.src = 'assets/battle_' + id + '.png'; } else dg.remove(); };
+    dg.onload = () => { if (dg.naturalWidth > 0) ch.style.visibility = 'hidden'; else { dg.remove(); ch.style.visibility = ''; } };
+    dg.onerror = () => { if (!dg.dataset.fb) { dg.dataset.fb = '1'; dg.src = 'assets/battle_' + id + '.png'; } else { dg.remove(); ch.style.visibility = ''; } };
     dg.src = 'assets/battle_' + id + '.webp';
+    setTimeout(() => { if (dg.isConnected && !dg.complete) ch.style.visibility = ''; }, 2500); // 読み込みが長引いた場合だけスプライトを出す保険
     d.appendChild(dg);
     attachHeldWeapon(d, id, mbase);
     bp.appendChild(d);
@@ -4499,12 +4501,14 @@ function buildPartyDOM() {
     const mbase = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (id === 'yui' ? 1 : 0.9);
     setCharFrame(ch, 6, 1, mbase);
     d.appendChild(ch);
+    ch.style.visibility = 'hidden'; // バトル絵が届くまで歩行スプライトを出さない（突入時の一瞬の映り込み防止）
     const dg = document.createElement('img');
     dg.className = 'bdiag'; dg.alt = '';
     dg.style.height = mbase + 'px';
-    dg.onload = () => { if (dg.naturalWidth > 0) ch.style.visibility = 'hidden'; else dg.remove(); };
-    dg.onerror = () => { if (!dg.dataset.fb) { dg.dataset.fb = '1'; dg.src = 'assets/battle_' + id + '.png'; } else dg.remove(); };
+    dg.onload = () => { if (dg.naturalWidth > 0) ch.style.visibility = 'hidden'; else { dg.remove(); ch.style.visibility = ''; } };
+    dg.onerror = () => { if (!dg.dataset.fb) { dg.dataset.fb = '1'; dg.src = 'assets/battle_' + id + '.png'; } else { dg.remove(); ch.style.visibility = ''; } };
     dg.src = 'assets/battle_' + id + '.webp';
+    setTimeout(() => { if (dg.isConnected && !dg.complete) ch.style.visibility = ''; }, 2500); // 読み込みが長引いた場合だけスプライトを出す保険
     d.appendChild(dg);
     attachHeldWeapon(d, id, mbase);
     bp.appendChild(d);
