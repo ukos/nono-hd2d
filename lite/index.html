@@ -68,6 +68,7 @@
   .bunit { position:absolute; transform:translateX(-50%); transition:transform .18s ease; text-align:center; }
   .bunit img { display:block; margin:0 auto; filter:drop-shadow(0 6px 6px rgba(0,0,0,.45)); }
   .bunit .bname { color:#fff; font-size:12px; text-shadow:0 1px 3px #000; margin-top:2px; }
+  .bhelper .bname { color:#ffe9a8; }
   .bunit .bbar { width:74px; height:6px; margin:3px auto 0; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.5); border-radius:3px; overflow:hidden; }
   .bunit .bbar i { display:block; height:100%; background:#7dd069; transition:width .35s; }
   .bunit.dead { opacity:0; transform:translateX(-50%) translateY(14px); transition:opacity .5s, transform .5s; }
@@ -2169,7 +2170,7 @@ const KIND_ALIAS = { spider: 'kumo', yeti: 'yukio' };
 // 中ボス・ボスの右斜めリアル絵の縦横比（フィールド表示にも同じ絵を使う）
 const DIAG_ASPECT = { kishin: 0.5, nue: 1.67, bear: 1.54, gaikotsu: 0.58, hitotsume: 0.51, hyouga: 0.95, iwaryu: 1.54, kgolem: 0.54, koorioni: 0.97, kyojin: 0.95, nurikabe: 0.67, oni: 0.52, oogumo: 1.47, oowani: 2.8, oowashi: 1.87, pontanuki: 0.64, robo: 0.75, tonosama: 0.56, wani: 2.19, yukio: 0.96, oozaru: 0.62, golem: 0.69, shiyuu: 1.534, shiyuu2: 0.667 };
 // ライバルの右斜めリアル絵の縦横比（フィールド・バトル共用）
-const REAL_ASPECT = { akuryou: 0.81, bandit: 0.5, chouchin: 0.54, dokuhebi: 1.63, drone: 1.581, dwolf: 0.99, eagle: 1.109, fox: 1.25, gama: 1.31, griffon: 1.0, hawk: 0.57, hibat: 0.84, iwagani: 0.65, kaeru: 0.9, kaizoku: 0.6, kamome: 0.75, kani: 1.133, karakasa: 0.81, karasu: 0.58, karyu: 0.78, kinokoob: 0.66, kitsune: 1.52, komori: 0.92, kumo: 0.49, kurage: 0.804, leever: 0.6, marten: 3.034, mogura: 0.9, mukade: 1.29, mummy: 0.49, ninja: 0.52, onibi: 0.87, oumu: 0.96, raichou: 1.022, same: 1.342, scorpion: 1.39, shinigami: 0.78, shirofukuro: 0.973, squirrel: 1.016, tako: 0.57, tanuki: 0.89, tengu: 0.79, utsubo: 1.44, vulture: 0.78, wolf: 1.22, x_acorn: 0.62, x_bluejelly: 1.08, x_boar: 1.6, x_cactus: 0.79, x_darkocto: 1.29, x_kappa: 1.36, x_mushcat: 0.82, x_owl: 1.47, x_purpmush: 0.76, x_rabbit: 0.8, x_whiterabbit: 0.79, yadokari: 1.03, yamiinu: 0.9, yougan: 0.9, yukiookami: 1.798, ankou: 0.945, cobra: 0.596, deer: 0.634, foxsq: 0.696, gorori: 1.335, hachi: 0.641, hirari: 1.505, koorislime: 1.112, morikuma: 0.447, puru: 1.946, tobiuo: 1.085, washi: 0.682, yagi: 0.611, kingcrab: 1.969 };
+const REAL_ASPECT = { akuryou: 0.81, bandit: 0.5, chouchin: 0.54, dokuhebi: 1.63, drone: 1.57, dwolf: 0.99, eagle: 1.109, fox: 1.25, gama: 1.31, griffon: 1.0, hawk: 0.86, hibat: 0.84, iwagani: 0.65, kaeru: 0.9, kaizoku: 0.6, kamome: 0.75, kani: 1.133, karakasa: 0.81, karasu: 0.58, karyu: 0.78, kinokoob: 0.66, kitsune: 1.52, komori: 0.92, kumo: 0.984, kurage: 0.804, leever: 0.6, marten: 3.034, mogura: 0.9, mukade: 1.29, mummy: 0.49, ninja: 0.52, onibi: 0.87, oumu: 0.96, raichou: 1.022, same: 1.605, scorpion: 1.39, shinigami: 0.78, shirofukuro: 0.973, squirrel: 1.016, tako: 0.57, tanuki: 0.89, tengu: 0.79, utsubo: 1.44, vulture: 0.78, wolf: 1.67, x_acorn: 0.62, x_bluejelly: 1.08, x_boar: 1.6, x_cactus: 0.79, x_darkocto: 1.29, x_kappa: 1.36, x_mushcat: 0.82, x_owl: 0.696, x_purpmush: 0.76, x_rabbit: 0.8, x_whiterabbit: 0.79, yadokari: 1.03, yamiinu: 0.9, yougan: 0.862, yukiookami: 1.639, ankou: 0.945, cobra: 0.635, deer: 0.634, foxsq: 0.7, gorori: 1.335, hachi: 0.641, hirari: 1.505, koorislime: 1.112, morikuma: 0.492, puru: 1.946, tobiuo: 1.085, washi: 0.933, yagi: 0.726, kingcrab: 1.969 };
 const REAL_FLIP = { fox: 1, yukiookami: 1, tanuki: 1, x_rabbit: 1, x_boar: 1, utsubo: 1, scorpion: 1, dwolf: 1, griffon: 1, vulture: 1, leever: 1, mukade: 1, x_owl: 1, kinokoob: 1, komori: 1, x_mushcat: 1, x_whiterabbit: 1, kaeru: 1, mummy: 1, ninja: 1, x_acorn: 1, x_cactus: 1 };
 // 中ボス・ボスの斜め絵のうち左向きのもの（フィールド移動とバトルの反転に使う）
 const DIAG_FLIP = { gaikotsu: 1, hitotsume: 1, oowani: 1, pontanuki: 1, tonosama: 1 };
@@ -2177,7 +2178,7 @@ const DIAG_FLIP = { gaikotsu: 1, hitotsume: 1, oowani: 1, pontanuki: 1, tonosama
 const RIVAL_FLIP = { kogane: 1 };
 const RIVAL_DIAG_ASPECT = { akane: 0.68, gou: 0.69, hayate: 0.7, homura: 0.71, iwao: 0.7, kogane: 0.79, kotetsu: 0.82, kurogane: 0.71, mei: 0.7, mizuchi: 0.69, nibulus: 0.72, sasuke: 0.75, shiro: 0.64, tanurio: 0.74, yoru: 0.72 };
 // フィールド移動アニメ用: 2コマ目の縦横比（実測）。移動中だけテクスチャを切り替える
-const REAL_ACT_ASPECT = { akuryou: 0.811, bandit: 0.482, chouchin: 0.566, dokuhebi: 1.15, drone: 1.885, dwolf: 0.63, eagle: 0.883, fox: 1.417, gama: 1.029, griffon: 1.193, hawk: 0.86, hibat: 0.795, iwagani: 0.879, kaeru: 0.852, kaizoku: 0.601, kamome: 0.688, kani: 1.006, karakasa: 0.793, karasu: 0.506, karyu: 0.834, kinokoob: 0.605, kitsune: 1.474, komori: 0.406, kumo: 0.633, kurage: 0.722, leever: 0.637, marten: 3.324, mogura: 0.81, mukade: 1.286, mummy: 0.483, ninja: 0.558, onibi: 0.596, oumu: 0.789, raichou: 0.677, same: 1.494, scorpion: 1.297, shinigami: 0.754, shirofukuro: 1.007, squirrel: 0.881, tako: 0.768, tanuki: 1.011, tengu: 0.779, utsubo: 1.957, vulture: 0.874, wolf: 1.671, x_acorn: 0.623, x_bluejelly: 1.3, x_boar: 1.449, x_cactus: 0.82, x_darkocto: 1.307, x_kappa: 1.322, x_mushcat: 0.744, x_owl: 1.072, x_purpmush: 0.893, x_rabbit: 0.833, x_whiterabbit: 1.124, yadokari: 1.271, yamiinu: 0.632, yougan: 2.014, yukiookami: 2.544, ankou: 0.922, cobra: 0.726, deer: 0.699, foxsq: 0.7, gorori: 1.335, hachi: 0.641, hirari: 1.505, koorislime: 1.278, morikuma: 0.547, puru: 1.946, tobiuo: 1.339, washi: 0.725, yagi: 0.611, kingcrab: 1.78 };
+const REAL_ACT_ASPECT = { akuryou: 0.811, bandit: 0.482, chouchin: 0.566, dokuhebi: 1.15, drone: 2.227, dwolf: 0.63, eagle: 0.883, fox: 1.417, gama: 1.029, griffon: 1.193, hawk: 0.86, hibat: 0.795, iwagani: 0.879, kaeru: 0.852, kaizoku: 0.601, kamome: 1.355, kani: 1.006, karakasa: 0.793, karasu: 0.506, karyu: 0.834, kinokoob: 0.605, kitsune: 1.474, komori: 0.406, kumo: 0.952, kurage: 0.722, leever: 0.637, marten: 3.324, mogura: 0.81, mukade: 1.286, mummy: 0.483, ninja: 0.558, onibi: 0.747, oumu: 0.789, raichou: 0.781, same: 1.494, scorpion: 1.815, shinigami: 0.754, shirofukuro: 1.007, squirrel: 0.881, tako: 0.768, tanuki: 1.011, tengu: 0.779, utsubo: 1.957, vulture: 0.874, wolf: 1.671, x_acorn: 0.623, x_bluejelly: 1.3, x_boar: 1.449, x_cactus: 0.82, x_darkocto: 1.301, x_kappa: 1.322, x_mushcat: 0.744, x_owl: 1.876, x_purpmush: 0.893, x_rabbit: 0.833, x_whiterabbit: 1.124, yadokari: 1.271, yamiinu: 0.95, yougan: 1.037, yukiookami: 2.741, ankou: 0.922, cobra: 0.726, deer: 0.638, foxsq: 0.7, gorori: 1.335, hachi: 0.641, hirari: 1.505, koorislime: 1.278, morikuma: 0.581, puru: 1.946, tobiuo: 1.339, washi: 1.184, yagi: 0.726, kingcrab: 1.78 };
 const DIAG_ACT_ASPECT = { bear: 1.385, gaikotsu: 0.59, golem: 0.658, hitotsume: 0.55, hyouga: 0.817, iwaryu: 1.528, kgolem: 0.533, kishin: 0.505, koorioni: 0.781, kyojin: 0.844, nue: 1.716, nurikabe: 0.622, oni: 0.504, oogumo: 1.534, oowani: 2.999, oowashi: 1.889, oozaru: 0.806, pontanuki: 0.639, robo: 0.754, tonosama: 0.572, wani: 2.174, yukio: 0.916 };
 const PARTY = {
   nono: { name: 'nono', sheet: 'assets/nono_sheet8c.png', hp: 62, maxhp: 62, mp: 18, maxmp: 18, atk: 14, def: 6, spd: 8 },
@@ -2223,7 +2224,7 @@ function buildRegion(id, def) {
     const gm = ORGANIC_GROUND_KEYS.has(g.tex) ? 3 : 2; // 高精細化: 模様を細かく（有機質はより細かく）
     if (g.tex) {
       const tex = makeGroundTexture(g.tex);
-      tex.repeat.set(g.repeat[0] * gm, g.repeat[1] * gm);
+      tex.repeat.set(g.repeat[0] * gm, g.strip ? g.repeat[1] : g.repeat[1] * gm); // 帯は深さ方向に繰り返さない
       mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 1 });
     } else {
       mat = new THREE.MeshStandardMaterial({ color: g.color, roughness: 1 });
@@ -2232,7 +2233,8 @@ function buildRegion(id, def) {
       if (!_stripAlpha) { _stripAlpha = stripAlphaTexture(); _softAlpha = softAlphaTexture(); }
       const at = (g.strip ? _stripAlpha : _softAlpha).clone();
       at.wrapS = at.wrapT = THREE.RepeatWrapping;
-      at.repeat.set(g.repeat ? g.repeat[0] * gm : 1, g.repeat ? g.repeat[1] * gm : 1);
+      if (g.soft) at.repeat.set(1, 1); // 池状の面は1枚全体で1つの縁ぼかし（繰り返すと円盤の並びになる）
+      else at.repeat.set(g.repeat ? g.repeat[0] * gm : 1, 1); // 帯の縁ぼかしは深さ方向に繰り返さない
       at.needsUpdate = true;
       mat.transparent = true;
       mat.alphaMap = at;
@@ -2908,6 +2910,11 @@ function refreshBattleUI() {
     const bar = battle.foeEls[i].querySelector('.bbar i');
     if (bar) bar.style.width = Math.max(0, f.hp / f.maxhp * 100) + '%';
   });
+  if (battle.helpers) for (const h of battle.helpers.active) {
+    if (!h.el) continue;
+    const bar = h.el.querySelector('.bbar i');
+    if (bar) bar.style.width = Math.max(0, h.hp / h.maxhp * 100) + '%';
+  }
   for (const [id, m] of Object.entries(PARTY)) {
     const p = battle.plateEls[id];
     if (!p) continue;
@@ -2965,7 +2972,7 @@ async function hitFoe(att, f, dmg, opt = {}) {
       const k2 = ENEMY_KINDS.shiyuu2;
       f.kind = k2; f.name = k2.name; f.maxhp = k2.hp; f.hp = k2.hp; f.atk = k2.atk; f.def = k2.def; f.spd = k2.spd;
       const im = el.querySelector('img');
-      if (im) im.src = 'assets/enemy_shiyuu2_diag.png';
+      if (im) { im.src = 'assets/enemy_shiyuu2_diag.png'; if (battle.shiyuuStdH) im.style.height = battle.shiyuuStdH + 'px'; el.style.bottom = '30%'; } // 第2形態は通常のボスの大きさ・位置
       const nm = el.querySelector('.bname'); if (nm) nm.textContent = k2.name;
       refreshBattleUI();
       bMsg('大悪魔・蚩尤 が 真の姿 を あらわした！');
@@ -2997,6 +3004,84 @@ async function healMember(att, id, val, opt = {}) {
 }
 function aliveFoes() { return battle.foes.filter((f) => !f.dead); }
 function aliveMembers() { return Object.keys(PARTY).filter((id) => PARTY[id].hp > 0); }
+// ---------- 蚩尤戦の助っ人（十二支ライバルが2人ずつ交代で参戦） ----------
+const HELPER_PAIRS = [['ニブルス', 'イワオ'], ['虎鉄', 'シロ'], ['ホムラ', 'ミズチ'], ['ハヤテ', 'メイ'], ['サスケ', 'コガネ'], ['クロガネ', 'ゴウ'], ['タヌリオ', 'アカネ'], ['ヨル']]; // 十二支順＋残り3人
+function aliveHelpers() { return battle.helpers ? battle.helpers.active.filter((h) => !h.dead && h.hp > 0) : []; }
+function spawnHelperPair(names) {
+  const bp = bEl('bparty');
+  const spots = window.innerWidth > window.innerHeight ? [[57, 32], [65, 13]] : [[56, 35], [67, 15]]; // パーティの前（敵側）に立つ
+  battle.helpers.active = names.map((name, i) => {
+    const rv = RIVALS[name];
+    const rid = rv.sheet.replace('assets/', '').replace('_sheet.png', '');
+    const h = { name, rid, hp: rv.hp, maxhp: rv.hp, atk: rv.atk, def: rv.def, spd: rv.spd, fresh: true, dead: false, el: null };
+    const d = document.createElement('div');
+    d.className = 'bunit bhelper';
+    d.style.left = spots[i][0] + '%'; d.style.bottom = spots[i][1] + '%';
+    const hPx = Math.min(170, window.innerHeight * 0.24) * 0.8;
+    const flipCss = RIVAL_FLIP[rid] ? '' : ';transform:scaleX(-1)'; // diag原画は右向き→反転してボス（左）を向く。コガネだけ原画が左向き
+    d.innerHTML = `<div class="bshadow"></div><img class="diag" src="assets/rival_${rid}_diag.png" style="height:${hPx}px${flipCss}" alt=""><div class="bname">${name}（助っ人）</div><div class="bbar"><i></i></div>`;
+    bp.appendChild(d);
+    h.el = d;
+    return h;
+  });
+  refreshBattleUI();
+}
+async function rotateHelpers() {
+  const H = battle.helpers; if (!H) return;
+  H.pairIdx++;
+  for (const h of H.active) if (h.el) h.el.remove();
+  H.active = [];
+  if (H.pairIdx >= H.pairs.length) { bMsg('十二支の 助っ人は 全員 戦い抜いた！'); await bSleep(800); return; }
+  spawnHelperPair(H.pairs[H.pairIdx]);
+  bMsg(H.pairs[H.pairIdx].join(' と ') + ' が 助っ人に 駆けつけた！');
+  await bSleep(900);
+}
+async function hitHelper(att, h, dmg, opt = {}) {
+  const el = h.el;
+  if (opt.fx) showFx(el, opt.fx);
+  if (att.foe) { const fe = foeEl(att.foe); if (fe) lunge(fe, 1); }
+  await bSleep(opt.fx ? 340 : 190);
+  h.hp -= dmg;
+  hurtFx(el); dmgNumber(el, dmg, opt.crit ? 'crit' : '');
+  refreshBattleUI();
+  await bSleep(430);
+  if (h.hp <= 0 && !h.dead) { h.dead = true; el.classList.add('dead'); bMsg(h.name + ' は たおれた…'); await bSleep(620); }
+}
+async function healHelper(att, h, val) {
+  showFx(h.el, 'heal');
+  await bSleep(340);
+  const real = Math.min(val, h.maxhp - h.hp);
+  h.hp += real;
+  dmgNumber(h.el, real, 'heal');
+  refreshBattleUI();
+  await bSleep(430);
+}
+async function helperTurn(h) {
+  if (h.dead || h.hp <= 0 || battle.over) return;
+  await bSleep(280);
+  const mv = h.move || RIVALS[h.name].move;
+  if (h.fresh) {
+    h.fresh = false;
+    if (mv.type === 'heal') {
+      const cands = [
+        ...Object.keys(PARTY).filter((id) => PARTY[id].hp > 0).map((id) => ({ ratio: PARTY[id].hp / PARTY[id].maxhp, heal: () => healMember({ el: h.el }, id, mv.val) })),
+        ...aliveHelpers().filter((x) => x !== h).map((x) => ({ ratio: x.hp / x.maxhp, heal: () => healHelper({ el: h.el }, x, mv.val) })),
+      ].sort((a, b) => a.ratio - b.ratio);
+      if (cands.length && cands[0].ratio < 1) { bMsg(h.name + ' の とくぎ！ ' + mv.name + '！'); await cands[0].heal(); return; }
+    } else {
+      const foes = aliveFoes(); if (!foes.length) return;
+      const t = foes[0];
+      bMsg(h.name + ' の とくぎ！ ' + mv.name + '！');
+      const hits = mv.type === 'hit2' ? 2 : 1;
+      for (let i = 0; i < hits && !t.dead; i++) await hitFoe({ el: h.el, side: -1 }, t, physDamage(h, t, mv.mult), { fx: i === 0 ? mv.fx : null, lunge: i === 0 });
+      return;
+    }
+  }
+  const foes = aliveFoes(); if (!foes.length) return;
+  const t = foes[Math.floor(Math.random() * foes.length)];
+  bMsg(h.name + ' の こうげき！');
+  await hitFoe({ el: h.el, side: -1 }, t, physDamage(h, t));
+}
 function checkEnd() {
   if (aliveFoes().length === 0) { battle.over = 'win'; return true; }
   if (aliveMembers().length === 0) { battle.over = 'lose'; return true; }
@@ -3177,16 +3262,24 @@ async function foeTurn(f) {
     }
     return;
   }
-  const ids = aliveMembers(); if (!ids.length) return;
-  const t = ids[Math.floor(Math.random() * ids.length)];
+  const pool = [
+    ...aliveMembers().map((id) => ({ m: PARTY[id], hit: (d) => hitMember({ foe: f }, id, d) })),
+    ...aliveHelpers().map((h) => ({ m: h, hit: (d) => hitHelper({ foe: f }, h, d) })),
+  ];
+  if (!pool.length) return;
+  const t = pool[Math.floor(Math.random() * pool.length)];
   bMsg(f.name + ' の こうげき！');
-  await hitMember({ foe: f }, t, physDamage(f, PARTY[t]));
+  await t.hit(physDamage(f, t.m));
 }
 async function battleLoop() {
+  let round = 0;
   while (!battle.over) {
+    round++;
+    if (battle.helpers && round > 1 && (round - 1) % 3 === 0) await rotateHelpers(); // 助っ人は3ラウンドごとに交代
     for (const id of Object.keys(PARTY)) PARTY[id].defending = false;
     const order = [
       ...Object.keys(PARTY).filter((id) => PARTY[id].hp > 0).map((id) => ({ spd: PARTY[id].spd, run: () => (id === 'nono' ? nonoTurn() : npcTurn(id)) })),
+      ...aliveHelpers().map((h) => ({ spd: h.spd, run: () => helperTurn(h) })),
       ...aliveFoes().map((f) => ({ spd: f.spd, run: () => foeTurn(f) })),
     ].sort((a, b) => b.spd - a.spd + Math.random() * 2);
     for (const a of order) {
@@ -3208,12 +3301,13 @@ function buildBattleDOM(kindKey, count) {
     const d = document.createElement('div');
     d.className = 'bunit benemy';
     d.style.left = spots[i][0] + '%'; d.style.bottom = spots[i][1] + '%';
-    const hPx = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (kind.h / 1.18) * (count === 3 ? 0.82 : count === 2 ? 0.92 : 1) * ((kind.tier === 'boss' || kind.tier === 'mid') ? 1.3 : 1);
+    let hPx = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (kind.h / 1.18) * (count === 3 ? 0.82 : count === 2 ? 0.92 : 1) * ((kind.tier === 'boss' || kind.tier === 'mid') ? 1.3 : 1);
+    if (kindKey === 'shiyuu') { battle.shiyuuStdH = hPx; hPx = window.innerHeight * 0.85; d.style.bottom = window.innerWidth <= window.innerHeight ? '10%' : '6%'; } // 蚩尤・第1形態は画面の8〜9割の大さ
     const useDiag = (kind.tier === 'boss' || kind.tier === 'mid');
     const useReal = !useDiag && REAL_ASPECT[kindKey];
     const dsrc = useDiag ? kind.img.replace('.png', '_diag.png') : useReal ? `assets/enemy_${kindKey}_real.png` : kind.img;
     const flip = useDiag ? !!DIAG_FLIP[kindKey] : useReal ? !!REAL_FLIP[kindKey] : true;
-    d.innerHTML = `<div class="bshadow"></div><img ${(useDiag || useReal) ? 'class="diag" ' : ''}src="${dsrc}" style="height:${hPx}px${flip ? '; transform:scaleX(-1)' : ''}" onerror="this.onerror=null;this.src='${kind.img}';this.style.transform='scaleX(-1)';this.classList.remove('diag')" ${(useDiag || useReal) ? `onload="const a=this.naturalWidth/this.naturalHeight,mw=innerWidth*0.58,c=parseFloat(this.style.height);if(c*a>mw)this.style.height=(mw/a)+'px'"` : ''} alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
+    d.innerHTML = `<div class="bshadow"></div><img ${(useDiag || useReal) ? 'class="diag" ' : ''}${kindKey === 'shiyuu' ? `data-capw="${window.innerWidth <= window.innerHeight ? 2.0 : 0.94}" ` : ''}src="${dsrc}" style="height:${hPx}px${flip ? '; transform:scaleX(-1)' : ''}" onerror="this.onerror=null;this.src='${kind.img}';this.style.transform='scaleX(-1)';this.classList.remove('diag')" ${(useDiag || useReal) ? `onload="const a=this.naturalWidth/this.naturalHeight,mw=innerWidth*(this.dataset.capw?parseFloat(this.dataset.capw):0.58),c=parseFloat(this.style.height);if(c*a>mw)this.style.height=(mw/a)+'px'"` : ''} alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
     be.appendChild(d); battle.foeEls.push(d);
   }
   const bp = bEl('bparty'); bp.innerHTML = '';
@@ -3292,7 +3386,7 @@ async function startBattle(fieldEnemy) {
   if (inBattle) return;
   inBattle = true; document.body.classList.add('inbattle');
   BGM.set('battle');
-  battle.over = false; battle.skillLeft = 3; battle.fieldEnemy = fieldEnemy; battle.rival = null;
+  battle.over = false; battle.skillLeft = 3; battle.fieldEnemy = fieldEnemy; battle.rival = null; battle.helpers = null; battle.shiyuuStdH = null;
   const R = REGIONS[area];
   const bg = bEl('bbg');
   const fallback = { hajimari: 'assets/far_mountains.jpg' }[area] || R.backdrop;
@@ -3311,6 +3405,12 @@ async function startBattle(fieldEnemy) {
   requestAnimationFrame(() => { el.style.opacity = '1'; });
   bMsg(ENEMY_KINDS[fieldEnemy.kindKey].name + ' が あらわれた！');
   await bSleep(900);
+  if (fieldEnemy.kindKey === 'shiyuu') { // 蚩尤戦だけ十二支の助っ人が参戦
+    battle.helpers = { pairs: HELPER_PAIRS, pairIdx: 0, active: [] };
+    spawnHelperPair(HELPER_PAIRS[0]);
+    bMsg('十二支の ライバルたちが 助っ人に 駆けつけた！');
+    await bSleep(1000);
+  }
   await battleLoop();
   await endBattle();
 }
@@ -3600,7 +3700,7 @@ async function startRivalBattle(name) {
   if (inBattle) return;
   inBattle = true; document.body.classList.add('inbattle');
   BGM.set('battle');
-  battle.over = false; battle.skillLeft = 3; battle.fieldEnemy = null; battle.rival = name;
+  battle.over = false; battle.skillLeft = 3; battle.fieldEnemy = null; battle.rival = name; battle.helpers = null; battle.shiyuuStdH = null;
   const R = REGIONS[area];
   const bg = bEl('bbg');
   const fallback = { hajimari: 'assets/far_mountains.jpg' }[area] || R.backdrop;
