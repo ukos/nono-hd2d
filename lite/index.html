@@ -3139,11 +3139,12 @@ function spawnHelperPair(names) {
     const d = document.createElement('div');
     d.className = 'bunit bhelper';
     d.style.left = spots[i][0] + '%'; d.style.bottom = spots[i][1] + '%';
-    const hPx = Math.min(170, window.innerHeight * 0.24) * 0.8;
+    const hPx = Math.min(170, window.innerHeight * 0.24) * 0.8 * 1.2; // ライバルはバトルで1.2倍（ユーザー指示 2026-11-21）
     const flipCss = RIVAL_FLIP[rid] ? '' : ';transform:scaleX(-1)'; // diag原画は全員右向き→反転してボス（左）を向く
     d.innerHTML = `<div class="bshadow"></div><img class="diag" src="assets/rival_${rid}_diag.png" style="height:${hPx}px${flipCss}" alt=""><div class="bname">${name}（助っ人）</div><div class="bbar"><i></i></div>`;
     bp.appendChild(d);
     h.el = d;
+    const him = d.querySelector('img'); if (him) fitFoe(d, him);
     return h;
   });
   refreshBattleUI();
@@ -3432,6 +3433,7 @@ function buildBattleDOM(kindKey, count) {
     const flip = useDiag ? !!DIAG_FLIP[kindKey] : useReal ? !!REAL_FLIP[kindKey] : true;
     d.innerHTML = `<div class="bshadow"></div><img ${(useDiag || useReal) ? 'class="diag" ' : ''}src="${dsrc}" style="height:${hPx}px${flip ? '; transform:scaleX(-1)' : ''}" onerror="this.onerror=null;this.src='${kind.img}';this.style.transform='scaleX(-1)';this.classList.remove('diag')" ${(useDiag || useReal) ? `onload="const a=this.naturalWidth/this.naturalHeight,mw=innerWidth*(this.dataset.capw?parseFloat(this.dataset.capw):0.58),c=parseFloat(this.style.height);if(c*a>mw)this.style.height=(mw/a)+'px'"` : ''} alt=""><div class="bname">${kind.name}</div><div class="bbar"><i></i></div>`;
     be.appendChild(d); battle.foeEls.push(d);
+    const fim = d.querySelector('img'); if (fim) { fitFoe(d, fim); fim.addEventListener('load', () => fitFoe(d, fim)); }
   }
   const bp = bEl('bparty'); bp.innerHTML = '';
   const pspots = window.innerWidth > window.innerHeight ? { nono: [83, 35], yui: [86.5, 20], rei: [89.5, 5] } : { nono: [83, 41], yui: [86.5, 26.5], rei: [89.5, 12] };
@@ -3475,6 +3477,23 @@ function capFoeImg(img) {
   const a = img.naturalWidth / img.naturalHeight, mw = window.innerWidth * (img.dataset.capw ? parseFloat(img.dataset.capw) : 0.58), c = parseFloat(img.style.height);
   if (c * a > mw) img.style.height = (mw / a) + 'px';
 }
+// 大きな敵・ライバルが上のHP/MPプレート帯（top:40px＋高さ）に隠れないようにする。
+// コマンドボタン側へはみ出すのは可（ユーザー指示 2026-11-21）なので、まず要素ごと下へずらし、残りだけ高さを削る。
+function fitFoe(d, img) {
+  if (!d || !img) return;
+  const reserveTop = 112, ih = window.innerHeight;
+  const h = parseFloat(img.style.height) || 0;
+  if (!h) return;
+  const rect = img.getBoundingClientRect(); // 名前・ゲージが画像の下に付く分も含めて実測する
+  if (!rect.height) return;
+  let need = reserveTop - rect.top;
+  if (need <= 0) return;
+  const bottomPct = parseFloat(d.style.bottom) || 0;
+  const maxMove = Math.max(0, (bottomPct - 6) / 100 * ih);
+  const move = Math.min(need, maxMove);
+  if (move > 0) { d.style.bottom = (bottomPct - move / ih * 100) + '%'; need -= move; }
+  if (need > 0) img.style.height = Math.max(40, h - need) + 'px';
+}
 function layoutBattle() {
   if (!inBattle) return;
   const land = window.innerWidth > window.innerHeight;
@@ -3482,8 +3501,9 @@ function layoutBattle() {
   (battle.foeEls || []).forEach((d, i) => {
     const img = d.querySelector('img');
     if (d.dataset.rival) {
-      const hPx = Math.min(170, window.innerHeight * 0.24) * 0.8;
+      const hPx = Math.min(170, window.innerHeight * 0.24) * 0.8 * 1.2; // ライバルはバトルで1.2倍（ユーザー指示 2026-11-21）
       if (img) { img.style.height = hPx + 'px'; const w = img.naturalWidth ? img.naturalWidth / img.naturalHeight * hPx : 0; if (w > window.innerWidth * 0.58) img.style.height = (hPx * window.innerWidth * 0.58 / w) + 'px'; }
+      if (img) fitFoe(d, img);
       else { const ch = d.querySelector('.bchar'); if (ch) setCharFrame(ch, 1, 1, hPx, 3); }
       return;
     }
@@ -3491,7 +3511,7 @@ function layoutBattle() {
     const count = +d.dataset.count || 1, sp = espots(count)[i]; if (!sp) return;
     d.style.left = sp[0] + '%'; d.style.bottom = sp[1] + '%';
     const hPx = (Math.min(170, window.innerHeight * 0.24) * 0.8) * (kind.h / 1.18) * (count === 3 ? 0.82 : count === 2 ? 0.92 : 1) * ((kind.tier === 'boss' || kind.tier === 'mid') ? 1.3 : 1) * (+d.dataset.bscale || 1);
-    if (img) { img.style.height = hPx + 'px'; capFoeImg(img); }
+    if (img) { img.style.height = hPx + 'px'; capFoeImg(img); fitFoe(d, img); }
   });
   const pspots = land ? { nono: [83, 35], yui: [86.5, 20], rei: [89.5, 5] } : { nono: [83, 41], yui: [86.5, 26.5], rei: [89.5, 12] };
   for (const [id, d] of Object.entries(battle.memberEls || {})) {
@@ -3507,7 +3527,7 @@ function layoutBattle() {
     battle.helpers.active.forEach((h, i) => {
       if (!h.el) return;
       const sp = hspots[i]; if (sp) { h.el.style.left = sp[0] + '%'; h.el.style.bottom = sp[1] + '%'; }
-      const img = h.el.querySelector('img'); if (img) img.style.height = (Math.min(170, window.innerHeight * 0.24) * 0.8) + 'px';
+      const img = h.el.querySelector('img'); if (img) { img.style.height = (Math.min(170, window.innerHeight * 0.24) * 0.8 * 1.2) + 'px'; fitFoe(h.el, img); }
     });
   }
 }
@@ -3889,7 +3909,7 @@ async function startRivalBattle(name) {
   const ch = document.createElement('div');
   ch.className = 'bchar';
   const rid = rv.sheet.replace('assets/', '').replace('_sheet.png', '');
-  const hPx = Math.min(170, window.innerHeight * 0.24) * 0.8;
+  const hPx = Math.min(170, window.innerHeight * 0.24) * 0.8 * 1.2; // ライバルはバトルで1.2倍（ユーザー指示 2026-11-21）
   if (RIVAL_DIAG_ASPECT[rid]) {
     const dimg = new Image();
     dimg.className = 'diag';
@@ -3898,6 +3918,7 @@ async function startRivalBattle(name) {
     dimg.onload = () => {
       const w = dimg.naturalWidth / dimg.naturalHeight * hPx;
       if (w > window.innerWidth * 0.58) dimg.style.height = (hPx * window.innerWidth * 0.58 / w) + 'px';
+      fitFoe(d, dimg);
     };
     dimg.onerror = () => {
       dimg.remove();
