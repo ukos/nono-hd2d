@@ -49,7 +49,11 @@
     background:
       radial-gradient(130vmin 105vmin at 50% 46%, #282633 0%, #23212c 52%, #1c1a25 100%);
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    box-sizing:border-box; padding-bottom:calc(72px + env(safe-area-inset-bottom));
     transition:opacity .6s; cursor:pointer; }
+  #splash .ver { position:absolute; right:14px; bottom:calc(10px + env(safe-area-inset-bottom));
+    color:#ffe9c9; font-size:11px; letter-spacing:.08em;
+    font-family:"Yu Gothic", "游ゴシック", YuGothic, "メイリオ", Meiryo, sans-serif; }
   #splash img { display:block; width:min(82vmin, 540px); height:auto; border:2px solid #2a3242; border-radius:8px; }
   /* タイトルロゴのウインドウ枠: 本編タイトル画面の .card と同じ仕様（白枠3px＋外側に bg 色と line 色の二重リング、内側の絵には line 色2pxの縁） */
   #splash .logoframe { background:#151922; border:3px solid #ece6d6; border-radius:16px;
