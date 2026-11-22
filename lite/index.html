@@ -1055,7 +1055,7 @@ const STEP_LENS = [0.42, 0.40, 0.42, 0.38, 0.42, 0.38, 0.42, 0.40];
 const BOB_AMPS = [0.035, 0.035, 0.035, 0.04, 0.06, 0.04, 0.035, 0.035];
 
 // プレイヤーと仲間（地方をまたいで存在するのでシーン直下に置く）
-const player = makeChar('assets/nono_sheet8m.png', 1.18, 8);
+const player = makeChar('assets/nono_sheet8n.png', 1.18, 8);
 // 2026-11-21 シート作り直しで横向き行1コマ目の向きが正しくなったため、旧シート由来の反転対策は無効化
 player.userData.flipSide0 = false;
 player.userData.sideSlim = 0.9; // 横向きだけ横幅を8割に（太く見える対策）
@@ -2263,7 +2263,7 @@ const RIVAL_DIAG_ASPECT = { akane: 0.68, gou: 0.69, hayate: 0.7, homura: 0.71, i
 const REAL_ACT_ASPECT = { akuryou: 0.811, bandit: 0.482, chouchin: 0.566, dokuhebi: 1.15, drone: 2.227, dwolf: 0.63, eagle: 0.883, fox: 1.417, gama: 1.411, griffon: 1.193, hawk: 0.86, hibat: 0.795, iwagani: 0.879, kaeru: 0.852, kaizoku: 0.601, kamome: 1.355, kani: 1.006, karakasa: 0.793, karasu: 0.506, karyu: 0.834, kinokoob: 0.605, kitsune: 1.474, komori: 0.406, kumo: 0.952, kurage: 0.722, leever: 0.637, marten: 3.324, mogura: 0.81, mukade: 1.286, mummy: 0.483, ninja: 0.558, onibi: 0.747, oumu: 0.789, raichou: 0.781, same: 1.494, scorpion: 1.815, shinigami: 0.754, shirofukuro: 1.007, squirrel: 0.881, tako: 0.768, tanuki: 1.011, tengu: 0.779, utsubo: 1.957, vulture: 0.874, wolf: 1.671, x_acorn: 0.623, x_bluejelly: 0.967, x_boar: 1.449, x_cactus: 0.82, x_darkocto: 1.301, x_kappa: 1.322, x_mushcat: 0.744, x_owl: 1.876, x_purpmush: 0.893, x_rabbit: 0.833, x_whiterabbit: 1.124, yadokari: 1.271, yamiinu: 0.95, yougan: 1.037, yukiookami: 2.741, ankou: 0.922, cobra: 0.726, deer: 0.698, foxsq: 0.884, gorori: 1.335, hachi: 0.641, hirari: 1.505, koorislime: 1.278, morikuma: 0.619, puru: 1.946, tobiuo: 1.339, washi: 1.184, yagi: 0.726, kingcrab: 1.78 };
 const DIAG_ACT_ASPECT = { bear: 1.385, gaikotsu: 0.854, golem: 0.658, hitotsume: 0.55, hyouga: 0.817, iwaryu: 1.528, kgolem: 0.533, kishin: 0.505, koorioni: 0.781, kyojin: 0.844, nue: 1.716, nurikabe: 0.622, oni: 0.504, oogumo: 1.534, oowani: 2.999, oowashi: 1.889, oozaru: 0.806, pontanuki: 0.639, robo: 0.754, tonosama: 0.548, wani: 2.174, yukio: 0.916 };
 const PARTY = {
-  nono: { name: 'nono', sheet: 'assets/nono_sheet8m.png', hp: 62, maxhp: 62, mp: 18, maxmp: 18, atk: 14, def: 6, spd: 8 },
+  nono: { name: 'nono', sheet: 'assets/nono_sheet8n.png', hp: 62, maxhp: 62, mp: 18, maxmp: 18, atk: 14, def: 6, spd: 8 },
   yui:  { name: 'ユイ', sheet: 'assets/yui_sheet8.png',   hp: 48, maxhp: 48, mp: 14, maxmp: 14, atk: 11, def: 4, spd: 11 },
   rei:  { name: 'レイ', sheet: 'assets/rei_sheet8.png',   hp: 44, maxhp: 44, mp: 6,  maxmp: 6,  atk: 13, def: 4, spd: 15 },
 };
